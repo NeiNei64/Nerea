@@ -15,11 +15,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
   @media print {
+    /* Ocultar todo lo que no sea la vista de impresión */
+    body * { visibility: hidden; }
+    #printView, #printView * { visibility: visible; }
+    #printView { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+    
     .no-print { display: none !important; }
-    .print-only { display: block !important; }
-    body { background: white !important; }
-    .print-section { page-break-inside: avoid; }
+    
+    /* Forzar que los gráficos y la tabla se vean */
     #printChartsContainer { display: block !important; page-break-inside: avoid; }
+    #printTableContainer { display: block !important; page-break-inside: avoid; }
     canvas { max-width: 100% !important; height: auto !important; }
   }
   .print-only { display: none; }
@@ -307,6 +312,7 @@
           <div class="h-64 relative">
             <canvas id="subjectChart"></canvas>
           </div>
+          <ul id="subjectLegend" class="mt-2 text-xs space-y-1"></ul>
         </div>
       </div>
       <div id="analysisDetails" class="text-sm space-y-2 mt-4"></div>
@@ -392,7 +398,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '2.1.0'; 
+const APP_VERSION = '2.3.0'; // Actualizado para solucionar impresión PDF
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1107,6 +1113,17 @@ function renderCharts() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
   });
 
+  const subjectLegend = document.getElementById('subjectLegend');
+  subjectLegend.innerHTML = '';
+  const totalSubj = subjData.reduce((a,b)=>a+b, 0);
+  subjLabels.forEach((label, i) => {
+    const pct = ((subjData[i] / totalSubj) * 100).toFixed(1);
+    const li = document.createElement('li');
+    li.className = 'flex items-center gap-2';
+    li.innerHTML = `<span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${subjColors[i]}"></span><span class="flex-1">${label}</span><span class="font-semibold text-gray-700">${subjData[i]} (${pct}%)</span>`;
+    subjectLegend.appendChild(li);
+  });
+
   // Análisis de texto
   let evolutionText = t('stableEvolution');
   let evolutionColor = 'text-gray-600';
@@ -1246,8 +1263,10 @@ function generatePDF(mode) {
     // Configurar visibilidad
     if (mode === 'full' || mode === 'all') {
         tableContainer.classList.remove('hidden');
+        tableContainer.style.display = 'block';
     } else {
         tableContainer.classList.add('hidden');
+        tableContainer.style.display = 'none';
     }
     
     if (mode === 'charts' || mode === 'all') {
@@ -1350,7 +1369,7 @@ function generatePDF(mode) {
 
     setTimeout(() => {
         window.print();
-    }, 800);
+    }, 1000); // Aumentado a 1000ms para asegurar que los gráficos se rendericen
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
