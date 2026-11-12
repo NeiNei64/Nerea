@@ -384,7 +384,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '3.1.0'; 
+const APP_VERSION = '3.2.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1280,7 +1280,7 @@ function generatePDF(mode) {
         <head>
             <title>NereApp - Report</title>
             <style>
-                /* Estilos estrictos para A4 */
+                /* Estilos estrictos para A4 Vertical */
                 @page { size: A4 portrait; margin: 15mm; }
                 body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
                 table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
@@ -1289,17 +1289,17 @@ function generatePDF(mode) {
                 h1 { font-size: 20px; margin: 0; }
                 h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 15px; }
                 
-                /* Cuadrícula de gráficos estricta */
+                /* Gráficos en una sola columna para que se vean grandes y no se corten */
                 .chart-grid { 
-                    display: grid; 
-                    grid-template-columns: 1fr 1fr; 
-                    gap: 15px; 
+                    display: flex; 
+                    flex-direction: column;
+                    gap: 20px; 
                     width: 100%; 
-                    margin-top: 10px;
+                    margin-top: 15px;
                 }
                 .chart-box { 
                     width: 100%; 
-                    height: 220px; /* Altura fija para evitar que se descontrolen */
+                    height: 350px; /* Altura grande para que se vea bien */
                     position: relative;
                     overflow: hidden;
                 }
