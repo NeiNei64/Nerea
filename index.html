@@ -23,8 +23,34 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
   
-  /* Ocultar el contenedor de los gráficos del PDF en pantalla */
-  #printChartsContainer { position: absolute; left: -9999px; top: -9999px; }
+  /* ============ ESTILOS PARA IMPRESIÓN NATIVA ============ */
+  @media print {
+    body * { visibility: hidden; }
+    #printView, #printView * { visibility: visible; }
+    #printView { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+    
+    /* Forzar A4 Vertical */
+    @page { size: A4 portrait; margin: 15mm; }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+    th { background: #eee; }
+    
+    .chart-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 15px; 
+        width: 100%; 
+        margin-top: 10px;
+    }
+    .chart-box { 
+        width: 100%; 
+        height: 250px; 
+        position: relative;
+        overflow: hidden;
+    }
+    .page-break { page-break-before: always; }
+  }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -64,10 +90,10 @@
   </div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4">
+<div class="max-w-6xl mx-auto p-4 no-print">
 
   <!-- Header -->
-  <header class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
+  <header class="flex flex-wrap justify-between items-center mb-6 gap-3">
     <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="NereApp - Eguneroko gorabeherak">
     <div class="flex gap-2 flex-wrap">
       <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
@@ -85,7 +111,7 @@
   </header>
 
   <!-- Tabs -->
-  <nav class="no-print flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
+  <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
     <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
     </button>
@@ -349,7 +375,6 @@
   <div id="printChartsContainer" style="display: none; margin-bottom: 30px;">
       <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="chart-grid">
-          <!-- Contenedores con altura fija y overflow oculto para evitar que Chart.js se descontrole -->
           <div class="chart-box"><canvas id="printChart1"></canvas></div>
           <div class="chart-box"><canvas id="printChart2"></canvas></div>
           <div class="chart-box"><canvas id="printChart3"></canvas></div>
@@ -384,7 +409,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '3.3.0'; 
+const APP_VERSION = '3.5.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1270,136 +1295,71 @@ function generatePDF(mode) {
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 
-    // 3. Copiar el HTML de impresión a un contenedor temporal
-    const printHTML = document.getElementById('printView').innerHTML;
-    
-    // 4. Crear una nueva ventana para imprimir (evita bloqueos de caché)
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>NereApp - Report</title>
-            <style>
-                /* Estilos estrictos para A4 Vertical */
-                @page { size: A4 portrait; margin: 15mm; }
-                body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
-                table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; page-break-inside: auto; }
-                th, td { border: 1px solid #ccc; padding: 4px; text-align: left; page-break-inside: avoid; }
-                th { background: #eee; }
-                h1 { font-size: 20px; margin: 0; }
-                h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 15px; }
-                
-                /* Cuadrícula de gráficos estricta */
-                .chart-grid { 
-                    display: grid; 
-                    grid-template-columns: 1fr 1fr; 
-                    gap: 15px; 
-                    width: 100%; 
-                    margin-top: 10px;
-                }
-                .chart-box { 
-                    width: 100%; 
-                    height: 250px; /* Altura fija para evitar que se descontrolen */
-                    position: relative;
-                    overflow: hidden;
-                }
-                .page-break { page-break-before: always; }
-            </style>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-        </head>
-        <body>
-            ${printHTML}
-        </body>
-        </html>
-    `);
-
-    // 5. Si hay gráficos, dibujarlos en la nueva ventana y luego imprimir
+    // 3. Si hay gráficos, prepararlos en el contenedor invisible
     if (mode === 'charts' || mode === 'all') {
-        printWindow.document.close();
+        const chartStudentFilter = document.getElementById('chartStudentFilter');
+        const selectedStudent = chartStudentFilter.value || fStudent;
         
-        // Esperamos a que cargue el script de Chart.js
-        setTimeout(() => {
-            const chartStudentFilter = document.getElementById('chartStudentFilter');
-            const selectedStudent = chartStudentFilter.value || fStudent;
-            
-            if (!selectedStudent) {
-                alert(t('selectStudentForCharts'));
-                printWindow.close();
-                return;
-            }
-            
-            const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
-            
-            if (chartFiltered.length === 0) {
-                alert(t('noIncidents'));
-                printWindow.close();
-                return;
-            }
+        if (!selectedStudent) {
+            alert(t('selectStudentForCharts'));
+            return;
+        }
+        
+        const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
+        
+        if (chartFiltered.length === 0) {
+            alert(t('noIncidents'));
+            return;
+        }
 
-            const countsByDate = {};
-            [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
-            const labels = Object.keys(countsByDate);
-            const data = labels.map(l => countsByDate[l]);
+        const countsByDate = {};
+        [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
+        const labels = Object.keys(countsByDate);
+        const data = labels.map(l => countsByDate[l]);
 
-            const slotCount = {};
-            chartFiltered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
-            const slotLabels = Object.keys(slotCount).sort();
-            const slotData = slotLabels.map(l=>slotCount[l]);
+        const slotCount = {};
+        chartFiltered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
+        const slotLabels = Object.keys(slotCount).sort();
+        const slotData = slotLabels.map(l=>slotCount[l]);
 
-            const blockCounts = { class: 0, break: 0, peri: 0 };
-            chartFiltered.forEach(i => {
-                if (i.slotEu === 'Klasea') blockCounts.class++;
-                else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
-                else blockCounts.peri++;
-            });
-            const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
-            const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
+        const blockCounts = { class: 0, break: 0, peri: 0 };
+        chartFiltered.forEach(i => {
+            if (i.slotEu === 'Klasea') blockCounts.class++;
+            else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
+            else blockCounts.peri++;
+        });
+        const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
+        const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
 
-            const subjectCount = {};
-            chartFiltered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
-            const subjLabels = Object.keys(subjectCount);
-            const subjData = subjLabels.map(l=>subjectCount[l]);
-            const subjColors = subjLabels.map(s=>getSubjectColor(s));
+        const subjectCount = {};
+        chartFiltered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
+        const subjLabels = Object.keys(subjectCount);
+        const subjData = subjLabels.map(l=>subjectCount[l]);
+        const subjColors = subjLabels.map(s=>getSubjectColor(s));
 
-            // Dibujar en la nueva ventana
-            new Chart(printWindow.document.getElementById('printChart1').getContext('2d'), {
-                type: 'line', 
-                data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, 
-                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
-            });
-            new Chart(printWindow.document.getElementById('printChart2').getContext('2d'), {
-                type: 'bar', 
-                data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, 
-                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
-            });
-            new Chart(printWindow.document.getElementById('printChart3').getContext('2d'), {
-                type: 'doughnut', 
-                data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, 
-                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } }
-            });
-            new Chart(printWindow.document.getElementById('printChart4').getContext('2d'), {
-                type: 'doughnut', 
-                data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, 
-                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } }
-            });
+        if(window.printChart1) window.printChart1.destroy();
+        if(window.printChart2) window.printChart2.destroy();
+        if(window.printChart3) window.printChart3.destroy();
+        if(window.printChart4) window.printChart4.destroy();
 
-            // Lanzar la impresión
-            setTimeout(() => {
-                printWindow.focus();
-                printWindow.print();
-                printWindow.close(); // Cerrar después de imprimir
-            }, 800); // Damos tiempo a que se pinten los gráficos
-
-        }, 1000); // Esperar a que cargue la librería
-    } else {
-        // Si solo es la tabla, imprimir directamente
-        printWindow.document.close();
-        setTimeout(() => {
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        }, 500);
+        window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
+            type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+        });
+        window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
+            type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+        });
+        window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
+            type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+        });
+        window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
+            type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+        });
     }
+
+    // 4. Esperar a que los gráficos se dibujen y lanzar la impresión nativa
+    setTimeout(() => {
+        window.print();
+    }, 500);
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
