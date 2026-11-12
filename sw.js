@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aesh-cache-v7'; // <-- CAMBIADO A v7
+const CACHE_NAME = 'aesh-cache-v8'; // <-- CAMBIADO A v8
 const ASSETS = [
   './',
   './index.html',
