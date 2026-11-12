@@ -346,19 +346,20 @@
   <div id="printStats" style="margin-bottom: 20px; font-size: 14px;"></div>
   
   <!-- Contenedor de Gráficos -->
-  <div id="printChartsContainer" class="page-break" style="display: none; margin-bottom: 30px;">
+  <div id="printChartsContainer" style="display: none; margin-bottom: 30px;">
       <h2 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
-          <div style="height: 250px; position: relative;"><canvas id="printChart1"></canvas></div>
-          <div style="height: 250px; position: relative;"><canvas id="printChart2"></canvas></div>
-          <div style="height: 250px; position: relative;"><canvas id="printChart3"></canvas></div>
-          <div style="height: 250px; position: relative;"><canvas id="printChart4"></canvas></div>
+          <!-- Contenedores con altura fija para que no se descontrole en el PDF -->
+          <div style="height: 200px; width: 100%;"><canvas id="printChart1"></canvas></div>
+          <div style="height: 200px; width: 100%;"><canvas id="printChart2"></canvas></div>
+          <div style="height: 200px; width: 100%;"><canvas id="printChart3"></canvas></div>
+          <div style="height: 200px; width: 100%;"><canvas id="printChart4"></canvas></div>
       </div>
   </div>
 
   <!-- Contenedor de Tabla -->
-  <div id="printTableContainer" class="page-break" style="display: none;">
-      <h2 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">Historikoa / Historique</h2>
+  <div id="printTableContainer" style="display: none;">
+      <h2 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px; page-break-before: always;">Historikoa / Historique</h2>
       <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
         <thead>
           <tr style="background-color: #e5e7eb;">
@@ -383,7 +384,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '2.9.0'; 
+const APP_VERSION = '3.0.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1279,14 +1280,30 @@ function generatePDF(mode) {
         <head>
             <title>NereApp - Report</title>
             <style>
-                body { font-family: Arial, sans-serif; background: white; color: black; padding: 20px; }
-                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+                /* Estilos específicos para A4 */
+                @page { size: A4 portrait; margin: 15mm; }
+                body { font-family: Arial, sans-serif; background: white; color: black; margin: 0; padding: 0; }
+                table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
                 th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
                 th { background: #eee; }
-                h1 { font-size: 24px; margin: 0; }
-                h2 { font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
-                .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-                .chart-container { width: 100%; height: 250px; margin-bottom: 20px; }
+                h1 { font-size: 20px; margin: 0; }
+                h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 15px; }
+                
+                /* Cuadrícula de gráficos estricta */
+                .chart-grid { 
+                    display: grid; 
+                    grid-template-columns: 1fr 1fr; 
+                    gap: 15px; 
+                    width: 100%; 
+                    margin-top: 10px;
+                }
+                .chart-box { 
+                    width: 100%; 
+                    height: 220px; /* Altura fija para evitar que se descontrolen */
+                    position: relative;
+                    overflow: hidden;
+                }
+                .page-break { page-break-before: always; }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
         </head>
@@ -1344,18 +1361,26 @@ function generatePDF(mode) {
             const subjData = subjLabels.map(l=>subjectCount[l]);
             const subjColors = subjLabels.map(s=>getSubjectColor(s));
 
-            // Dibujar en la nueva ventana
+            // Dibujar en la nueva ventana (con tamaño estricto)
             new Chart(printWindow.document.getElementById('printChart1').getContext('2d'), {
-                type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+                type: 'line', 
+                data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, 
+                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
             });
             new Chart(printWindow.document.getElementById('printChart2').getContext('2d'), {
-                type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+                type: 'bar', 
+                data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, 
+                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
             });
             new Chart(printWindow.document.getElementById('printChart3').getContext('2d'), {
-                type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+                type: 'doughnut', 
+                data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, 
+                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } }
             });
             new Chart(printWindow.document.getElementById('printChart4').getContext('2d'), {
-                type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+                type: 'doughnut', 
+                data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, 
+                options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } }
             });
 
             // Lanzar la impresión
