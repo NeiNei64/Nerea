@@ -14,30 +14,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
-  /* ============ CSS PARA IMPRESIÓN ============ */
-  @media print {
-    body { background: white !important; margin: 0; padding: 0; }
-    .no-print { display: none !important; }
-    
-    /* Ocultar todo lo que hay en el body excepto la vista de impresión */
-    body > *:not(#printView) { display: none !important; }
-    
-    /* Mostrar la vista de impresión */
-    #printView { 
-      display: block !important; 
-      position: relative; 
-      width: 100%; 
-      background: white;
-    }
-    
-    /* Asegurar que los canvas se escalen bien en el papel */
-    canvas { max-width: 100% !important; height: auto !important; }
-    
-    /* Evitar cortes de página en medio de un gráfico o tabla */
-    .page-break { page-break-inside: avoid; }
-  }
-  .print-only { display: none; }
-
   /* Utilidades normales de la app */
   .editable-item { display: flex; align-items: center; justify-content: space-between; padding: 4px; border-radius: 4px; }
   .editable-item:hover { background-color: #f3f4f6; }
@@ -46,11 +22,14 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
+  
+  /* Ocultar el contenedor de los gráficos del PDF en pantalla */
+  #printChartsContainer { position: absolute; left: -9999px; top: -9999px; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
 
-<!-- Modales -->
+<!-- Modal para añadir opciones personalizadas -->
 <div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3" id="modalTitle">Aukera berria</h3>
@@ -62,6 +41,7 @@
   </div>
 </div>
 
+<!-- Modal de selección de PDF -->
 <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
@@ -85,10 +65,10 @@
   </div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4 no-print">
+<div class="max-w-6xl mx-auto p-4">
 
   <!-- Header -->
-  <header class="flex flex-wrap justify-between items-center mb-6 gap-3">
+  <header class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
     <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="NereApp - Eguneroko gorabeherak">
     <div class="flex gap-2 flex-wrap">
       <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
@@ -106,7 +86,7 @@
   </header>
 
   <!-- Tabs -->
-  <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
+  <nav class="no-print flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
     <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
     </button>
@@ -350,40 +330,40 @@
 </div>
 
 <!-- ========================================== -->
-<!-- VISTA DE IMPRESIÓN (Se oculta en pantalla) -->
+<!-- VISTA DE IMPRESIÓN (Oculta en pantalla) -->
 <!-- ========================================== -->
-<div id="printView" class="print-only max-w-4xl mx-auto p-8 bg-white absolute top-0 left-0 w-full z-[-1] opacity-0">
-  <div class="text-center mb-6">
-    <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
-    <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
+<div id="printView" style="display: none;">
+  <div class="text-center mb-6" style="margin-bottom: 20px;">
+    <h1 id="printTitle" style="font-size: 24px; font-weight: bold; margin: 0;">NereApp</h1>
+    <p id="printMeta" style="font-size: 12px; color: #666; margin-top: 5px;"></p>
   </div>
-  <div id="printStats" class="mb-6 text-sm"></div>
+  <div id="printStats" style="margin-bottom: 20px; font-size: 14px;"></div>
   
   <!-- Contenedor de Gráficos -->
-  <div id="printChartsContainer" class="mb-8 page-break hidden">
-      <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
-      <div class="grid grid-cols-2 gap-4 mt-4">
-          <div class="h-64 relative"><canvas id="printChart1"></canvas></div>
-          <div class="h-64 relative"><canvas id="printChart2"></canvas></div>
-          <div class="h-64 relative"><canvas id="printChart3"></canvas></div>
-          <div class="h-64 relative"><canvas id="printChart4"></canvas></div>
+  <div id="printChartsContainer" class="page-break" style="display: none; margin-bottom: 30px;">
+      <h2 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">Eboluzioa eta Analisia / Évolution et Analyse</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+          <div style="height: 250px; position: relative;"><canvas id="printChart1"></canvas></div>
+          <div style="height: 250px; position: relative;"><canvas id="printChart2"></canvas></div>
+          <div style="height: 250px; position: relative;"><canvas id="printChart3"></canvas></div>
+          <div style="height: 250px; position: relative;"><canvas id="printChart4"></canvas></div>
       </div>
   </div>
 
   <!-- Contenedor de Tabla -->
-  <div id="printTableContainer" class="page-break hidden">
-      <h2 class="text-lg font-bold border-b mb-2 mt-4">Historikoa / Historique</h2>
-      <table class="w-full border-collapse text-xs mt-2">
+  <div id="printTableContainer" class="page-break" style="display: none;">
+      <h2 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">Historikoa / Historique</h2>
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
         <thead>
-          <tr class="bg-gray-200">
-            <th class="border px-2 py-1 text-left"><span data-eu="Data" data-fr="Date">Data</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Ordutegia" data-fr="Créneau">Ordutegia</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Ikasgaia" data-fr="Matière">Ikasgaia</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Jokabidea" data-fr="Comportement">Jokabidea</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Esku-hartzea" data-fr="Intervention">Esku-hartzea</span></th>
-            <th class="border px-2 py-1 text-left"><span data-eu="Oharrak" data-fr="Notes">Oharrak</span></th>
+          <tr style="background-color: #e5e7eb;">
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Data</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Ikaslea</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Ordutegia</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Ikasgaia</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Eragilea</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Jokabidea</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Esku-hartzea</th>
+            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Oharrak</th>
           </tr>
         </thead>
         <tbody id="printTableBody"></tbody>
@@ -397,7 +377,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '2.6.0'; 
+const APP_VERSION = '2.7.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1132,6 +1112,9 @@ function renderCharts() {
     <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
     <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
   `;
+
+  // Actualizar los gráficos del PDF ocultos con los mismos datos
+  updatePrintCharts(filtered);
 }
 
 function renderStats(filtered) {
@@ -1211,7 +1194,7 @@ document.getElementById('pdfBtn').onclick = () => {
     document.getElementById('pdfModal').classList.add('flex');
 };
 
-// Se llama cada vez que se renderizan los gráficos en pantalla para actualizar los del PDF en la sombra
+// Función que crea los gráficos del PDF de forma invisible
 function updatePrintCharts(studentData) {
     if (!studentData || studentData.length === 0) return;
     
@@ -1240,13 +1223,11 @@ function updatePrintCharts(studentData) {
     const subjData = subjLabels.map(l=>subjectCount[l]);
     const subjColors = subjLabels.map(s=>getSubjectColor(s));
 
-    // Destruir gráficos del PDF si ya existían
     if(window.printChart1) window.printChart1.destroy();
     if(window.printChart2) window.printChart2.destroy();
     if(window.printChart3) window.printChart3.destroy();
     if(window.printChart4) window.printChart4.destroy();
 
-    // Crear los gráficos del PDF
     window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
         type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
     });
@@ -1277,43 +1258,39 @@ function generatePDF(mode) {
     filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
     let statsHtml = '';
     if (fStudent) {
-        statsHtml = `<div class="mb-2"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
+        statsHtml = `<div style="margin-bottom: 10px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
     } else {
         statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]).map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
     }
-    statsHtml += `<div class="mt-2 pt-2 border-t text-sm font-bold">${t('total')}: ${filtered.length}</div>`;
+    statsHtml += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
     document.getElementById('printStats').innerHTML = statsHtml;
 
     const tableContainer = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
     
-    // CONTROL DE VISIBILIDAD
     if (mode === 'full' || mode === 'all') {
         tableContainer.classList.remove('hidden');
+        tableContainer.style.display = 'block';
     } else {
         tableContainer.classList.add('hidden');
+        tableContainer.style.display = 'none';
     }
     
     if (mode === 'charts' || mode === 'all') {
         chartsContainer.classList.remove('hidden');
-        // Asegurarse de que los gráficos del PDF están actualizados con el alumno seleccionado
-        const chartStudentFilter = document.getElementById('chartStudentFilter');
-        const selectedStudent = chartStudentFilter.value || fStudent;
-        if (selectedStudent) {
-             const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
-             updatePrintCharts(chartFiltered);
-        }
+        chartsContainer.style.display = 'block';
+        // Los gráficos ya se han renderizado invisibles al seleccionar al alumno
     } else {
         chartsContainer.classList.add('hidden');
+        chartsContainer.style.display = 'none';
     }
 
-    // RELLENAR TABLA
     if (mode === 'full' || mode === 'all') {
         const tbody = document.getElementById('printTableBody');
         tbody.innerHTML = '';
         filtered.forEach(i => {
             const tr = document.createElement('tr');
-            const td = (txt) => { const c = document.createElement('td'); c.className='border px-2 py-1 align-top'; c.textContent = txt; return c; };
+            const td = (txt) => { const c = document.createElement('td'); c.style.border = '1px solid #ccc'; c.style.padding = '4px'; c.style.verticalAlign = 'top'; c.textContent = txt; return c; };
             tr.appendChild(td(i.date.replace('T',' ')));
             tr.appendChild(td(i.student));
             tr.appendChild(td(`${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`));
@@ -1326,7 +1303,6 @@ function generatePDF(mode) {
         });
     }
 
-    // Empaquetar datos de respaldo ocultos en el PDF
     const backupData = {
       version: APP_VERSION,
       students: students,
@@ -1337,9 +1313,32 @@ function generatePDF(mode) {
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 
-    // Imprimir (con un pequeño delay para asegurar que el DOM se ha actualizado)
+    // MAGIA: Copiamos la vista de impresión a un iframe temporal y lo imprimimos
+    // Esto evita TODOS los problemas de caché y visualización en móviles.
+    const printContent = document.getElementById('printView').innerHTML;
+    const originalContent = document.body.innerHTML;
+
+    document.body.innerHTML = printContent;
+    
+    // Añadir estilos básicos para la impresión
+    const style = document.createElement('style');
+    style.innerHTML = `
+        body { font-family: Arial, sans-serif; background: white; color: black; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+        th { background: #eee; }
+        h1 { font-size: 24px; margin: 0; }
+        h2 { font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
+        canvas { max-width: 100% !important; height: auto !important; }
+        .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    `;
+    document.head.appendChild(style);
+
     setTimeout(() => {
         window.print();
+        // Restaurar la app después de imprimir
+        document.body.innerHTML = originalContent;
+        window.location.reload(); // Recargar para restaurar los event listeners
     }, 500);
 }
 
