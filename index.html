@@ -6,10 +6,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="AESH">
+<meta name="apple-mobile-web-app-title" content="NereApp">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4f46e5">
-<title>AESH - Gorabeherak / Incidents</title>
+<title>NereApp - Gorabeherak</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -52,12 +52,12 @@
     <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
     <div class="space-y-3">
       <button onclick="generatePDF('full')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
-        <div class="font-bold text-indigo-800">1. Historiko osoa</div>
+        <div class="font-bold text-indigo-800">1. Historiko osoa (Taula)</div>
         <div class="text-xs text-gray-600">Taula soilik / Tableau uniquement</div>
       </button>
       <button onclick="generatePDF('charts')" class="w-full text-left px-4 py-3 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200">
         <div class="font-bold text-emerald-800">2. Grafikoak eta Eboluzioa</div>
-        <div class="text-xs text-gray-600">Grafikoak eta datu orokorrak soilik / Graphiques et données générales</div>
+        <div class="text-xs text-gray-600">Grafikoak eta datu orokorrak soilik / Graphiques uniquement</div>
       </button>
       <button onclick="generatePDF('all')" class="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200">
         <div class="font-bold text-blue-800">3. Dena (Taula + Grafikoak)</div>
@@ -74,11 +74,8 @@
 
   <!-- Header -->
   <header class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
-    <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="AESH - Eguneroko gorabeherak">
+    <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="NereApp - Eguneroko gorabeherak">
     <div class="flex gap-2 flex-wrap">
-      <button id="installBtn" class="hidden px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-semibold">
-        📲 Instalar
-      </button>
       <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
         ⬇️ Backup
       </button>
@@ -139,15 +136,15 @@
           </label>
           <select id="incidentSlot" required class="w-full border rounded px-3 py-2">
             <option value="">--</option>
-            <option value="08:20-09:00|Zaintza|Garderie">08:20 - 09:00 — Zaintza / Garderie</option>
+            <option value="08:20-09:00|Zaintza|Garderie">08:20 - 09:00 — Zaintza / Garderie (Periscolar)</option>
             <option value="09:00-10:20|Klasea|Classe">09:00 - 10:20 — Klasea / Classe</option>
-            <option value="10:20-10:40|Atsedenaldia|Pause">10:20 - 10:40 — Atsedenaldia / Pause</option>
+            <option value="10:20-10:40|Atsedenaldia|Pause">10:20 - 10:40 — Atsedenaldia / Pause (Klasikoa)</option>
             <option value="10:40-12:00|Klasea|Classe">10:40 - 12:00 — Klasea / Classe</option>
-            <option value="12:00-13:30|Jantegia|Cantine">12:00 - 13:30 — Jantegia / Cantine</option>
+            <option value="12:00-13:30|Jantegia|Cantine">12:00 - 13:30 — Jantegia / Cantine (Periscolar)</option>
             <option value="13:30-14:50|Klasea|Classe">13:30 - 14:50 — Klasea / Classe</option>
-            <option value="14:50-15:10|Atsedenaldia|Pause">14:50 - 15:10 — Atsedenaldia / Pause</option>
+            <option value="14:50-15:10|Atsedenaldia|Pause">14:50 - 15:10 — Atsedenaldia / Pause (Klasikoa)</option>
             <option value="15:10-16:30|Klasea|Classe">15:10 - 16:30 — Klasea / Classe</option>
-            <option value="16:30-18:00|Zaintza|Garderie">16:30 - 18:00 — Zaintza / Garderie</option>
+            <option value="16:30-18:00|Zaintza|Garderie">16:30 - 18:00 — Zaintza / Garderie (Periscolar)</option>
           </select>
         </div>
         <div>
@@ -274,6 +271,7 @@
         </select>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Evolución temporal -->
         <div>
           <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
             <span data-eu="Gorabeherak denboran zehar" data-fr="Incidents dans le temps">Gorabeherak denboran zehar</span>
@@ -282,14 +280,33 @@
             <canvas id="evolutionChart"></canvas>
           </div>
         </div>
+        <!-- Franjas horarias exactas -->
         <div>
           <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
-            <span data-eu="Gorabeherak ordutegiaren arabera (%)" data-fr="Incidents par créneau horaire (%)">Gorabeherak ordutegiaren arabera (%)</span>
+            <span data-eu="Gorabeherak orduaren arabera" data-fr="Incidents par heure">Gorabeherak orduaren arabera</span>
           </h4>
           <div class="h-64 relative">
             <canvas id="slotChart"></canvas>
           </div>
-          <ul id="slotLegend" class="mt-2 text-xs space-y-1"></ul>
+        </div>
+        <!-- Bloques (Clase vs Periscolar) -->
+        <div>
+          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+            <span data-eu="Blokeen araberako banaketa" data-fr="Répartition par blocs">Blokeen araberako banaketa</span>
+          </h4>
+          <div class="h-64 relative">
+            <canvas id="blockChart"></canvas>
+          </div>
+          <ul id="blockLegend" class="mt-2 text-xs space-y-1"></ul>
+        </div>
+        <!-- Por materia (Solo clases) -->
+        <div>
+          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+            <span data-eu="Gorabeherak ikasgaiaren arabera (Klasean)" data-fr="Incidents par matière (En classe)">Gorabeherak ikasgaiaren arabera (Klasean)</span>
+          </h4>
+          <div class="h-64 relative">
+            <canvas id="subjectChart"></canvas>
+          </div>
         </div>
       </div>
       <div id="analysisDetails" class="text-sm space-y-2 mt-4"></div>
@@ -333,19 +350,23 @@
 <!-- PRINT VIEW -->
 <div id="printView" class="print-only max-w-4xl mx-auto p-8">
   <div class="text-center mb-6">
-    <h1 id="printTitle" class="text-2xl font-bold">AESH — <span data-eu="Gorabeheren txostena" data-fr="Rapport d'incidents">Gorabeheren txostena</span></h1>
+    <h1 id="printTitle" class="text-2xl font-bold">NereApp — <span data-eu="Gorabeheren txostena" data-fr="Rapport d'incidents">Gorabeheren txostena</span></h1>
     <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
   </div>
   <div id="printStats" class="mb-6 text-sm"></div>
   
+  <!-- Contenedor de Gráficos para imprimir -->
   <div id="printChartsContainer" class="hidden mb-8">
-      <h2 class="text-lg font-bold border-b mb-2">Eboluzioa / Évolution</h2>
+      <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="grid grid-cols-2 gap-4">
           <div class="h-64"><canvas id="printChart1"></canvas></div>
           <div class="h-64"><canvas id="printChart2"></canvas></div>
+          <div class="h-64"><canvas id="printChart3"></canvas></div>
+          <div class="h-64"><canvas id="printChart4"></canvas></div>
       </div>
   </div>
 
+  <!-- Contenedor de Tabla para imprimir -->
   <div id="printTableContainer">
       <table class="w-full border-collapse text-xs">
         <thead>
@@ -371,7 +392,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '2.1.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -396,7 +417,7 @@ const doughnutLabelsPlugin = {
     meta.data.forEach((arc, i) => {
       const value = chart.data.datasets[0].data[i];
       const pct = ((value / total) * 100).toFixed(1);
-      if ((value / total) < 0.04) return;
+      if ((value / total) < 0.05) return;
       const pos = arc.tooltipPosition();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 12px sans-serif';
@@ -432,25 +453,24 @@ const I18N = {
     allPeriod: "Denbora guztia",
     incident: "Gorabehera",
     notes: "Oharrak",
-    positiveEvolution: "Eboluzio positiboa (incidentziak gutxitu dira)",
-    negativeEvolution: "Eboluzio negatiboa (incidentziak gehitu dira)",
+    positiveEvolution: "Eboluzio positiboa",
+    negativeEvolution: "Eboluzio negatiboa",
     stableEvolution: "Eboluzio egonkorra",
     topTriggers: "Eragile ohikoenak",
     topBehaviors: "Jokabide ohikoenak",
-    addOptionPrompt: "Idatzi aukera berria:",
     peakSlot: "Ordu-tarte kritikoena",
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
     selectStudentForCharts: "Ikasle bat hautatu behar da grafikoak ikusteko.",
-    personalize: "+ Pertsonalizatu",
-    personalizeFr: "+ Personnaliser",
     restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honetakoekin?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
     restoreError: "Errorea fitxategia irakurtzean.",
     noDataInPdf: "Ez da daturik aurkitu PDFan. Ziurtatu PDF hau aplikazio honekin sortu dela.",
     invalidFile: "Fitxategiak ez du balio.",
     unsupportedFile: "Fitxategi mota ez da onartzen.",
-    installInstructions: "Aplikazioa instalatzeko, sakatu menuan 'Gehitu hasierako pantailara' edo 'Instalatu aplikazioa'."
+    blockClass: "Klasea / Classe",
+    blockBreak: "Atsedenaldia / Pause",
+    blockPeri: "Periscolar (Zaintza/Jantegia)"
   },
   fr: {
     confirmDelete: "Voulez-vous vraiment supprimer cet incident ?",
@@ -471,25 +491,24 @@ const I18N = {
     allPeriod: "Toute la période",
     incident: "Incident",
     notes: "Notes",
-    positiveEvolution: "Évolution positive (incidents en baisse)",
-    negativeEvolution: "Évolution négative (incidents en hausse)",
+    positiveEvolution: "Évolution positive",
+    negativeEvolution: "Évolution négative",
     stableEvolution: "Évolution stable",
     topTriggers: "Déclencheurs fréquents",
     topBehaviors: "Comportements fréquents",
-    addOptionPrompt: "Entrez la nouvelle option :",
     peakSlot: "Créneau le plus critique",
     modalTitle: "Ajouter une option",
     modalPlaceholder: "Écrivez ici...",
     selectStudentForCharts: "Sélectionnez un élève pour voir les graphiques.",
-    personalize: "+ Personnaliser",
-    personalizeFr: "+ Personnaliser",
     restoreConfirm: "Voulez-vous vraiment remplacer les données actuelles par celles de ce fichier ?",
     restoreSuccess: "Données restaurées avec succès.",
     restoreError: "Erreur lors de la lecture du fichier.",
     noDataInPdf: "Aucune donnée trouvée dans le PDF. Assurez-vous que ce PDF a été généré avec cette application.",
     invalidFile: "Fichier invalide.",
     unsupportedFile: "Type de fichier non pris en charge.",
-    installInstructions: "Pour installer l'application, appuyez sur 'Ajouter à l'écran d'accueil' ou 'Installer l'application' dans le menu."
+    blockClass: "Classe",
+    blockBreak: "Pause",
+    blockPeri: "Périscolaire (Garderie/Cantine)"
   }
 };
 
@@ -556,8 +575,8 @@ function applyLang() {
   renderPrintMeta();
   
   const titleInput = document.getElementById('mainTitle');
-  if(!titleInput.value || titleInput.value === "AESH - Eguneroko gorabeherak" || titleInput.value === "AESH - Incidents quotidiens"){
-      titleInput.value = lang === 'eu' ? "AESH - Eguneroko gorabeherak" : "AESH - Incidents quotidiens";
+  if(!titleInput.value || titleInput.value === "NereApp - Eguneroko gorabeherak" || titleInput.value === "NereApp - Incidents quotidiens"){
+      titleInput.value = lang === 'eu' ? "NereApp - Eguneroko gorabeherak" : "NereApp - Incidents quotidiens";
   }
 
   document.querySelectorAll('button[onclick*="openCustomModal"] span').forEach(span => {
@@ -902,6 +921,8 @@ function editIncident(id) {
 
 let myChart = null;
 let mySlotChart = null;
+let myBlockChart = null;
+let mySubjectChart = null;
 
 function getFilteredIncidents() {
   const fStudent = document.getElementById('filterStudent').value;
@@ -978,6 +999,8 @@ function renderCharts() {
   if (!selectedStudent) {
     if(myChart) { myChart.destroy(); myChart = null; }
     if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+    if(myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
+    if(mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
     document.getElementById('analysisDetails').innerHTML = `<p class="text-gray-500">${t('selectStudentForCharts')}</p>`;
     return;
   }
@@ -987,125 +1010,117 @@ function renderCharts() {
   if (filtered.length === 0) {
     if(myChart) { myChart.destroy(); myChart = null; }
     if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+    if(myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
+    if(mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
     document.getElementById('analysisDetails').innerHTML = `<p class="text-gray-500">${t('noIncidents')}</p>`;
     return;
   }
 
+  // 1. Evolución temporal
   const countsByDate = {};
   [...filtered].reverse().forEach(i => {
     const d = i.date.slice(0,10);
     countsByDate[d] = (countsByDate[d] || 0) + 1;
   });
-  
   const labels = Object.keys(countsByDate);
   const data = labels.map(l => countsByDate[l]);
   
   const ctx = document.getElementById('evolutionChart').getContext('2d');
   if (myChart) myChart.destroy();
-  
   myChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [{
-        label: lang==='eu' ? 'Gorabeherak' : 'Incidents',
-        data: data,
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-        tension: 0.3,
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: '#4f46e5'
-      }]
+      datasets: [{ label: lang==='eu' ? 'Gorabeherak' : 'Incidents', data: data, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: '#4f46e5' }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-      plugins: { legend: { display: false } }
-    }
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
   });
 
+  // 2. Franjas horarias (Horas exactas)
   const slotCount = {};
   filtered.forEach(i => {
-    const slotLabel = `${i.slotRange} ${lang==='eu' ? i.slotEu : i.slotFr}`;
+    const slotLabel = i.slotRange;
     slotCount[slotLabel] = (slotCount[slotLabel] || 0) + 1;
   });
-  
-  const slotLabels = Object.keys(slotCount);
+  const slotLabels = Object.keys(slotCount).sort(); // Ordenar por hora
   const slotData = slotLabels.map(l => slotCount[l]);
-  const totalSlot = slotData.reduce((a,b)=>a+b, 0);
-  const percentages = slotData.map(v => ((v/totalSlot)*100).toFixed(1));
   
-  const slotColors = [
-    '#4f46e5', '#0891b2', '#059669', '#ca8a04', '#ea580c',
-    '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
-  ];
-  const slotBgColors = slotLabels.map((_, i) => slotColors[i % slotColors.length]);
-
   const slotCtx = document.getElementById('slotChart').getContext('2d');
   if (mySlotChart) mySlotChart.destroy();
-  
   mySlotChart = new Chart(slotCtx, {
-    type: 'doughnut',
+    type: 'bar',
     data: {
       labels: slotLabels,
-      datasets: [{
-        data: slotData,
-        backgroundColor: slotBgColors,
-        borderColor: '#ffffff',
-        borderWidth: 2
-      }]
+      datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const idx = context.dataIndex;
-              const value = context.parsed;
-              return `${context.label}: ${value} (${percentages[idx]}%)`;
-            }
-          }
-        }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
   });
 
-  const legend = document.getElementById('slotLegend');
-  legend.innerHTML = '';
-  slotLabels.forEach((label, i) => {
+  // 3. Bloques (Clase, Recreo, Periscolar)
+  const blockCounts = { class: 0, break: 0, peri: 0 };
+  filtered.forEach(i => {
+    if (i.slotEu === 'Klasea') blockCounts.class++;
+    else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
+    else blockCounts.peri++;
+  });
+  
+  const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
+  const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
+  const blockColors = ['#4f46e5', '#ca8a04', '#ea580c'];
+  
+  const blockCtx = document.getElementById('blockChart').getContext('2d');
+  if (myBlockChart) myBlockChart.destroy();
+  myBlockChart = new Chart(blockCtx, {
+    type: 'doughnut',
+    data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: blockColors, borderColor: '#ffffff', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  const blockLegend = document.getElementById('blockLegend');
+  blockLegend.innerHTML = '';
+  const totalBlock = blockData.reduce((a,b)=>a+b, 0);
+  blockLabels.forEach((label, i) => {
+    if (blockData[i] === 0) return;
+    const pct = ((blockData[i] / totalBlock) * 100).toFixed(1);
     const li = document.createElement('li');
     li.className = 'flex items-center gap-2';
-    li.innerHTML = `
-      <span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${slotBgColors[i]}"></span>
-      <span class="flex-1">${label}</span>
-      <span class="font-semibold text-gray-700">${slotData[i]} (${percentages[i]}%)</span>
-    `;
-    legend.appendChild(li);
+    li.innerHTML = `<span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${blockColors[i]}"></span><span class="flex-1">${label}</span><span class="font-semibold text-gray-700">${blockData[i]} (${pct}%)</span>`;
+    blockLegend.appendChild(li);
   });
 
+  // 4. Materias (Solo clases)
+  const subjectCount = {};
+  filtered.forEach(i => {
+    if (i.slotEu === 'Klasea' && i.subject) {
+      subjectCount[i.subject] = (subjectCount[i.subject] || 0) + 1;
+    }
+  });
+  const subjLabels = Object.keys(subjectCount);
+  const subjData = subjLabels.map(l => subjectCount[l]);
+  const subjColors = subjLabels.map(s => getSubjectColor(s));
+
+  const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+  if (mySubjectChart) mySubjectChart.destroy();
+  mySubjectChart = new Chart(subjectCtx, {
+    type: 'doughnut',
+    data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors, borderColor: '#ffffff', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Análisis de texto
   let evolutionText = t('stableEvolution');
   let evolutionColor = 'text-gray-600';
   if (data.length >= 2) {
     const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
     const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
-    if (secondHalf < firstHalf) {
-      evolutionText = t('positiveEvolution');
-      evolutionColor = 'text-green-600 font-bold';
-    } else if (secondHalf > firstHalf) {
-      evolutionText = t('negativeEvolution');
-      evolutionColor = 'text-red-600 font-bold';
-    }
+    if (secondHalf < firstHalf) { evolutionText = t('positiveEvolution'); evolutionColor = 'text-green-600 font-bold'; }
+    else if (secondHalf > firstHalf) { evolutionText = t('negativeEvolution'); evolutionColor = 'text-red-600 font-bold'; }
   }
 
   let peakSlot = '';
   if (slotLabels.length > 0) {
     const maxIdx = slotData.indexOf(Math.max(...slotData));
-    peakSlot = `${slotLabels[maxIdx]} (${percentages[maxIdx]}%)`;
+    peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} incidents)`;
   }
 
   const triggerCount = {};
@@ -1117,26 +1132,12 @@ function renderCharts() {
   const topTriggers = Object.entries(triggerCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
   const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
-  const detailsHtml = `
-    <div class="mb-4">
-      <h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4>
-      <p class="${evolutionColor}">${evolutionText}</p>
-    </div>
+  document.getElementById('analysisDetails').innerHTML = `
+    <div class="mb-4"><h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4><p class="${evolutionColor}">${evolutionText}</p></div>
     ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
-    <div class="mb-2">
-      <h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4>
-      <ul class="list-disc pl-5">
-        ${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
-      </ul>
-    </div>
-    <div>
-      <h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4>
-      <ul class="list-disc pl-5">
-        ${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
-      </ul>
-    </div>
+    <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
+    <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
   `;
-  document.getElementById('analysisDetails').innerHTML = detailsHtml;
 }
 
 function renderStats(filtered) {
@@ -1200,16 +1201,7 @@ document.getElementById('exportCsv').onclick = () => {
   if (filtered.length === 0) { alert(t('noIncidents')); return; }
   const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
   const header = ['Date','Élève','Matière','Créneau','Déclencheur','Comportement','Intervention','Notes'];
-  const rows = filtered.map(i => [
-    i.date.replace('T',' '),
-    i.student,
-    i.subject || '',
-    `${i.slotRange} - ${i.slotFr}`,
-    i.triggers.join('; '),
-    i.behaviors.join('; '),
-    i.interventions.join('; '),
-    i.notes
-  ].map(esc).join(','));
+  const rows = filtered.map(i => [ i.date.replace('T',' '), i.student, i.subject || '', `${i.slotRange} - ${i.slotFr}`, i.triggers.join('; '), i.behaviors.join('; '), i.interventions.join('; '), i.notes ].map(esc).join(','));
   const csv = '\uFEFF' + header.join(',') + '\n' + rows.join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
@@ -1243,8 +1235,7 @@ function generatePDF(mode) {
     if (fStudent) {
         statsHtml = `<div class="mb-2"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
     } else {
-        statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
-            .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
+        statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]).map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
     }
     statsHtml += `<div class="mt-2 pt-2 border-t text-sm font-bold">${t('total')}: ${filtered.length}</div>`;
     document.getElementById('printStats').innerHTML = statsHtml;
@@ -1252,6 +1243,7 @@ function generatePDF(mode) {
     const tableContainer = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
     
+    // Configurar visibilidad
     if (mode === 'full' || mode === 'all') {
         tableContainer.classList.remove('hidden');
     } else {
@@ -1278,33 +1270,49 @@ function generatePDF(mode) {
             chartsContainer.classList.add('hidden');
             return;
         }
-        
-        const ctx1 = document.getElementById('printChart1').getContext('2d');
-        const ctx2 = document.getElementById('printChart2').getContext('2d');
-        
-        if(window.printChart1) window.printChart1.destroy();
-        if(window.printChart2) window.printChart2.destroy();
 
         const countsByDate = {};
         [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
         const labels = Object.keys(countsByDate);
         const data = labels.map(l => countsByDate[l]);
 
-        window.printChart1 = new Chart(ctx1, {
-            type: 'line',
-            data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
-            options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-        });
-
         const slotCount = {};
-        chartFiltered.forEach(i => { const s = `${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`; slotCount[s]=(slotCount[s]||0)+1; });
-        const sLabels = Object.keys(slotCount);
-        const sData = sLabels.map(l=>slotCount[l]);
+        chartFiltered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
+        const slotLabels = Object.keys(slotCount).sort();
+        const slotData = slotLabels.map(l=>slotCount[l]);
 
-        window.printChart2 = new Chart(ctx2, {
-            type: 'doughnut',
-            data: { labels: sLabels, datasets: [{ data: sData, backgroundColor: ['#4f46e5','#0891b2','#059669','#ca8a04','#ea580c'] }] },
-            options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+        const blockCounts = { class: 0, break: 0, peri: 0 };
+        chartFiltered.forEach(i => {
+            if (i.slotEu === 'Klasea') blockCounts.class++;
+            else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
+            else blockCounts.peri++;
+        });
+        const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
+        const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
+
+        const subjectCount = {};
+        chartFiltered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
+        const subjLabels = Object.keys(subjectCount);
+        const subjData = subjLabels.map(l=>subjectCount[l]);
+        const subjColors = subjLabels.map(s=>getSubjectColor(s));
+
+        // Destruir gráficos previos si existen
+        if(window.printChart1) window.printChart1.destroy();
+        if(window.printChart2) window.printChart2.destroy();
+        if(window.printChart3) window.printChart3.destroy();
+        if(window.printChart4) window.printChart4.destroy();
+
+        window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
+            type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+        });
+        window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
+            type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+        });
+        window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
+            type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+        });
+        window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
+            type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
         });
     } else {
         chartsContainer.classList.add('hidden');
@@ -1329,6 +1337,7 @@ function generatePDF(mode) {
         });
     }
 
+    // Empaquetar datos de respaldo ocultos en el PDF
     const backupData = {
       version: APP_VERSION,
       students: students,
@@ -1456,30 +1465,6 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
     e.target.value = '';
   }
 });
-
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('installBtn')?.classList.remove('hidden');
-});
-
-document.getElementById('installBtn')?.addEventListener('click', async () => {
-  if (!deferredPrompt) {
-    alert(t('installInstructions'));
-    return;
-  }
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log(`Instalación: ${outcome}`);
-  deferredPrompt = null;
-  document.getElementById('installBtn')?.classList.add('hidden');
-});
-
-if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-  document.getElementById('installBtn')?.classList.add('hidden');
-}
 
 function init() {
   const now = new Date();
