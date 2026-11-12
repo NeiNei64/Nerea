@@ -2,11 +2,11 @@
 <html lang="eu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- ENLACE AL MANIFEST CORREGIDO AQUÍ -->
+<meta name="apple-mobile-web-app-title" content="AESH">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4f46e5">
 <title>AESH - Gorabeherak / Incidents</title>
@@ -19,7 +19,6 @@
     .print-only { display: block !important; }
     body { background: white !important; }
     .print-section { page-break-inside: avoid; }
-    /* Forzar que los canvas de impresión se vean bien */
     #printChartsContainer { display: block !important; page-break-inside: avoid; }
     canvas { max-width: 100% !important; height: auto !important; }
   }
@@ -30,6 +29,7 @@
   .delete-icon:hover { color: #b91c1c; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -53,11 +53,15 @@
     <div class="space-y-3">
       <button onclick="generatePDF('full')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
         <div class="font-bold text-indigo-800">1. Historiko osoa</div>
-        <div class="text-xs text-gray-600">Taula eta grafiko guztiak</div>
+        <div class="text-xs text-gray-600">Taula soilik / Tableau uniquement</div>
       </button>
       <button onclick="generatePDF('charts')" class="w-full text-left px-4 py-3 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200">
         <div class="font-bold text-emerald-800">2. Grafikoak eta Eboluzioa</div>
-        <div class="text-xs text-gray-600">Grafikoak eta datu orokorrak soilik</div>
+        <div class="text-xs text-gray-600">Grafikoak eta datu orokorrak soilik / Graphiques et données générales</div>
+      </button>
+      <button onclick="generatePDF('all')" class="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200">
+        <div class="font-bold text-blue-800">3. Dena (Taula + Grafikoak)</div>
+        <div class="text-xs text-gray-600">Taula eta grafiko guztiak / Tableau et graphiques</div>
       </button>
     </div>
     <div class="mt-4 text-right">
@@ -71,7 +75,17 @@
   <!-- Header -->
   <header class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
     <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="AESH - Eguneroko gorabeherak">
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
+      <button id="installBtn" class="hidden px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-semibold">
+        📲 Instalar
+      </button>
+      <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
+        ⬇️ Backup
+      </button>
+      <label for="importBackupInput" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold cursor-pointer" title="Importar copia de seguridad (JSON o PDF)">
+        ⬆️ Restaurar
+      </label>
+      <input type="file" id="importBackupInput" accept=".json,.pdf" class="hidden">
       <button id="langBtn" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-semibold">FR</button>
       <button id="pdfBtn" class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-semibold">
         <span data-eu="💾 Gorde PDF" data-fr="💾 Enregistrer PDF">💾 Gorde PDF</span>
@@ -86,6 +100,9 @@
     </button>
     <button data-tab="history" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
       <span data-eu="Historia" data-fr="Historique">Historia</span>
+    </button>
+    <button data-tab="charts" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+      <span data-eu="Grafikoak" data-fr="Graphiques">Grafikoak</span>
     </button>
     <button data-tab="students" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
       <span data-eu="Ikasleak" data-fr="Élèves">Ikasleak</span>
@@ -147,7 +164,9 @@
       <fieldset class="border rounded p-3">
         <legend class="px-2 text-sm font-semibold flex items-center gap-2">
           <span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span>
-          <button type="button" onclick="openCustomModal('trigger')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">+ Personalizatu</button>
+          <button type="button" onclick="openCustomModal('trigger')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">
+            <span data-eu="+ Pertsonalizatu" data-fr="+ Personnaliser">+ Pertsonalizatu</span>
+          </button>
         </legend>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="triggersGroup"></div>
       </fieldset>
@@ -156,7 +175,9 @@
       <fieldset class="border rounded p-3">
         <legend class="px-2 text-sm font-semibold flex items-center gap-2">
           <span data-eu="Ikusitako jokabidea" data-fr="Comportement observé">Ikusitako jokabidea</span>
-          <button type="button" onclick="openCustomModal('behavior')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">+ Personalizatu</button>
+          <button type="button" onclick="openCustomModal('behavior')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">
+            <span data-eu="+ Pertsonalizatu" data-fr="+ Personnaliser">+ Pertsonalizatu</span>
+          </button>
         </legend>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="behaviorsGroup"></div>
       </fieldset>
@@ -165,7 +186,9 @@
       <fieldset class="border rounded p-3">
         <legend class="px-2 text-sm font-semibold flex items-center gap-2">
           <span data-eu="Ezarritako esku-hartzea" data-fr="Intervention appliquée">Ezarritako esku-hartzea</span>
-          <button type="button" onclick="openCustomModal('intervention')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">+ Personalizatu</button>
+          <button type="button" onclick="openCustomModal('intervention')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">
+            <span data-eu="+ Pertsonalizatu" data-fr="+ Personnaliser">+ Pertsonalizatu</span>
+          </button>
         </legend>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="interventionsGroup"></div>
       </fieldset>
@@ -188,7 +211,7 @@
     </form>
   </section>
 
-  <!-- HISTORY TAB -->
+  <!-- HISTORY TAB (solo lista de incidentes) -->
   <section id="tab-history" class="tab-content hidden">
     <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
       <h2 class="text-lg font-bold mb-3">
@@ -229,11 +252,27 @@
       </div>
     </div>
 
-    <!-- Análisis y Gráficos -->
-    <div id="analysisSection" class="bg-white rounded-lg shadow p-4 md:p-6 mb-4 hidden">
-      <h3 class="font-bold mb-3 text-indigo-700">
+    <!-- Lista de incidentes -->
+    <div id="historyList" class="space-y-2"></div>
+  </section>
+
+  <!-- CHARTS TAB (análisis y gráficos) -->
+  <section id="tab-charts" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
+      <h2 class="text-lg font-bold mb-3">
         <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
-      </h3>
+      </h2>
+      <p class="text-sm text-gray-500 mb-4">
+        <span data-eu="Ikasle bat hautatu behar da grafikoak ikusteko." data-fr="Sélectionnez un élève pour voir les graphiques.">Ikasle bat hautatu behar da grafikoak ikusteko.</span>
+      </p>
+      <div class="mb-4">
+        <label class="block text-xs font-semibold mb-1">
+          <span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span>
+        </label>
+        <select id="chartStudentFilter" class="w-full border rounded px-3 py-2 text-sm">
+          <option value="" data-eu="Hautatu ikasle bat" data-fr="Sélectionnez un élève">Hautatu ikasle bat</option>
+        </select>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
@@ -255,25 +294,6 @@
       </div>
       <div id="analysisDetails" class="text-sm space-y-2 mt-4"></div>
     </div>
-
-    <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="font-bold mb-2 text-indigo-700">
-          <span data-eu="Kopurua ikasle bakoitzeko" data-fr="Nombre par élève">Kopurua ikasle bakoitzeko</span>
-        </h3>
-        <ul id="statsStudents" class="text-sm space-y-1"></ul>
-      </div>
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="font-bold mb-2 text-indigo-700">
-          <span data-eu="Kopurua jokabide mota bakoitzeko" data-fr="Nombre par type de comportement">Kopurua jokabide mota bakoitzeko</span>
-        </h3>
-        <ul id="statsBehaviors" class="text-sm space-y-1"></ul>
-      </div>
-    </div>
-
-    <!-- List -->
-    <div id="historyList" class="space-y-2"></div>
   </section>
 
   <!-- STUDENTS TAB -->
@@ -343,9 +363,24 @@
         <tbody id="printTableBody"></tbody>
       </table>
   </div>
+
+  <div id="pdfDataContainer" style="display:none;">
+    <script type="application/json" id="pdfDataScript"></script>
+  </div>
 </div>
 
 <script>
+/* ============ Control de versión y limpieza ============ */
+const APP_VERSION = '1.0.0';
+const STORAGE_VERSION_KEY = 'aesh_app_version';
+
+const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+if (savedVersion !== APP_VERSION) {
+    localStorage.clear();
+    localStorage.setItem(STORAGE_VERSION_KEY, APP_VERSION);
+    console.log('Datos antiguos eliminados. Instalación limpia.');
+}
+
 /* ============ Plugin para mostrar % dentro del doughnut ============ */
 const doughnutLabelsPlugin = {
   id: 'doughnutLabels',
@@ -405,7 +440,17 @@ const I18N = {
     addOptionPrompt: "Idatzi aukera berria:",
     peakSlot: "Ordu-tarte kritikoena",
     modalTitle: "Aukera berria gehitu",
-    modalPlaceholder: "Idatzi hemen..."
+    modalPlaceholder: "Idatzi hemen...",
+    selectStudentForCharts: "Ikasle bat hautatu behar da grafikoak ikusteko.",
+    personalize: "+ Pertsonalizatu",
+    personalizeFr: "+ Personnaliser",
+    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honetakoekin?",
+    restoreSuccess: "Datuak behar bezala berreskuratu dira.",
+    restoreError: "Errorea fitxategia irakurtzean.",
+    noDataInPdf: "Ez da daturik aurkitu PDFan. Ziurtatu PDF hau aplikazio honekin sortu dela.",
+    invalidFile: "Fitxategiak ez du balio.",
+    unsupportedFile: "Fitxategi mota ez da onartzen.",
+    installInstructions: "Aplikazioa instalatzeko, sakatu menuan 'Gehitu hasierako pantailara' edo 'Instalatu aplikazioa'."
   },
   fr: {
     confirmDelete: "Voulez-vous vraiment supprimer cet incident ?",
@@ -434,7 +479,17 @@ const I18N = {
     addOptionPrompt: "Entrez la nouvelle option :",
     peakSlot: "Créneau le plus critique",
     modalTitle: "Ajouter une option",
-    modalPlaceholder: "Écrivez ici..."
+    modalPlaceholder: "Écrivez ici...",
+    selectStudentForCharts: "Sélectionnez un élève pour voir les graphiques.",
+    personalize: "+ Personnaliser",
+    personalizeFr: "+ Personnaliser",
+    restoreConfirm: "Voulez-vous vraiment remplacer les données actuelles par celles de ce fichier ?",
+    restoreSuccess: "Données restaurées avec succès.",
+    restoreError: "Erreur lors de la lecture du fichier.",
+    noDataInPdf: "Aucune donnée trouvée dans le PDF. Assurez-vous que ce PDF a été généré avec cette application.",
+    invalidFile: "Fichier invalide.",
+    unsupportedFile: "Type de fichier non pris en charge.",
+    installInstructions: "Pour installer l'application, appuyez sur 'Ajouter à l'écran d'accueil' ou 'Installer l'application' dans le menu."
   }
 };
 
@@ -459,12 +514,16 @@ const defaultOptions = {
     }
 };
 
+const SUBJECT_COLORS = [
+  '#4f46e5', '#0891b2', '#059669', '#ca8a04', '#ea580c',
+  '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
+];
+
 let students = JSON.parse(localStorage.getItem(KEY_STUDENTS) || '[]');
 let subjects = JSON.parse(localStorage.getItem(KEY_SUBJECTS) || '[]');
 let incidents = JSON.parse(localStorage.getItem(KEY_INCIDENTS) || '[]');
 let customOptions = JSON.parse(localStorage.getItem(KEY_OPTIONS) || JSON.stringify(defaultOptions));
 
-// Variables para edición
 let editingIncidentId = null;
 let currentModalType = null;
 
@@ -473,7 +532,12 @@ function saveSubjects() { localStorage.setItem(KEY_SUBJECTS, JSON.stringify(subj
 function saveIncidents() { localStorage.setItem(KEY_INCIDENTS, JSON.stringify(incidents)); }
 function saveOptions() { localStorage.setItem(KEY_OPTIONS, JSON.stringify(customOptions)); }
 
-/* ============ i18n helpers ============ */
+function getSubjectColor(subject) {
+  if (!subject) return '#e5e7eb';
+  const idx = subjects.indexOf(subject);
+  return SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
+}
+
 function t(key) { return I18N[lang][key]; }
 
 function applyLang() {
@@ -488,15 +552,21 @@ function applyLang() {
   renderStudentList();
   renderSubjectList();
   renderHistory();
+  renderCharts();
   renderPrintMeta();
   
   const titleInput = document.getElementById('mainTitle');
   if(!titleInput.value || titleInput.value === "AESH - Eguneroko gorabeherak" || titleInput.value === "AESH - Incidents quotidiens"){
       titleInput.value = lang === 'eu' ? "AESH - Eguneroko gorabeherak" : "AESH - Incidents quotidiens";
   }
+
+  document.querySelectorAll('button[onclick*="openCustomModal"] span').forEach(span => {
+    if (span.dataset.eu) {
+      span.textContent = lang === 'eu' ? span.dataset.eu : span.dataset.fr;
+    }
+  });
 }
 
-/* ============ Modal Personalizado ============ */
 function openCustomModal(type) {
     currentModalType = type;
     const modal = document.getElementById('customOptionModal');
@@ -531,7 +601,6 @@ document.getElementById('modalInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); saveModalOption(); }
 });
 
-/* ============ Build Checkboxes & Edit Options ============ */
 function buildCheckboxes() {
   const groups = [
     { id: 'triggersGroup', name: 'trigger', key: 'triggers' },
@@ -586,7 +655,6 @@ function buildCheckboxes() {
   });
 }
 
-/* ============ Students & Subjects ============ */
 function renderStudentsSelect() {
   const sel = document.getElementById('incidentStudent');
   const prev = sel.value;
@@ -609,16 +677,28 @@ function renderStudentsSelect() {
     f.appendChild(o);
   });
   if (students.includes(prevF)) f.value = prevF;
+
+  const chartFilter = document.getElementById('chartStudentFilter');
+  const prevChart = chartFilter.value;
+  chartFilter.innerHTML = `<option value="">${lang === 'eu' ? 'Hautatu ikasle bat' : 'Sélectionnez un élève'}</option>`;
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s;
+    o.textContent = s;
+    chartFilter.appendChild(o);
+  });
+  if (students.includes(prevChart)) chartFilter.value = prevChart;
 }
 
 function renderSubjectsSelect() {
     const sel = document.getElementById('incidentSubject');
     const prev = sel.value;
     sel.innerHTML = '<option value="">--</option>';
-    subjects.forEach(s => {
+    subjects.forEach((s, idx) => {
         const o = document.createElement('option');
         o.value = s;
         o.textContent = s;
+        o.style.color = SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
         sel.appendChild(o);
     });
     if (subjects.includes(prev)) sel.value = prev;
@@ -648,6 +728,7 @@ function renderStudentList() {
         renderStudentsSelect();
         renderStudentList();
         renderHistory();
+        renderCharts();
       }
     };
     li.appendChild(sp);
@@ -663,12 +744,25 @@ function renderSubjectList() {
     ul.innerHTML = `<li class="p-3 text-gray-500 text-sm">${t('noSubjects')}</li>`;
     return;
   }
-  subjects.forEach(s => {
+  subjects.forEach((s, idx) => {
     const li = document.createElement('li');
     li.className = 'flex justify-between items-center p-3 hover:bg-gray-50';
+    const color = SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
+    
+    const leftDiv = document.createElement('div');
+    leftDiv.className = 'flex items-center gap-2';
+    
+    const colorDot = document.createElement('span');
+    colorDot.style.backgroundColor = color;
+    colorDot.className = 'w-3 h-3 rounded-full inline-block';
+    
     const sp = document.createElement('span');
     sp.textContent = s;
     sp.className = 'font-medium';
+    
+    leftDiv.appendChild(colorDot);
+    leftDiv.appendChild(sp);
+    
     const b = document.createElement('button');
     b.textContent = '✕';
     b.className = 'text-red-600 hover:text-red-800 font-bold px-2';
@@ -679,9 +773,11 @@ function renderSubjectList() {
         saveSubjects();
         renderSubjectsSelect();
         renderSubjectList();
+        renderHistory();
+        renderCharts();
       }
     };
-    li.appendChild(sp);
+    li.appendChild(leftDiv);
     li.appendChild(b);
     ul.appendChild(li);
   });
@@ -719,7 +815,6 @@ document.getElementById('newSubject').addEventListener('keypress', e => {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubjectBtn').click(); }
 });
 
-/* ============ Form Submit & Edit ============ */
 document.getElementById('incidentForm').onsubmit = (e) => {
   e.preventDefault();
   const date = document.getElementById('incidentDate').value;
@@ -750,6 +845,7 @@ document.getElementById('incidentForm').onsubmit = (e) => {
   saveIncidents();
   resetForm();
   renderHistory();
+  renderCharts();
   document.querySelector('[data-tab="history"]').click();
 };
 
@@ -804,7 +900,6 @@ function editIncident(id) {
     document.querySelector('[data-tab="form"]').click();
 }
 
-/* ============ History & Analysis ============ */
 let myChart = null;
 let mySlotChart = null;
 
@@ -827,20 +922,6 @@ function renderHistory() {
   const L = lang;
   list.innerHTML = '';
 
-  const analysisSection = document.getElementById('analysisSection');
-  const fStudent = document.getElementById('filterStudent').value;
-  
-  if (fStudent && filtered.length > 0) {
-      analysisSection.classList.remove('hidden');
-      requestAnimationFrame(() => {
-          renderAnalysis(filtered, fStudent);
-      });
-  } else {
-      analysisSection.classList.add('hidden');
-      if(myChart) { myChart.destroy(); myChart = null; }
-      if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
-  }
-
   if (filtered.length === 0) {
     list.innerHTML = `<div class="bg-white rounded-lg shadow p-4 text-center text-gray-500">${t('noIncidents')}</div>`;
   } else {
@@ -849,7 +930,12 @@ function renderHistory() {
       card.className = 'bg-white rounded-lg shadow p-4';
       const dateStr = inc.date.replace('T', ' ');
       const slotLabel = `${inc.slotRange} — ${L==='eu'?inc.slotEu:inc.slotFr}`;
-      const subjectLabel = inc.subject ? `<span class="text-xs font-semibold text-indigo-600">${inc.subject}</span> · ` : '';
+      
+      let subjectBadge = '';
+      if (inc.subject) {
+        const color = getSubjectColor(inc.subject);
+        subjectBadge = `<span class="subject-badge" style="background-color:${color}">${inc.subject}</span>`;
+      }
       
       const row = (label, arr) => arr.length ? `<div class="text-sm mt-1"><span class="font-semibold text-gray-700">${label}:</span> ${arr.map(x=>`<span class="inline-block bg-indigo-100 text-indigo-800 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${x}</span>`).join('')}</div>` : '';
       
@@ -857,7 +943,7 @@ function renderHistory() {
         <div class="flex justify-between items-start gap-2">
           <div class="flex-1">
             <div class="font-bold text-indigo-700">${inc.student} <span class="text-gray-500 font-normal text-sm">· ${dateStr}</span></div>
-            <div class="text-xs text-gray-500 mt-0.5">${subjectLabel}${slotLabel}</div>
+            <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${slotLabel}</div>
             ${row(L==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
             ${row(L==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
             ${row(L==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
@@ -875,6 +961,7 @@ function renderHistory() {
           incidents = incidents.filter(x => x.id !== inc.id);
           saveIncidents();
           renderHistory();
+          renderCharts();
         }
       };
       list.appendChild(card);
@@ -884,191 +971,213 @@ function renderHistory() {
   renderStats(filtered);
 }
 
-function renderAnalysis(filtered, studentName) {
-    const countsByDate = {};
-    const sorted = [...filtered].reverse(); 
-    sorted.forEach(i => {
-        const d = i.date.slice(0,10);
-        countsByDate[d] = (countsByDate[d] || 0) + 1;
-    });
-    
-    const labels = Object.keys(countsByDate);
-    const data = labels.map(l => countsByDate[l]);
-    
-    let evolutionText = t('stableEvolution');
-    let evolutionColor = 'text-gray-600';
-    if (data.length >= 2) {
-        const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
-        const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
-        if (secondHalf < firstHalf) {
-            evolutionText = t('positiveEvolution');
-            evolutionColor = 'text-green-600 font-bold';
-        } else if (secondHalf > firstHalf) {
-            evolutionText = t('negativeEvolution');
-            evolutionColor = 'text-red-600 font-bold';
-        }
+function renderCharts() {
+  const chartFilter = document.getElementById('chartStudentFilter');
+  const selectedStudent = chartFilter.value;
+  
+  if (!selectedStudent) {
+    if(myChart) { myChart.destroy(); myChart = null; }
+    if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+    document.getElementById('analysisDetails').innerHTML = `<p class="text-gray-500">${t('selectStudentForCharts')}</p>`;
+    return;
+  }
+
+  const filtered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
+  
+  if (filtered.length === 0) {
+    if(myChart) { myChart.destroy(); myChart = null; }
+    if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+    document.getElementById('analysisDetails').innerHTML = `<p class="text-gray-500">${t('noIncidents')}</p>`;
+    return;
+  }
+
+  const countsByDate = {};
+  [...filtered].reverse().forEach(i => {
+    const d = i.date.slice(0,10);
+    countsByDate[d] = (countsByDate[d] || 0) + 1;
+  });
+  
+  const labels = Object.keys(countsByDate);
+  const data = labels.map(l => countsByDate[l]);
+  
+  const ctx = document.getElementById('evolutionChart').getContext('2d');
+  if (myChart) myChart.destroy();
+  
+  myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: lang==='eu' ? 'Gorabeherak' : 'Incidents',
+        data: data,
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#4f46e5'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+      plugins: { legend: { display: false } }
     }
+  });
 
-    const slotCount = {};
-    filtered.forEach(i => {
-        const slotLabel = `${i.slotRange} ${lang==='eu' ? i.slotEu : i.slotFr}`;
-        slotCount[slotLabel] = (slotCount[slotLabel] || 0) + 1;
-    });
-    
-    const slotLabels = Object.keys(slotCount);
-    const slotData = slotLabels.map(l => slotCount[l]);
-    const totalSlot = slotData.reduce((a,b)=>a+b, 0);
-    const percentages = slotData.map(v => ((v/totalSlot)*100).toFixed(1));
-    
-    let peakSlot = '';
-    if (slotLabels.length > 0) {
-        const maxIdx = slotData.indexOf(Math.max(...slotData));
-        peakSlot = `${slotLabels[maxIdx]} (${percentages[maxIdx]}%)`;
-    }
+  const slotCount = {};
+  filtered.forEach(i => {
+    const slotLabel = `${i.slotRange} ${lang==='eu' ? i.slotEu : i.slotFr}`;
+    slotCount[slotLabel] = (slotCount[slotLabel] || 0) + 1;
+  });
+  
+  const slotLabels = Object.keys(slotCount);
+  const slotData = slotLabels.map(l => slotCount[l]);
+  const totalSlot = slotData.reduce((a,b)=>a+b, 0);
+  const percentages = slotData.map(v => ((v/totalSlot)*100).toFixed(1));
+  
+  const slotColors = [
+    '#4f46e5', '#0891b2', '#059669', '#ca8a04', '#ea580c',
+    '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
+  ];
+  const slotBgColors = slotLabels.map((_, i) => slotColors[i % slotColors.length]);
 
-    const triggerCount = {};
-    const behaviorCount = {};
-    filtered.forEach(i => {
-        i.triggers.forEach(t => triggerCount[t] = (triggerCount[t]||0)+1);
-        i.behaviors.forEach(b => behaviorCount[b] = (behaviorCount[b]||0)+1);
-    });
-    const topTriggers = Object.entries(triggerCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
-
-    const detailsHtml = `
-        <div class="mb-4">
-            <h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4>
-            <p class="${evolutionColor}">${evolutionText}</p>
-        </div>
-        ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
-        <div class="mb-2">
-            <h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4>
-            <ul class="list-disc pl-5">
-                ${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
-            </ul>
-        </div>
-        <div>
-            <h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4>
-            <ul class="list-disc pl-5">
-                ${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
-            </ul>
-        </div>
-    `;
-    document.getElementById('analysisDetails').innerHTML = detailsHtml;
-
-    const ctx = document.getElementById('evolutionChart').getContext('2d');
-    if (myChart) myChart.destroy();
-    
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: lang==='eu' ? 'Gorabeherak' : 'Incidents',
-                data: data,
-                borderColor: '#4f46e5',
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                tension: 0.3,
-                fill: true,
-                pointRadius: 4,
-                pointBackgroundColor: '#4f46e5'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-            plugins: { legend: { display: false } }
-        }
-    });
-
-    const slotColors = [
-        '#4f46e5', '#0891b2', '#059669', '#ca8a04', '#ea580c',
-        '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
-    ];
-    const slotBgColors = slotLabels.map((_, i) => slotColors[i % slotColors.length]);
-
-    const slotCtx = document.getElementById('slotChart').getContext('2d');
-    if (mySlotChart) mySlotChart.destroy();
-    
-    mySlotChart = new Chart(slotCtx, {
-        type: 'doughnut',
-        data: {
-            labels: slotLabels,
-            datasets: [{
-                data: slotData,
-                backgroundColor: slotBgColors,
-                borderColor: '#ffffff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const idx = context.dataIndex;
-                            const value = context.parsed;
-                            return `${context.label}: ${value} (${percentages[idx]}%)`;
-                        }
-                    }
-                }
+  const slotCtx = document.getElementById('slotChart').getContext('2d');
+  if (mySlotChart) mySlotChart.destroy();
+  
+  mySlotChart = new Chart(slotCtx, {
+    type: 'doughnut',
+    data: {
+      labels: slotLabels,
+      datasets: [{
+        data: slotData,
+        backgroundColor: slotBgColors,
+        borderColor: '#ffffff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const idx = context.dataIndex;
+              const value = context.parsed;
+              return `${context.label}: ${value} (${percentages[idx]}%)`;
             }
+          }
         }
-    });
+      }
+    }
+  });
 
-    const legend = document.getElementById('slotLegend');
-    legend.innerHTML = '';
-    slotLabels.forEach((label, i) => {
-        const li = document.createElement('li');
-        li.className = 'flex items-center gap-2';
-        li.innerHTML = `
-            <span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${slotBgColors[i]}"></span>
-            <span class="flex-1">${label}</span>
-            <span class="font-semibold text-gray-700">${slotData[i]} (${percentages[i]}%)</span>
-        `;
-        legend.appendChild(li);
-    });
+  const legend = document.getElementById('slotLegend');
+  legend.innerHTML = '';
+  slotLabels.forEach((label, i) => {
+    const li = document.createElement('li');
+    li.className = 'flex items-center gap-2';
+    li.innerHTML = `
+      <span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${slotBgColors[i]}"></span>
+      <span class="flex-1">${label}</span>
+      <span class="font-semibold text-gray-700">${slotData[i]} (${percentages[i]}%)</span>
+    `;
+    legend.appendChild(li);
+  });
+
+  let evolutionText = t('stableEvolution');
+  let evolutionColor = 'text-gray-600';
+  if (data.length >= 2) {
+    const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+    const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+    if (secondHalf < firstHalf) {
+      evolutionText = t('positiveEvolution');
+      evolutionColor = 'text-green-600 font-bold';
+    } else if (secondHalf > firstHalf) {
+      evolutionText = t('negativeEvolution');
+      evolutionColor = 'text-red-600 font-bold';
+    }
+  }
+
+  let peakSlot = '';
+  if (slotLabels.length > 0) {
+    const maxIdx = slotData.indexOf(Math.max(...slotData));
+    peakSlot = `${slotLabels[maxIdx]} (${percentages[maxIdx]}%)`;
+  }
+
+  const triggerCount = {};
+  const behaviorCount = {};
+  filtered.forEach(i => {
+    i.triggers.forEach(t => triggerCount[t] = (triggerCount[t]||0)+1);
+    i.behaviors.forEach(b => behaviorCount[b] = (behaviorCount[b]||0)+1);
+  });
+  const topTriggers = Object.entries(triggerCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  const detailsHtml = `
+    <div class="mb-4">
+      <h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4>
+      <p class="${evolutionColor}">${evolutionText}</p>
+    </div>
+    ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
+    <div class="mb-2">
+      <h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4>
+      <ul class="list-disc pl-5">
+        ${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4>
+      <ul class="list-disc pl-5">
+        ${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
+      </ul>
+    </div>
+  `;
+  document.getElementById('analysisDetails').innerHTML = detailsHtml;
 }
 
 function renderStats(filtered) {
   const byStudent = {};
   filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
   const sStudents = document.getElementById('statsStudents');
-  sStudents.innerHTML = '';
-  const sKeys = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]);
-  if (sKeys.length === 0) sStudents.innerHTML = `<li class="text-gray-400">—</li>`;
-  sKeys.forEach(k => {
-    const li = document.createElement('li');
-    li.className = 'flex justify-between';
-    li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byStudent[k]}</span>`;
-    sStudents.appendChild(li);
-  });
-  const totalLi = document.createElement('li');
-  totalLi.className = 'flex justify-between border-t pt-1 mt-1 font-bold';
-  totalLi.innerHTML = `<span>${t('total')}</span><span>${filtered.length}</span>`;
-  sStudents.appendChild(totalLi);
+  if (sStudents) {
+    sStudents.innerHTML = '';
+    const sKeys = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]);
+    if (sKeys.length === 0) sStudents.innerHTML = `<li class="text-gray-400">—</li>`;
+    sKeys.forEach(k => {
+      const li = document.createElement('li');
+      li.className = 'flex justify-between';
+      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byStudent[k]}</span>`;
+      sStudents.appendChild(li);
+    });
+    const totalLi = document.createElement('li');
+    totalLi.className = 'flex justify-between border-t pt-1 mt-1 font-bold';
+    totalLi.innerHTML = `<span>${t('total')}</span><span>${filtered.length}</span>`;
+    sStudents.appendChild(totalLi);
+  }
 
   const byBeh = {};
   filtered.forEach(i => i.behaviors.forEach(b => { byBeh[b]=(byBeh[b]||0)+1; }));
   const sBeh = document.getElementById('statsBehaviors');
-  sBeh.innerHTML = '';
-  const bKeys = Object.keys(byBeh).sort((a,b)=>byBeh[b]-byBeh[a]);
-  if (bKeys.length === 0) sBeh.innerHTML = `<li class="text-gray-400">—</li>`;
-  bKeys.forEach(k => {
-    const li = document.createElement('li');
-    li.className = 'flex justify-between';
-    li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byBeh[k]}</span>`;
-    sBeh.appendChild(li);
-  });
+  if (sBeh) {
+    sBeh.innerHTML = '';
+    const bKeys = Object.keys(byBeh).sort((a,b)=>byBeh[b]-byBeh[a]);
+    if (bKeys.length === 0) sBeh.innerHTML = `<li class="text-gray-400">—</li>`;
+    bKeys.forEach(k => {
+      const li = document.createElement('li');
+      li.className = 'flex justify-between';
+      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byBeh[k]}</span>`;
+      sBeh.appendChild(li);
+    });
+  }
 }
 
-/* ============ Filters ============ */
 ['filterStudent','filterFrom','filterTo'].forEach(id => {
-  document.getElementById(id).addEventListener('change', renderHistory);
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', renderHistory);
 });
 document.getElementById('clearFilters').onclick = () => {
   document.getElementById('filterStudent').value = '';
@@ -1082,10 +1191,10 @@ document.getElementById('clearAll').onclick = () => {
     incidents = [];
     saveIncidents();
     renderHistory();
+    renderCharts();
   }
 };
 
-/* ============ CSV export ============ */
 document.getElementById('exportCsv').onclick = () => {
   const filtered = getFilteredIncidents();
   if (filtered.length === 0) { alert(t('noIncidents')); return; }
@@ -1109,10 +1218,7 @@ document.getElementById('exportCsv').onclick = () => {
   a.click();
 };
 
-/* ============ PDF Generation ============ */
-function renderPrintMeta() {
-  // Se genera en el PDF
-}
+function renderPrintMeta() {}
 
 document.getElementById('pdfBtn').onclick = () => {
     document.getElementById('pdfModal').classList.remove('hidden');
@@ -1146,10 +1252,66 @@ function generatePDF(mode) {
     const tableContainer = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
     
-    if (mode === 'full') {
+    if (mode === 'full' || mode === 'all') {
         tableContainer.classList.remove('hidden');
-        chartsContainer.classList.add('hidden');
+    } else {
+        tableContainer.classList.add('hidden');
+    }
+    
+    if (mode === 'charts' || mode === 'all') {
+        chartsContainer.classList.remove('hidden');
+        chartsContainer.style.display = 'block';
         
+        const chartStudentFilter = document.getElementById('chartStudentFilter');
+        const selectedStudent = chartStudentFilter.value || fStudent;
+        
+        if (!selectedStudent) {
+            alert(t('selectStudentForCharts'));
+            chartsContainer.classList.add('hidden');
+            return;
+        }
+        
+        const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
+        
+        if (chartFiltered.length === 0) {
+            alert(t('noIncidents'));
+            chartsContainer.classList.add('hidden');
+            return;
+        }
+        
+        const ctx1 = document.getElementById('printChart1').getContext('2d');
+        const ctx2 = document.getElementById('printChart2').getContext('2d');
+        
+        if(window.printChart1) window.printChart1.destroy();
+        if(window.printChart2) window.printChart2.destroy();
+
+        const countsByDate = {};
+        [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
+        const labels = Object.keys(countsByDate);
+        const data = labels.map(l => countsByDate[l]);
+
+        window.printChart1 = new Chart(ctx1, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
+            options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+        });
+
+        const slotCount = {};
+        chartFiltered.forEach(i => { const s = `${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`; slotCount[s]=(slotCount[s]||0)+1; });
+        const sLabels = Object.keys(slotCount);
+        const sData = sLabels.map(l=>slotCount[l]);
+
+        window.printChart2 = new Chart(ctx2, {
+            type: 'doughnut',
+            data: { labels: sLabels, datasets: [{ data: sData, backgroundColor: ['#4f46e5','#0891b2','#059669','#ca8a04','#ea580c'] }] },
+            options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    } else {
+        chartsContainer.classList.add('hidden');
+        chartsContainer.style.display = 'none';
+    }
+
+    if (mode === 'full' || mode === 'all') {
         const tbody = document.getElementById('printTableBody');
         tbody.innerHTML = '';
         filtered.forEach(i => {
@@ -1165,49 +1327,23 @@ function generatePDF(mode) {
             tr.appendChild(td(i.notes));
             tbody.appendChild(tr);
         });
-    } else {
-        tableContainer.classList.add('hidden');
-        chartsContainer.classList.remove('hidden');
-        
-        // Forzar que el contenedor sea visible para Chart.js
-        chartsContainer.style.display = 'block';
-
-        const ctx1 = document.getElementById('printChart1').getContext('2d');
-        const ctx2 = document.getElementById('printChart2').getContext('2d');
-        
-        if(window.printChart1) window.printChart1.destroy();
-        if(window.printChart2) window.printChart2.destroy();
-
-        const countsByDate = {};
-        [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
-        const labels = Object.keys(countsByDate);
-        const data = labels.map(l => countsByDate[l]);
-
-        window.printChart1 = new Chart(ctx1, {
-            type: 'line',
-            data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
-            options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-        });
-
-        const slotCount = {};
-        filtered.forEach(i => { const s = `${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`; slotCount[s]=(slotCount[s]||0)+1; });
-        const sLabels = Object.keys(slotCount);
-        const sData = sLabels.map(l=>slotCount[l]);
-
-        window.printChart2 = new Chart(ctx2, {
-            type: 'doughnut',
-            data: { labels: sLabels, datasets: [{ data: sData, backgroundColor: ['#4f46e5','#0891b2','#059669','#ca8a04','#ea580c'] }] },
-            options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-        });
     }
 
-    // Lanzar impresión con un pequeño retraso para asegurar renderizado
+    const backupData = {
+      version: APP_VERSION,
+      students: students,
+      subjects: subjects,
+      incidents: incidents,
+      customOptions: customOptions,
+      title: document.getElementById('mainTitle').value
+    };
+    document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
+
     setTimeout(() => {
         window.print();
     }, 800);
 }
 
-/* ============ Tabs ============ */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.tab-btn').forEach(b => {
@@ -1219,10 +1355,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
     if (btn.dataset.tab === 'history') renderHistory();
+    if (btn.dataset.tab === 'charts') renderCharts();
   };
 });
 
-/* ============ Title Customization ============ */
+document.getElementById('chartStudentFilter').addEventListener('change', renderCharts);
+
 const titleInput = document.getElementById('mainTitle');
 const savedTitle = localStorage.getItem(KEY_TITLE);
 if(savedTitle) {
@@ -1232,14 +1370,117 @@ titleInput.addEventListener('input', (e) => {
     localStorage.setItem(KEY_TITLE, e.target.value);
 });
 
-/* ============ Lang button ============ */
 document.getElementById('langBtn').onclick = () => {
   lang = lang === 'eu' ? 'fr' : 'eu';
   localStorage.setItem('aesh_lang', lang);
   applyLang();
 };
 
-/* ============ Init & Service Worker ============ */
+document.getElementById('exportBackupBtn').addEventListener('click', () => {
+  const backupData = {
+    version: APP_VERSION,
+    students: students,
+    subjects: subjects,
+    incidents: incidents,
+    customOptions: customOptions,
+    title: document.getElementById('mainTitle').value
+  };
+  const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aesh_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('importBackupInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!confirm(t('restoreConfirm'))) {
+    e.target.value = '';
+    return;
+  }
+
+  try {
+    let backupData = null;
+
+    if (file.name.endsWith('.json')) {
+      const text = await file.text();
+      backupData = JSON.parse(text);
+    } else if (file.name.endsWith('.pdf')) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfText = new TextDecoder('utf-8').decode(arrayBuffer);
+      const match = pdfText.match(/<script type="application\/json" id="pdfDataScript">([\s\S]*?)<\/script>/);
+      if (!match) {
+        const jsonMatch = pdfText.match(/\{"version":"[^"]+","students":[\s\S]*\}/);
+        if (jsonMatch) {
+          backupData = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error(t('noDataInPdf'));
+        }
+      } else {
+        backupData = JSON.parse(match[1]);
+      }
+    } else {
+      throw new Error(t('unsupportedFile'));
+    }
+
+    if (!backupData || !backupData.incidents) {
+      throw new Error(t('invalidFile'));
+    }
+
+    students = backupData.students || [];
+    subjects = backupData.subjects || [];
+    incidents = backupData.incidents || [];
+    customOptions = backupData.customOptions || defaultOptions;
+    if (backupData.title) {
+      document.getElementById('mainTitle').value = backupData.title;
+      localStorage.setItem(KEY_TITLE, backupData.title);
+    }
+
+    saveStudents();
+    saveSubjects();
+    saveIncidents();
+    saveOptions();
+
+    applyLang();
+    renderHistory();
+    renderCharts();
+
+    alert(t('restoreSuccess'));
+  } catch (err) {
+    console.error(err);
+    alert(err.message || t('restoreError'));
+  } finally {
+    e.target.value = '';
+  }
+});
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn')?.classList.remove('hidden');
+});
+
+document.getElementById('installBtn')?.addEventListener('click', async () => {
+  if (!deferredPrompt) {
+    alert(t('installInstructions'));
+    return;
+  }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`Instalación: ${outcome}`);
+  deferredPrompt = null;
+  document.getElementById('installBtn')?.classList.add('hidden');
+});
+
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+  document.getElementById('installBtn')?.classList.add('hidden');
+}
+
 function init() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -1248,7 +1489,6 @@ function init() {
 }
 init();
 
-// Registrar Service Worker para PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
