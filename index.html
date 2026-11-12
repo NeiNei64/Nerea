@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- ENLACE AL MANIFEST CORREGIDO AQUÍ -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<title>AESH - Gorabeherak / Incidents</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<style>
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: white !important; }
+    .print-section { page-break-inside: avoid; }
+    /* Forzar que los canvas de impresión se vean bien */
+    #printChartsContainer { display: block !important; page-break-inside: avoid; }
+    canvas { max-width: 100% !important; height: auto !important; }
+  }
+  .print-only { display: none; }
+  .editable-item { display: flex; align-items: center; justify-content: space-between; padding: 4px; border-radius: 4px; }
+  .editable-item:hover { background-color: #f3f4f6; }
+  .delete-icon { cursor: pointer; color: #ef4444; font-weight: bold; padding: 0 6px; font-size: 1.1em; }
+  .delete-icon:hover { color: #b91c1c; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+
+<!-- Modal para añadir opciones personalizadas -->
+<div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
+    <h3 class="font-bold text-lg mb-3" id="modalTitle">Aukera berria</h3>
+    <input type="text" id="modalInput" class="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:border-indigo-500">
+    <div class="flex justify-end gap-2">
+      <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold">Utzi</button>
+      <button onclick="saveModalOption()" class="px-4 py-2 bg-indigo-600 rounded text-white font-semibold">Gorde</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de selección de PDF -->
+<div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
+    <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
+    <div class="space-y-3">
+      <button onclick="generatePDF('full')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
+        <div class="font-bold text-indigo-800">1. Historiko osoa</div>
+        <div class="text-xs text-gray-600">Taula eta grafiko guztiak</div>
+      </button>
+      <button onclick="generatePDF('charts')" class="w-full text-left px-4 py-3 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200">
+        <div class="font-bold text-emerald-800">2. Grafikoak eta Eboluzioa</div>
+        <div class="text-xs text-gray-600">Grafikoak eta datu orokorrak soilik</div>
+      </button>
+    </div>
+    <div class="mt-4 text-right">
+      <button onclick="document.getElementById('pdfModal').classList.add('hidden')" class="text-sm text-gray-500 hover:text-gray-700">Utzi</button>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto p-4">
+
+  <!-- Header -->
+  <header class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
+    <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="AESH - Eguneroko gorabeherak">
+    <div class="flex gap-2">
+      <button id="langBtn" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-semibold">FR</button>
+      <button id="pdfBtn" class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-semibold">
+        <span data-eu="💾 Gorde PDF" data-fr="💾 Enregistrer PDF">💾 Gorde PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="no-print flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
+    <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
+      <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
+    </button>
+    <button data-tab="history" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+      <span data-eu="Historia" data-fr="Historique">Historia</span>
+    </button>
+    <button data-tab="students" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+      <span data-eu="Ikasleak" data-fr="Élèves">Ikasleak</span>
+    </button>
+    <button data-tab="subjects" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+      <span data-eu="Ikasgaiak" data-fr="Matières">Ikasgaiak</span>
+    </button>
+  </nav>
+
+  <!-- FORM TAB -->
+  <section id="tab-form" class="tab-content">
+    <form id="incidentForm" class="bg-white rounded-lg shadow p-4 md:p-6 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            <span data-eu="Data eta ordua" data-fr="Date et heure">Data eta ordua</span>
+          </label>
+          <input type="datetime-local" id="incidentDate" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            <span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span>
+          </label>
+          <select id="incidentStudent" required class="w-full border rounded px-3 py-2">
+            <option value="">--</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            <span data-eu="Ordutegia" data-fr="Créneau horaire">Ordutegia</span>
+          </label>
+          <select id="incidentSlot" required class="w-full border rounded px-3 py-2">
+            <option value="">--</option>
+            <option value="08:20-09:00|Zaintza|Garderie">08:20 - 09:00 — Zaintza / Garderie</option>
+            <option value="09:00-10:20|Klasea|Classe">09:00 - 10:20 — Klasea / Classe</option>
+            <option value="10:20-10:40|Atsedenaldia|Pause">10:20 - 10:40 — Atsedenaldia / Pause</option>
+            <option value="10:40-12:00|Klasea|Classe">10:40 - 12:00 — Klasea / Classe</option>
+            <option value="12:00-13:30|Jantegia|Cantine">12:00 - 13:30 — Jantegia / Cantine</option>
+            <option value="13:30-14:50|Klasea|Classe">13:30 - 14:50 — Klasea / Classe</option>
+            <option value="14:50-15:10|Atsedenaldia|Pause">14:50 - 15:10 — Atsedenaldia / Pause</option>
+            <option value="15:10-16:30|Klasea|Classe">15:10 - 16:30 — Klasea / Classe</option>
+            <option value="16:30-18:00|Zaintza|Garderie">16:30 - 18:00 — Zaintza / Garderie</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">
+            <span data-eu="Ikasgaia" data-fr="Matière">Ikasgaia</span>
+          </label>
+          <select id="incidentSubject" class="w-full border rounded px-3 py-2">
+            <option value="">--</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Triggers -->
+      <fieldset class="border rounded p-3">
+        <legend class="px-2 text-sm font-semibold flex items-center gap-2">
+          <span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span>
+          <button type="button" onclick="openCustomModal('trigger')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">+ Personalizatu</button>
+        </legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="triggersGroup"></div>
+      </fieldset>
+
+      <!-- Behaviors -->
+      <fieldset class="border rounded p-3">
+        <legend class="px-2 text-sm font-semibold flex items-center gap-2">
+          <span data-eu="Ikusitako jokabidea" data-fr="Comportement observé">Ikusitako jokabidea</span>
+          <button type="button" onclick="openCustomModal('behavior')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">+ Personalizatu</button>
+        </legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="behaviorsGroup"></div>
+      </fieldset>
+
+      <!-- Interventions -->
+      <fieldset class="border rounded p-3">
+        <legend class="px-2 text-sm font-semibold flex items-center gap-2">
+          <span data-eu="Ezarritako esku-hartzea" data-fr="Intervention appliquée">Ezarritako esku-hartzea</span>
+          <button type="button" onclick="openCustomModal('intervention')" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded hover:bg-indigo-200">+ Personalizatu</button>
+        </legend>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="interventionsGroup"></div>
+      </fieldset>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1">
+          <span data-eu="Oharrak (aukerakoa)" data-fr="Notes (facultatif)">Oharrak (aukerakoa)</span>
+        </label>
+        <textarea id="incidentNotes" rows="2" class="w-full border rounded px-3 py-2"></textarea>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit" class="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700">
+          <span data-eu="✓ Gorde gorabehera" data-fr="✓ Enregistrer l'incident">✓ Gorde gorabehera</span>
+        </button>
+        <button type="button" id="cancelEditBtn" onclick="resetForm()" class="hidden px-4 py-3 bg-gray-400 text-white font-bold rounded hover:bg-gray-500">
+          <span data-eu="✕ Utzi" data-fr="✕ Annuler">✕ Utzi</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- HISTORY TAB -->
+  <section id="tab-history" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
+      <h2 class="text-lg font-bold mb-3">
+        <span data-eu="Iragazkiak" data-fr="Filtres">Iragazkiak</span>
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1">
+            <span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span>
+          </label>
+          <select id="filterStudent" class="w-full border rounded px-3 py-2 text-sm">
+            <option value="" data-eu="Guztiak" data-fr="Tous">Guztiak</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">
+            <span data-eu="Data hasiera" data-fr="Date début">Data hasiera</span>
+          </label>
+          <input type="date" id="filterFrom" class="w-full border rounded px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">
+            <span data-eu="Data amaiera" data-fr="Date fin">Data amaiera</span>
+          </label>
+          <input type="date" id="filterTo" class="w-full border rounded px-3 py-2 text-sm">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3 flex-wrap">
+        <button id="clearFilters" class="px-3 py-2 bg-gray-500 text-white rounded text-sm">
+          <span data-eu="Iragazkiak garbitu" data-fr="Effacer filtres">Iragazkiak garbitu</span>
+        </button>
+        <button id="exportCsv" class="px-3 py-2 bg-blue-600 text-white rounded text-sm">
+          <span data-eu="CSV esportatu" data-fr="Exporter CSV">CSV esportatu</span>
+        </button>
+        <button id="clearAll" class="px-3 py-2 bg-red-600 text-white rounded text-sm">
+          <span data-eu="Datu-base osoa garbitu" data-fr="Vider la base">Datu-base osoa garbitu</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Análisis y Gráficos -->
+    <div id="analysisSection" class="bg-white rounded-lg shadow p-4 md:p-6 mb-4 hidden">
+      <h3 class="font-bold mb-3 text-indigo-700">
+        <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+            <span data-eu="Gorabeherak denboran zehar" data-fr="Incidents dans le temps">Gorabeherak denboran zehar</span>
+          </h4>
+          <div class="h-64 relative">
+            <canvas id="evolutionChart"></canvas>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+            <span data-eu="Gorabeherak ordutegiaren arabera (%)" data-fr="Incidents par créneau horaire (%)">Gorabeherak ordutegiaren arabera (%)</span>
+          </h4>
+          <div class="h-64 relative">
+            <canvas id="slotChart"></canvas>
+          </div>
+          <ul id="slotLegend" class="mt-2 text-xs space-y-1"></ul>
+        </div>
+      </div>
+      <div id="analysisDetails" class="text-sm space-y-2 mt-4"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="font-bold mb-2 text-indigo-700">
+          <span data-eu="Kopurua ikasle bakoitzeko" data-fr="Nombre par élève">Kopurua ikasle bakoitzeko</span>
+        </h3>
+        <ul id="statsStudents" class="text-sm space-y-1"></ul>
+      </div>
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="font-bold mb-2 text-indigo-700">
+          <span data-eu="Kopurua jokabide mota bakoitzeko" data-fr="Nombre par type de comportement">Kopurua jokabide mota bakoitzeko</span>
+        </h3>
+        <ul id="statsBehaviors" class="text-sm space-y-1"></ul>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div id="historyList" class="space-y-2"></div>
+  </section>
+
+  <!-- STUDENTS TAB -->
+  <section id="tab-students" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 class="text-lg font-bold mb-3">
+        <span data-eu="Ikasleen kudeaketa" data-fr="Gestion des élèves">Ikasleen kudeaketa</span>
+      </h2>
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="newStudent" placeholder="Izena / Nom" class="flex-1 border rounded px-3 py-2">
+        <button id="addStudentBtn" class="px-4 py-2 bg-indigo-600 text-white rounded font-semibold">
+          <span data-eu="+ Gehitu" data-fr="+ Ajouter">+ Gehitu</span>
+        </button>
+      </div>
+      <ul id="studentList" class="divide-y border rounded"></ul>
+    </div>
+  </section>
+
+  <!-- SUBJECTS TAB -->
+  <section id="tab-subjects" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 class="text-lg font-bold mb-3">
+        <span data-eu="Ikasgaien kudeaketa" data-fr="Gestion des matières">Ikasgaien kudeaketa</span>
+      </h2>
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="newSubject" placeholder="Ikasgaia / Matière" class="flex-1 border rounded px-3 py-2">
+        <button id="addSubjectBtn" class="px-4 py-2 bg-indigo-600 text-white rounded font-semibold">
+          <span data-eu="+ Gehitu" data-fr="+ Ajouter">+ Gehitu</span>
+        </button>
+      </div>
+      <ul id="subjectList" class="divide-y border rounded"></ul>
+    </div>
+  </section>
+
+</div>
+
+<!-- PRINT VIEW -->
+<div id="printView" class="print-only max-w-4xl mx-auto p-8">
+  <div class="text-center mb-6">
+    <h1 id="printTitle" class="text-2xl font-bold">AESH — <span data-eu="Gorabeheren txostena" data-fr="Rapport d'incidents">Gorabeheren txostena</span></h1>
+    <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
+  </div>
+  <div id="printStats" class="mb-6 text-sm"></div>
+  
+  <div id="printChartsContainer" class="hidden mb-8">
+      <h2 class="text-lg font-bold border-b mb-2">Eboluzioa / Évolution</h2>
+      <div class="grid grid-cols-2 gap-4">
+          <div class="h-64"><canvas id="printChart1"></canvas></div>
+          <div class="h-64"><canvas id="printChart2"></canvas></div>
+      </div>
+  </div>
+
+  <div id="printTableContainer">
+      <table class="w-full border-collapse text-xs">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border px-2 py-1 text-left"><span data-eu="Data" data-fr="Date">Data</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Ordutegia" data-fr="Créneau">Ordutegia</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Ikasgaia" data-fr="Matière">Ikasgaia</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Jokabidea" data-fr="Comportement">Jokabidea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Esku-hartzea" data-fr="Intervention">Esku-hartzea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Oharrak" data-fr="Notes">Oharrak</span></th>
+          </tr>
+        </thead>
+        <tbody id="printTableBody"></tbody>
+      </table>
+  </div>
+</div>
+
+<script>
+/* ============ Plugin para mostrar % dentro del doughnut ============ */
+const doughnutLabelsPlugin = {
+  id: 'doughnutLabels',
+  afterDatasetsDraw(chart, args, options) {
+    if (chart.config.type !== 'doughnut') return;
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data) return;
+    const total = chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+    if (!total) return;
+    
+    ctx.save();
+    meta.data.forEach((arc, i) => {
+      const value = chart.data.datasets[0].data[i];
+      const pct = ((value / total) * 100).toFixed(1);
+      if ((value / total) < 0.04) return;
+      const pos = arc.tooltipPosition();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 3;
+      ctx.fillText(`${pct}%`, pos.x, pos.y);
+    });
+    ctx.restore();
+  }
+};
+Chart.register(doughnutLabelsPlugin);
+
+/* ============ i18n & State ============ */
+const I18N = {
+  eu: {
+    confirmDelete: "Ziur zaude gorabehera hau ezabatu nahi duzula?",
+    confirmClearAll: "Ziur zaude datu-base osoa garbitu nahi duzula? Ekintza hau ezin da desegin.",
+    confirmDeleteStudent: "Ikasle hau ezabatu nahi duzu? (Bere gorabeherak mantenduko dira)",
+    confirmDeleteSubject: "Ikasgai hau ezabatu nahi duzu?",
+    noIncidents: "Ez dago gorabeherarik iragazki hauekin.",
+    noStudents: "Ez dago ikaslerik. Gehitu bat 'Ikasleak' fitxan.",
+    noSubjects: "Ez dago ikasgairik. Gehitu bat 'Ikasgaiak' fitxan.",
+    deleteBtn: "Ezabatu",
+    editBtn: "Editatu",
+    student: "Ikaslea",
+    subject: "Ikasgaia",
+    total: "Guztira",
+    report: "Gorabeheren txostena",
+    generated: "Sortua",
+    period: "Aldia",
+    allPeriod: "Denbora guztia",
+    incident: "Gorabehera",
+    notes: "Oharrak",
+    positiveEvolution: "Eboluzio positiboa (incidentziak gutxitu dira)",
+    negativeEvolution: "Eboluzio negatiboa (incidentziak gehitu dira)",
+    stableEvolution: "Eboluzio egonkorra",
+    topTriggers: "Eragile ohikoenak",
+    topBehaviors: "Jokabide ohikoenak",
+    addOptionPrompt: "Idatzi aukera berria:",
+    peakSlot: "Ordu-tarte kritikoena",
+    modalTitle: "Aukera berria gehitu",
+    modalPlaceholder: "Idatzi hemen..."
+  },
+  fr: {
+    confirmDelete: "Voulez-vous vraiment supprimer cet incident ?",
+    confirmClearAll: "Voulez-vous vraiment vider toute la base de données ? Cette action est irréversible.",
+    confirmDeleteStudent: "Supprimer cet élève ? (Ses incidents seront conservés)",
+    confirmDeleteSubject: "Supprimer cette matière ?",
+    noIncidents: "Aucun incident avec ces filtres.",
+    noStudents: "Aucun élève. Ajoutez-en dans l'onglet 'Élèves'.",
+    noSubjects: "Aucune matière. Ajoutez-en dans l'onglet 'Matières'.",
+    deleteBtn: "Supprimer",
+    editBtn: "Modifier",
+    student: "Élève",
+    subject: "Matière",
+    total: "Total",
+    report: "Rapport d'incidents",
+    generated: "Généré le",
+    period: "Période",
+    allPeriod: "Toute la période",
+    incident: "Incident",
+    notes: "Notes",
+    positiveEvolution: "Évolution positive (incidents en baisse)",
+    negativeEvolution: "Évolution négative (incidents en hausse)",
+    stableEvolution: "Évolution stable",
+    topTriggers: "Déclencheurs fréquents",
+    topBehaviors: "Comportements fréquents",
+    addOptionPrompt: "Entrez la nouvelle option :",
+    peakSlot: "Créneau le plus critique",
+    modalTitle: "Ajouter une option",
+    modalPlaceholder: "Écrivez ici..."
+  }
+};
+
+let lang = localStorage.getItem('aesh_lang') || 'eu';
+
+const KEY_STUDENTS = 'aesh_students_v1';
+const KEY_SUBJECTS = 'aesh_subjects_v1';
+const KEY_INCIDENTS = 'aesh_incidents_v1';
+const KEY_OPTIONS = 'aesh_options_v1';
+const KEY_TITLE = 'aesh_title_v1';
+
+const defaultOptions = {
+    eu: {
+        triggers: ["Jarrera edo ariketa aldaketa","Azalpen edo agindu konplexua","Frustrazioa / Akatsa","Kideekiko gatazka","Neurriz kanpoko zarata / Sobreestimulazioa","Nekea / Nekatuta egotea","Bestelakoa"],
+        behaviors: ["Ukatzea / Blokeoa","Ahozko urduritasuna","Errespetu falta / Hitz larriak","Jokabide desafiatzailea","Bakartzea"],
+        interventions: ["Atsedenaldia / Gune segurua","Ariketa bideratzea","Laguntza bisuala / Edukia egokitzea","Barealdia bilatzea (ahoz)","Tarteko bitartekaritza"]
+    },
+    fr: {
+        triggers: ["Transition - Changement d'activité","Consigne complexe","Frustration - Erreur","Conflit avec les pairs","Bruit - Surstimulation","Fatigue accumulée","Autre"],
+        behaviors: ["Refus d'aide - Blocage","Dérégulation verbale","Manque de respect - Propos déplacés","Comportement provocateur (défi)","Isolement"],
+        interventions: ["Pause - Espace apaisant","Redirection vers la tâche","Support visuel - Adaptation","Désescalade verbale","Médiation directe"]
+    }
+};
+
+let students = JSON.parse(localStorage.getItem(KEY_STUDENTS) || '[]');
+let subjects = JSON.parse(localStorage.getItem(KEY_SUBJECTS) || '[]');
+let incidents = JSON.parse(localStorage.getItem(KEY_INCIDENTS) || '[]');
+let customOptions = JSON.parse(localStorage.getItem(KEY_OPTIONS) || JSON.stringify(defaultOptions));
+
+// Variables para edición
+let editingIncidentId = null;
+let currentModalType = null;
+
+function saveStudents() { localStorage.setItem(KEY_STUDENTS, JSON.stringify(students)); }
+function saveSubjects() { localStorage.setItem(KEY_SUBJECTS, JSON.stringify(subjects)); }
+function saveIncidents() { localStorage.setItem(KEY_INCIDENTS, JSON.stringify(incidents)); }
+function saveOptions() { localStorage.setItem(KEY_OPTIONS, JSON.stringify(customOptions)); }
+
+/* ============ i18n helpers ============ */
+function t(key) { return I18N[lang][key]; }
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-eu]').forEach(el => {
+    el.textContent = lang === 'eu' ? el.dataset.eu : el.dataset.fr;
+  });
+  document.getElementById('langBtn').textContent = lang === 'eu' ? 'FR' : 'EU';
+  buildCheckboxes();
+  renderStudentsSelect();
+  renderSubjectsSelect();
+  renderStudentList();
+  renderSubjectList();
+  renderHistory();
+  renderPrintMeta();
+  
+  const titleInput = document.getElementById('mainTitle');
+  if(!titleInput.value || titleInput.value === "AESH - Eguneroko gorabeherak" || titleInput.value === "AESH - Incidents quotidiens"){
+      titleInput.value = lang === 'eu' ? "AESH - Eguneroko gorabeherak" : "AESH - Incidents quotidiens";
+  }
+}
+
+/* ============ Modal Personalizado ============ */
+function openCustomModal(type) {
+    currentModalType = type;
+    const modal = document.getElementById('customOptionModal');
+    document.getElementById('modalTitle').textContent = t('modalTitle');
+    const inp = document.getElementById('modalInput');
+    inp.placeholder = t('modalPlaceholder');
+    inp.value = '';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => inp.focus(), 100);
+}
+
+function closeModal() {
+    const modal = document.getElementById('customOptionModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    currentModalType = null;
+}
+
+function saveModalOption() {
+    const val = document.getElementById('modalInput').value.trim();
+    if (val && currentModalType) {
+        const keyMap = { 'trigger': 'triggers', 'behavior': 'behaviors', 'intervention': 'interventions' };
+        customOptions[lang][keyMap[currentModalType]].push(val);
+        saveOptions();
+        buildCheckboxes();
+    }
+    closeModal();
+}
+
+document.getElementById('modalInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); saveModalOption(); }
+});
+
+/* ============ Build Checkboxes & Edit Options ============ */
+function buildCheckboxes() {
+  const groups = [
+    { id: 'triggersGroup', name: 'trigger', key: 'triggers' },
+    { id: 'behaviorsGroup', name: 'behavior', key: 'behaviors' },
+    { id: 'interventionsGroup', name: 'intervention', key: 'interventions' }
+  ];
+  
+  groups.forEach(g => {
+    const container = document.getElementById(g.id);
+    const checked = new Set();
+    container.querySelectorAll('input:checked').forEach(i => checked.add(i.value));
+    container.innerHTML = '';
+    
+    const items = customOptions[lang][g.key];
+    
+    items.forEach((label, i) => {
+      const id = `${g.name}_${i}`;
+      const w = document.createElement('div');
+      w.className = 'editable-item flex items-center gap-2 text-sm cursor-pointer';
+      
+      const cbContainer = document.createElement('div');
+      cbContainer.className = 'flex-1 flex items-center gap-2';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.name = g.name;
+      cb.value = label;
+      cb.id = id;
+      cb.className = 'w-4 h-4';
+      if (checked.has(label)) cb.checked = true;
+      const sp = document.createElement('span');
+      sp.textContent = label;
+      cbContainer.appendChild(cb);
+      cbContainer.appendChild(sp);
+      
+      const delBtn = document.createElement('span');
+      delBtn.className = 'delete-icon no-print';
+      delBtn.innerHTML = '✕';
+      delBtn.title = t('deleteBtn');
+      delBtn.onclick = (e) => {
+        e.preventDefault();
+        if(confirm(t('confirmDelete') + " (" + label + ")")) {
+            customOptions[lang][g.key].splice(i, 1);
+            saveOptions();
+            buildCheckboxes();
+        }
+      };
+      
+      w.appendChild(cbContainer);
+      w.appendChild(delBtn);
+      container.appendChild(w);
+    });
+  });
+}
+
+/* ============ Students & Subjects ============ */
+function renderStudentsSelect() {
+  const sel = document.getElementById('incidentStudent');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">--</option>';
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s;
+    o.textContent = s;
+    sel.appendChild(o);
+  });
+  if (students.includes(prev)) sel.value = prev;
+
+  const f = document.getElementById('filterStudent');
+  const prevF = f.value;
+  f.innerHTML = `<option value="">${lang === 'eu' ? 'Guztiak' : 'Tous'}</option>`;
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s;
+    o.textContent = s;
+    f.appendChild(o);
+  });
+  if (students.includes(prevF)) f.value = prevF;
+}
+
+function renderSubjectsSelect() {
+    const sel = document.getElementById('incidentSubject');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">--</option>';
+    subjects.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s;
+        o.textContent = s;
+        sel.appendChild(o);
+    });
+    if (subjects.includes(prev)) sel.value = prev;
+}
+
+function renderStudentList() {
+  const ul = document.getElementById('studentList');
+  ul.innerHTML = '';
+  if (students.length === 0) {
+    ul.innerHTML = `<li class="p-3 text-gray-500 text-sm">${t('noStudents')}</li>`;
+    return;
+  }
+  students.forEach(s => {
+    const li = document.createElement('li');
+    li.className = 'flex justify-between items-center p-3 hover:bg-gray-50';
+    const sp = document.createElement('span');
+    sp.textContent = s;
+    sp.className = 'font-medium';
+    const b = document.createElement('button');
+    b.textContent = '✕';
+    b.className = 'text-red-600 hover:text-red-800 font-bold px-2';
+    b.title = t('deleteBtn');
+    b.onclick = () => {
+      if (confirm(t('confirmDeleteStudent'))) {
+        students = students.filter(x => x !== s);
+        saveStudents();
+        renderStudentsSelect();
+        renderStudentList();
+        renderHistory();
+      }
+    };
+    li.appendChild(sp);
+    li.appendChild(b);
+    ul.appendChild(li);
+  });
+}
+
+function renderSubjectList() {
+  const ul = document.getElementById('subjectList');
+  ul.innerHTML = '';
+  if (subjects.length === 0) {
+    ul.innerHTML = `<li class="p-3 text-gray-500 text-sm">${t('noSubjects')}</li>`;
+    return;
+  }
+  subjects.forEach(s => {
+    const li = document.createElement('li');
+    li.className = 'flex justify-between items-center p-3 hover:bg-gray-50';
+    const sp = document.createElement('span');
+    sp.textContent = s;
+    sp.className = 'font-medium';
+    const b = document.createElement('button');
+    b.textContent = '✕';
+    b.className = 'text-red-600 hover:text-red-800 font-bold px-2';
+    b.title = t('deleteBtn');
+    b.onclick = () => {
+      if (confirm(t('confirmDeleteSubject'))) {
+        subjects = subjects.filter(x => x !== s);
+        saveSubjects();
+        renderSubjectsSelect();
+        renderSubjectList();
+      }
+    };
+    li.appendChild(sp);
+    li.appendChild(b);
+    ul.appendChild(li);
+  });
+}
+
+document.getElementById('addStudentBtn').onclick = () => {
+  const inp = document.getElementById('newStudent');
+  const v = inp.value.trim();
+  if (!v) return;
+  if (students.includes(v)) { inp.value=''; return; }
+  students.push(v);
+  students.sort((a,b)=>a.localeCompare(b));
+  saveStudents();
+  inp.value = '';
+  renderStudentsSelect();
+  renderStudentList();
+};
+document.getElementById('newStudent').addEventListener('keypress', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addStudentBtn').click(); }
+});
+
+document.getElementById('addSubjectBtn').onclick = () => {
+  const inp = document.getElementById('newSubject');
+  const v = inp.value.trim();
+  if (!v) return;
+  if (subjects.includes(v)) { inp.value=''; return; }
+  subjects.push(v);
+  subjects.sort((a,b)=>a.localeCompare(b));
+  saveSubjects();
+  inp.value = '';
+  renderSubjectsSelect();
+  renderSubjectList();
+};
+document.getElementById('newSubject').addEventListener('keypress', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubjectBtn').click(); }
+});
+
+/* ============ Form Submit & Edit ============ */
+document.getElementById('incidentForm').onsubmit = (e) => {
+  e.preventDefault();
+  const date = document.getElementById('incidentDate').value;
+  const student = document.getElementById('incidentStudent').value;
+  const slot = document.getElementById('incidentSlot').value;
+  const subject = document.getElementById('incidentSubject').value;
+  
+  if (!date || !student || !slot) return;
+  
+  const [range, slotEu, slotFr] = slot.split('|');
+  const triggers = Array.from(document.querySelectorAll('input[name="trigger"]:checked')).map(c=>c.value);
+  const behaviors = Array.from(document.querySelectorAll('input[name="behavior"]:checked')).map(c=>c.value);
+  const interventions = Array.from(document.querySelectorAll('input[name="intervention"]:checked')).map(c=>c.value);
+  const notes = document.getElementById('incidentNotes').value.trim();
+
+  if (editingIncidentId) {
+      const idx = incidents.findIndex(i => i.id === editingIncidentId);
+      if (idx > -1) {
+          incidents[idx] = { ...incidents[idx], date, student, slotRange: range, slotEu, slotFr, subject, triggers, behaviors, interventions, notes };
+      }
+  } else {
+      incidents.push({
+        id: Date.now() + Math.random().toString(36).slice(2,7),
+        date, student, slotRange: range, slotEu, slotFr, subject, triggers, behaviors, interventions, notes
+      });
+  }
+  
+  saveIncidents();
+  resetForm();
+  renderHistory();
+  document.querySelector('[data-tab="history"]').click();
+};
+
+function resetForm() {
+    document.getElementById('incidentForm').reset();
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('incidentDate').value = now.toISOString().slice(0,16);
+    
+    editingIncidentId = null;
+    document.getElementById('cancelEditBtn').classList.add('hidden');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.classList.remove('bg-green-600');
+    submitBtn.classList.add('bg-indigo-600');
+    submitBtn.innerHTML = `<span data-eu="✓ Gorde gorabehera" data-fr="✓ Enregistrer l'incident">✓ Gorde gorabehera</span>`;
+    applyLang();
+}
+
+function editIncident(id) {
+    const inc = incidents.find(i => i.id === id);
+    if (!inc) return;
+    
+    editingIncidentId = id;
+    
+    document.getElementById('incidentDate').value = inc.date;
+    document.getElementById('incidentStudent').value = inc.student;
+    document.getElementById('incidentSubject').value = inc.subject || '';
+    
+    const slotVal = `${inc.slotRange}|${inc.slotEu}|${inc.slotFr}`;
+    document.getElementById('incidentSlot').value = slotVal;
+    
+    document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+    const markChecks = (name, vals) => {
+        vals.forEach(v => {
+            const cb = Array.from(document.querySelectorAll(`input[name="${name}"]`)).find(c => c.value === v);
+            if (cb) cb.checked = true;
+        });
+    };
+    markChecks('trigger', inc.triggers || []);
+    markChecks('behavior', inc.behaviors || []);
+    markChecks('intervention', inc.interventions || []);
+    
+    document.getElementById('incidentNotes').value = inc.notes || '';
+    
+    document.getElementById('cancelEditBtn').classList.remove('hidden');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    submitBtn.classList.remove('bg-indigo-600');
+    submitBtn.classList.add('bg-green-600');
+    submitBtn.innerHTML = `<span data-eu="✓ Eguneratu gorabehera" data-fr="✓ Mettre à jour l'incident">✓ Eguneratu gorabehera</span>`;
+    applyLang();
+    
+    document.querySelector('[data-tab="form"]').click();
+}
+
+/* ============ History & Analysis ============ */
+let myChart = null;
+let mySlotChart = null;
+
+function getFilteredIncidents() {
+  const fStudent = document.getElementById('filterStudent').value;
+  const fFrom = document.getElementById('filterFrom').value;
+  const fTo = document.getElementById('filterTo').value;
+  return incidents.filter(i => {
+    if (fStudent && i.student !== fStudent) return false;
+    const d = i.date.slice(0,10);
+    if (fFrom && d < fFrom) return false;
+    if (fTo && d > fTo) return false;
+    return true;
+  }).sort((a,b)=> b.date.localeCompare(a.date));
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const filtered = getFilteredIncidents();
+  const L = lang;
+  list.innerHTML = '';
+
+  const analysisSection = document.getElementById('analysisSection');
+  const fStudent = document.getElementById('filterStudent').value;
+  
+  if (fStudent && filtered.length > 0) {
+      analysisSection.classList.remove('hidden');
+      requestAnimationFrame(() => {
+          renderAnalysis(filtered, fStudent);
+      });
+  } else {
+      analysisSection.classList.add('hidden');
+      if(myChart) { myChart.destroy(); myChart = null; }
+      if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="bg-white rounded-lg shadow p-4 text-center text-gray-500">${t('noIncidents')}</div>`;
+  } else {
+    filtered.forEach(inc => {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-lg shadow p-4';
+      const dateStr = inc.date.replace('T', ' ');
+      const slotLabel = `${inc.slotRange} — ${L==='eu'?inc.slotEu:inc.slotFr}`;
+      const subjectLabel = inc.subject ? `<span class="text-xs font-semibold text-indigo-600">${inc.subject}</span> · ` : '';
+      
+      const row = (label, arr) => arr.length ? `<div class="text-sm mt-1"><span class="font-semibold text-gray-700">${label}:</span> ${arr.map(x=>`<span class="inline-block bg-indigo-100 text-indigo-800 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${x}</span>`).join('')}</div>` : '';
+      
+      card.innerHTML = `
+        <div class="flex justify-between items-start gap-2">
+          <div class="flex-1">
+            <div class="font-bold text-indigo-700">${inc.student} <span class="text-gray-500 font-normal text-sm">· ${dateStr}</span></div>
+            <div class="text-xs text-gray-500 mt-0.5">${subjectLabel}${slotLabel}</div>
+            ${row(L==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
+            ${row(L==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
+            ${row(L==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
+            ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${inc.notes}</div>` : ''}
+          </div>
+          <div class="flex flex-col gap-1 no-print">
+            <button class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" title="${t('editBtn')}">✏️</button>
+            <button class="del-btn text-red-600 hover:text-red-800 font-bold px-2" title="${t('deleteBtn')}">✕</button>
+          </div>
+        </div>
+      `;
+      card.querySelector('.edit-btn').onclick = () => editIncident(inc.id);
+      card.querySelector('.del-btn').onclick = () => {
+        if (confirm(t('confirmDelete'))) {
+          incidents = incidents.filter(x => x.id !== inc.id);
+          saveIncidents();
+          renderHistory();
+        }
+      };
+      list.appendChild(card);
+    });
+  }
+
+  renderStats(filtered);
+}
+
+function renderAnalysis(filtered, studentName) {
+    const countsByDate = {};
+    const sorted = [...filtered].reverse(); 
+    sorted.forEach(i => {
+        const d = i.date.slice(0,10);
+        countsByDate[d] = (countsByDate[d] || 0) + 1;
+    });
+    
+    const labels = Object.keys(countsByDate);
+    const data = labels.map(l => countsByDate[l]);
+    
+    let evolutionText = t('stableEvolution');
+    let evolutionColor = 'text-gray-600';
+    if (data.length >= 2) {
+        const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+        const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+        if (secondHalf < firstHalf) {
+            evolutionText = t('positiveEvolution');
+            evolutionColor = 'text-green-600 font-bold';
+        } else if (secondHalf > firstHalf) {
+            evolutionText = t('negativeEvolution');
+            evolutionColor = 'text-red-600 font-bold';
+        }
+    }
+
+    const slotCount = {};
+    filtered.forEach(i => {
+        const slotLabel = `${i.slotRange} ${lang==='eu' ? i.slotEu : i.slotFr}`;
+        slotCount[slotLabel] = (slotCount[slotLabel] || 0) + 1;
+    });
+    
+    const slotLabels = Object.keys(slotCount);
+    const slotData = slotLabels.map(l => slotCount[l]);
+    const totalSlot = slotData.reduce((a,b)=>a+b, 0);
+    const percentages = slotData.map(v => ((v/totalSlot)*100).toFixed(1));
+    
+    let peakSlot = '';
+    if (slotLabels.length > 0) {
+        const maxIdx = slotData.indexOf(Math.max(...slotData));
+        peakSlot = `${slotLabels[maxIdx]} (${percentages[maxIdx]}%)`;
+    }
+
+    const triggerCount = {};
+    const behaviorCount = {};
+    filtered.forEach(i => {
+        i.triggers.forEach(t => triggerCount[t] = (triggerCount[t]||0)+1);
+        i.behaviors.forEach(b => behaviorCount[b] = (behaviorCount[b]||0)+1);
+    });
+    const topTriggers = Object.entries(triggerCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    const detailsHtml = `
+        <div class="mb-4">
+            <h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4>
+            <p class="${evolutionColor}">${evolutionText}</p>
+        </div>
+        ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
+        <div class="mb-2">
+            <h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4>
+            <ul class="list-disc pl-5">
+                ${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4>
+            <ul class="list-disc pl-5">
+                ${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}
+            </ul>
+        </div>
+    `;
+    document.getElementById('analysisDetails').innerHTML = detailsHtml;
+
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    if (myChart) myChart.destroy();
+    
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: lang==='eu' ? 'Gorabeherak' : 'Incidents',
+                data: data,
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                pointBackgroundColor: '#4f46e5'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const slotColors = [
+        '#4f46e5', '#0891b2', '#059669', '#ca8a04', '#ea580c',
+        '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
+    ];
+    const slotBgColors = slotLabels.map((_, i) => slotColors[i % slotColors.length]);
+
+    const slotCtx = document.getElementById('slotChart').getContext('2d');
+    if (mySlotChart) mySlotChart.destroy();
+    
+    mySlotChart = new Chart(slotCtx, {
+        type: 'doughnut',
+        data: {
+            labels: slotLabels,
+            datasets: [{
+                data: slotData,
+                backgroundColor: slotBgColors,
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const value = context.parsed;
+                            return `${context.label}: ${value} (${percentages[idx]}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const legend = document.getElementById('slotLegend');
+    legend.innerHTML = '';
+    slotLabels.forEach((label, i) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-2';
+        li.innerHTML = `
+            <span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${slotBgColors[i]}"></span>
+            <span class="flex-1">${label}</span>
+            <span class="font-semibold text-gray-700">${slotData[i]} (${percentages[i]}%)</span>
+        `;
+        legend.appendChild(li);
+    });
+}
+
+function renderStats(filtered) {
+  const byStudent = {};
+  filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
+  const sStudents = document.getElementById('statsStudents');
+  sStudents.innerHTML = '';
+  const sKeys = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]);
+  if (sKeys.length === 0) sStudents.innerHTML = `<li class="text-gray-400">—</li>`;
+  sKeys.forEach(k => {
+    const li = document.createElement('li');
+    li.className = 'flex justify-between';
+    li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byStudent[k]}</span>`;
+    sStudents.appendChild(li);
+  });
+  const totalLi = document.createElement('li');
+  totalLi.className = 'flex justify-between border-t pt-1 mt-1 font-bold';
+  totalLi.innerHTML = `<span>${t('total')}</span><span>${filtered.length}</span>`;
+  sStudents.appendChild(totalLi);
+
+  const byBeh = {};
+  filtered.forEach(i => i.behaviors.forEach(b => { byBeh[b]=(byBeh[b]||0)+1; }));
+  const sBeh = document.getElementById('statsBehaviors');
+  sBeh.innerHTML = '';
+  const bKeys = Object.keys(byBeh).sort((a,b)=>byBeh[b]-byBeh[a]);
+  if (bKeys.length === 0) sBeh.innerHTML = `<li class="text-gray-400">—</li>`;
+  bKeys.forEach(k => {
+    const li = document.createElement('li');
+    li.className = 'flex justify-between';
+    li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byBeh[k]}</span>`;
+    sBeh.appendChild(li);
+  });
+}
+
+/* ============ Filters ============ */
+['filterStudent','filterFrom','filterTo'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderHistory);
+});
+document.getElementById('clearFilters').onclick = () => {
+  document.getElementById('filterStudent').value = '';
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value = '';
+  renderHistory();
+};
+
+document.getElementById('clearAll').onclick = () => {
+  if (confirm(t('confirmClearAll'))) {
+    incidents = [];
+    saveIncidents();
+    renderHistory();
+  }
+};
+
+/* ============ CSV export ============ */
+document.getElementById('exportCsv').onclick = () => {
+  const filtered = getFilteredIncidents();
+  if (filtered.length === 0) { alert(t('noIncidents')); return; }
+  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
+  const header = ['Date','Élève','Matière','Créneau','Déclencheur','Comportement','Intervention','Notes'];
+  const rows = filtered.map(i => [
+    i.date.replace('T',' '),
+    i.student,
+    i.subject || '',
+    `${i.slotRange} - ${i.slotFr}`,
+    i.triggers.join('; '),
+    i.behaviors.join('; '),
+    i.interventions.join('; '),
+    i.notes
+  ].map(esc).join(','));
+  const csv = '\uFEFF' + header.join(',') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aesh_incidents_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+};
+
+/* ============ PDF Generation ============ */
+function renderPrintMeta() {
+  // Se genera en el PDF
+}
+
+document.getElementById('pdfBtn').onclick = () => {
+    document.getElementById('pdfModal').classList.remove('hidden');
+    document.getElementById('pdfModal').classList.add('flex');
+};
+
+function generatePDF(mode) {
+    document.getElementById('pdfModal').classList.add('hidden');
+    
+    const filtered = getFilteredIncidents();
+    const fStudent = document.getElementById('filterStudent').value;
+    const fFrom = document.getElementById('filterFrom').value;
+    const fTo = document.getElementById('filterTo').value;
+    
+    document.getElementById('printTitle').textContent = document.getElementById('mainTitle').value + " — " + t('report');
+    const period = (fFrom || fTo) ? `${t('period')}: ${fFrom || '...'} → ${fTo || '...'}` : `${t('period')}: ${t('allPeriod')}`;
+    document.getElementById('printMeta').textContent = `${t('generated')}: ${new Date().toLocaleString(lang==='eu'?'eu-ES':'fr-FR')} · ${period}`;
+
+    const byStudent = {};
+    filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
+    let statsHtml = '';
+    if (fStudent) {
+        statsHtml = `<div class="mb-2"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
+    } else {
+        statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
+            .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
+    }
+    statsHtml += `<div class="mt-2 pt-2 border-t text-sm font-bold">${t('total')}: ${filtered.length}</div>`;
+    document.getElementById('printStats').innerHTML = statsHtml;
+
+    const tableContainer = document.getElementById('printTableContainer');
+    const chartsContainer = document.getElementById('printChartsContainer');
+    
+    if (mode === 'full') {
+        tableContainer.classList.remove('hidden');
+        chartsContainer.classList.add('hidden');
+        
+        const tbody = document.getElementById('printTableBody');
+        tbody.innerHTML = '';
+        filtered.forEach(i => {
+            const tr = document.createElement('tr');
+            const td = (txt) => { const c = document.createElement('td'); c.className='border px-2 py-1 align-top'; c.textContent = txt; return c; };
+            tr.appendChild(td(i.date.replace('T',' ')));
+            tr.appendChild(td(i.student));
+            tr.appendChild(td(`${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`));
+            tr.appendChild(td(i.subject || '-'));
+            tr.appendChild(td(i.triggers.join(', ')));
+            tr.appendChild(td(i.behaviors.join(', ')));
+            tr.appendChild(td(i.interventions.join(', ')));
+            tr.appendChild(td(i.notes));
+            tbody.appendChild(tr);
+        });
+    } else {
+        tableContainer.classList.add('hidden');
+        chartsContainer.classList.remove('hidden');
+        
+        // Forzar que el contenedor sea visible para Chart.js
+        chartsContainer.style.display = 'block';
+
+        const ctx1 = document.getElementById('printChart1').getContext('2d');
+        const ctx2 = document.getElementById('printChart2').getContext('2d');
+        
+        if(window.printChart1) window.printChart1.destroy();
+        if(window.printChart2) window.printChart2.destroy();
+
+        const countsByDate = {};
+        [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
+        const labels = Object.keys(countsByDate);
+        const data = labels.map(l => countsByDate[l]);
+
+        window.printChart1 = new Chart(ctx1, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
+            options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+        });
+
+        const slotCount = {};
+        filtered.forEach(i => { const s = `${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`; slotCount[s]=(slotCount[s]||0)+1; });
+        const sLabels = Object.keys(slotCount);
+        const sData = sLabels.map(l=>slotCount[l]);
+
+        window.printChart2 = new Chart(ctx2, {
+            type: 'doughnut',
+            data: { labels: sLabels, datasets: [{ data: sData, backgroundColor: ['#4f46e5','#0891b2','#059669','#ca8a04','#ea580c'] }] },
+            options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Lanzar impresión con un pequeño retraso para asegurar renderizado
+    setTimeout(() => {
+        window.print();
+    }, 800);
+}
+
+/* ============ Tabs ============ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('border-b-2','border-indigo-600','text-indigo-700');
+      b.classList.add('text-gray-600');
+    });
+    btn.classList.remove('text-gray-600');
+    btn.classList.add('border-b-2','border-indigo-600','text-indigo-700');
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
+    if (btn.dataset.tab === 'history') renderHistory();
+  };
+});
+
+/* ============ Title Customization ============ */
+const titleInput = document.getElementById('mainTitle');
+const savedTitle = localStorage.getItem(KEY_TITLE);
+if(savedTitle) {
+    titleInput.value = savedTitle;
+}
+titleInput.addEventListener('input', (e) => {
+    localStorage.setItem(KEY_TITLE, e.target.value);
+});
+
+/* ============ Lang button ============ */
+document.getElementById('langBtn').onclick = () => {
+  lang = lang === 'eu' ? 'fr' : 'eu';
+  localStorage.setItem('aesh_lang', lang);
+  applyLang();
+};
+
+/* ============ Init & Service Worker ============ */
+function init() {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('incidentDate').value = now.toISOString().slice(0,16);
+  applyLang();
+}
+init();
+
+// Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registrado con éxito:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Fallo al registrar el ServiceWorker:', error);
+      });
+  });
+}
+</script>
+</body>
+</html>
