@@ -23,19 +23,19 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
   
-  /* ============ ESTILOS PARA IMPRESIÓN NATIVA ============ */
+  /* ============ ESTILOS PARA IMPRESIÓN (IDÉNTICO A LA V1 PERO MEJORADO) ============ */
   @media print {
-    body * { visibility: hidden; }
-    #printView, #printView * { visibility: visible; }
-    #printView { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: white !important; margin: 0; padding: 0; }
     
-    /* Forzar A4 Vertical */
     @page { size: A4 portrait; margin: 15mm; }
     
-    table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
-    th { background: #eee; }
+    .print-section { page-break-inside: avoid; }
+    #printChartsContainer { display: block !important; page-break-inside: avoid; }
+    #printTableContainer { page-break-before: always; }
     
+    /* Ajustar gráficos en A4 */
     .chart-grid { 
         display: grid; 
         grid-template-columns: 1fr 1fr; 
@@ -46,11 +46,13 @@
     .chart-box { 
         width: 100%; 
         height: 250px; 
-        position: relative;
-        overflow: hidden;
+        object-fit: contain;
     }
-    .page-break { page-break-before: always; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+    th { background: #eee; }
   }
+  .print-only { display: none; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -362,40 +364,40 @@
 </div>
 
 <!-- ========================================== -->
-<!-- VISTA DE IMPRESIÓN (Oculta en pantalla) -->
+<!-- VISTA DE IMPRESIÓN (Misma que la v1) -->
 <!-- ========================================== -->
-<div id="printView" style="display: none;">
-  <div class="text-center mb-6" style="margin-bottom: 20px;">
-    <h1 id="printTitle" style="font-size: 20px; font-weight: bold; margin: 0;">NereApp</h1>
-    <p id="printMeta" style="font-size: 12px; color: #666; margin-top: 5px;"></p>
+<div id="printView" class="print-only max-w-4xl mx-auto p-8">
+  <div class="text-center mb-6">
+    <h1 id="printTitle" class="text-2xl font-bold">NereApp — <span data-eu="Gorabeheren txostena" data-fr="Rapport d'incidents">Gorabeheren txostena</span></h1>
+    <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
   </div>
-  <div id="printStats" style="margin-bottom: 20px; font-size: 14px;"></div>
+  <div id="printStats" class="mb-6 text-sm"></div>
   
-  <!-- Contenedor de Gráficos -->
-  <div id="printChartsContainer" style="display: none; margin-bottom: 30px;">
-      <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px;">Eboluzioa eta Analisia / Évolution et Analyse</h2>
+  <!-- Gráficos convertidos a imágenes (IMG) -->
+  <div id="printChartsContainer" class="hidden mb-8">
+      <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="chart-grid">
-          <div class="chart-box"><canvas id="printChart1"></canvas></div>
-          <div class="chart-box"><canvas id="printChart2"></canvas></div>
-          <div class="chart-box"><canvas id="printChart3"></canvas></div>
-          <div class="chart-box"><canvas id="printChart4"></canvas></div>
+          <img id="printImg1" class="chart-box" src="" alt="Grafico 1" />
+          <img id="printImg2" class="chart-box" src="" alt="Grafico 2" />
+          <img id="printImg3" class="chart-box" src="" alt="Grafico 3" />
+          <img id="printImg4" class="chart-box" src="" alt="Grafico 4" />
       </div>
   </div>
 
-  <!-- Contenedor de Tabla -->
-  <div id="printTableContainer" style="display: none;">
-      <h2 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px; page-break-before: always;">Historikoa / Historique</h2>
-      <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px;">
+  <!-- Tabla de historico -->
+  <div id="printTableContainer" class="hidden">
+      <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
+      <table class="w-full border-collapse text-xs">
         <thead>
-          <tr style="background-color: #e5e7eb;">
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Data</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Ikaslea</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Ordutegia</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Ikasgaia</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Eragilea</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Jokabidea</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Esku-hartzea</th>
-            <th style="border: 1px solid #ccc; padding: 4px; text-align: left;">Oharrak</th>
+          <tr class="bg-gray-200">
+            <th class="border px-2 py-1 text-left"><span data-eu="Data" data-fr="Date">Data</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Ordutegia" data-fr="Créneau">Ordutegia</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Ikasgaia" data-fr="Matière">Ikasgaia</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Jokabidea" data-fr="Comportement">Jokabidea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Esku-hartzea" data-fr="Intervention">Esku-hartzea</span></th>
+            <th class="border px-2 py-1 text-left"><span data-eu="Oharrak" data-fr="Notes">Oharrak</span></th>
           </tr>
         </thead>
         <tbody id="printTableBody"></tbody>
@@ -409,7 +411,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '3.5.0'; 
+const APP_VERSION = '3.7.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1009,6 +1011,7 @@ function renderHistory() {
   renderStats(filtered);
 }
 
+// ESTA FUNCIÓN AHORA GENERA IMÁGENES EN LUGAR DE GRÁFICOS DIRECTOS
 function renderCharts() {
   const chartFilter = document.getElementById('chartStudentFilter');
   const selectedStudent = chartFilter.value;
@@ -1033,31 +1036,16 @@ function renderCharts() {
     return;
   }
 
+  // Datos
   const countsByDate = {};
   [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
   const labels = Object.keys(countsByDate);
   const data = labels.map(l => countsByDate[l]);
   
-  const ctx = document.getElementById('evolutionChart').getContext('2d');
-  if (myChart) myChart.destroy();
-  myChart = new Chart(ctx, {
-    type: 'line',
-    data: { labels: labels, datasets: [{ label: lang==='eu' ? 'Gorabeherak' : 'Incidents', data: data, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: '#4f46e5' }] },
-    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
-  });
-
   const slotCount = {};
   filtered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange] || 0) + 1; });
   const slotLabels = Object.keys(slotCount).sort();
   const slotData = slotLabels.map(l => slotCount[l]);
-  
-  const slotCtx = document.getElementById('slotChart').getContext('2d');
-  if (mySlotChart) mySlotChart.destroy();
-  mySlotChart = new Chart(slotCtx, {
-    type: 'bar',
-    data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-  });
 
   const blockCounts = { class: 0, break: 0, peri: 0 };
   filtered.forEach(i => {
@@ -1067,16 +1055,31 @@ function renderCharts() {
   });
   const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
   const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
-  const blockColors = ['#4f46e5', '#ca8a04', '#ea580c'];
-  
+
+  const subjectCount = {};
+  filtered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject] || 0) + 1; });
+  const subjLabels = Object.keys(subjectCount);
+  const subjData = subjLabels.map(l => subjectCount[l]);
+  const subjColors = subjLabels.map(s => getSubjectColor(s));
+
+  // Dibujar gráficos en pantalla
+  const ctx = document.getElementById('evolutionChart').getContext('2d');
+  if (myChart) myChart.destroy();
+  myChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Incidents', data: data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+  const slotCtx = document.getElementById('slotChart').getContext('2d');
+  if (mySlotChart) mySlotChart.destroy();
+  mySlotChart = new Chart(slotCtx, { type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
   const blockCtx = document.getElementById('blockChart').getContext('2d');
   if (myBlockChart) myBlockChart.destroy();
-  myBlockChart = new Chart(blockCtx, {
-    type: 'doughnut',
-    data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: blockColors, borderColor: '#ffffff', borderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-  });
+  myBlockChart = new Chart(blockCtx, { type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
 
+  const subjectCtx = document.getElementById('subjectChart').getContext('2d');
+  if (mySubjectChart) mySubjectChart.destroy();
+  mySubjectChart = new Chart(subjectCtx, { type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+  // Leyendas
   const blockLegend = document.getElementById('blockLegend');
   blockLegend.innerHTML = '';
   const totalBlock = blockData.reduce((a,b)=>a+b, 0);
@@ -1085,22 +1088,8 @@ function renderCharts() {
     const pct = ((blockData[i] / totalBlock) * 100).toFixed(1);
     const li = document.createElement('li');
     li.className = 'flex items-center gap-2';
-    li.innerHTML = `<span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${blockColors[i]}"></span><span class="flex-1">${label}</span><span class="font-semibold text-gray-700">${blockData[i]} (${pct}%)</span>`;
+    li.innerHTML = `<span class="inline-block w-3 h-3 rounded-sm flex-shrink-0" style="background:${['#4f46e5', '#ca8a04', '#ea580c'][i]}"></span><span class="flex-1">${label}</span><span class="font-semibold text-gray-700">${blockData[i]} (${pct}%)</span>`;
     blockLegend.appendChild(li);
-  });
-
-  const subjectCount = {};
-  filtered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject] || 0) + 1; });
-  const subjLabels = Object.keys(subjectCount);
-  const subjData = subjLabels.map(l => subjectCount[l]);
-  const subjColors = subjLabels.map(s => getSubjectColor(s));
-
-  const subjectCtx = document.getElementById('subjectChart').getContext('2d');
-  if (mySubjectChart) mySubjectChart.destroy();
-  mySubjectChart = new Chart(subjectCtx, {
-    type: 'doughnut',
-    data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors, borderColor: '#ffffff', borderWidth: 2 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
   });
 
   const subjectLegend = document.getElementById('subjectLegend');
@@ -1114,6 +1103,7 @@ function renderCharts() {
     subjectLegend.appendChild(li);
   });
 
+  // Análisis detallado
   let evolutionText = t('stableEvolution');
   let evolutionColor = 'text-gray-600';
   if (data.length >= 2) {
@@ -1122,13 +1112,11 @@ function renderCharts() {
     if (secondHalf < firstHalf) { evolutionText = t('positiveEvolution'); evolutionColor = 'text-green-600 font-bold'; }
     else if (secondHalf > firstHalf) { evolutionText = t('negativeEvolution'); evolutionColor = 'text-red-600 font-bold'; }
   }
-
   let peakSlot = '';
   if (slotLabels.length > 0) {
     const maxIdx = slotData.indexOf(Math.max(...slotData));
     peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} incidents)`;
   }
-
   const triggerCount = {};
   const behaviorCount = {};
   filtered.forEach(i => {
@@ -1144,6 +1132,21 @@ function renderCharts() {
     <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
     <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
   `;
+
+  // ==============================================
+  // CONVERTIR GRÁFICOS A IMÁGENES PARA EL PDF
+  // ==============================================
+  setTimeout(() => {
+    const img1 = document.getElementById('printImg1');
+    const img2 = document.getElementById('printImg2');
+    const img3 = document.getElementById('printImg3');
+    const img4 = document.getElementById('printImg4');
+    
+    if (img1 && myChart) img1.src = myChart.toBase64Image();
+    if (img2 && mySlotChart) img2.src = mySlotChart.toBase64Image();
+    if (img3 && myBlockChart) img3.src = myBlockChart.toBase64Image();
+    if (img4 && mySubjectChart) img4.src = mySubjectChart.toBase64Image();
+  }, 300);
 }
 
 function renderStats(filtered) {
@@ -1226,7 +1229,6 @@ document.getElementById('pdfBtn').onclick = () => {
 function generatePDF(mode) {
     document.getElementById('pdfModal').classList.add('hidden');
     
-    // 1. Preparar contenedores y datos
     const filtered = getFilteredIncidents();
     const fStudent = document.getElementById('filterStudent').value;
     const fFrom = document.getElementById('filterFrom').value;
@@ -1240,11 +1242,11 @@ function generatePDF(mode) {
     filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
     let statsHtml = '';
     if (fStudent) {
-        statsHtml = `<div style="margin-bottom: 10px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
+        statsHtml = `<div class="mb-2"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
     } else {
         statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]).map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
     }
-    statsHtml += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
+    statsHtml += `<div class="mt-2 pt-2 border-t text-sm font-bold">${t('total')}: ${filtered.length}</div>`;
     document.getElementById('printStats').innerHTML = statsHtml;
 
     const tableContainer = document.getElementById('printTableContainer');
@@ -1252,27 +1254,22 @@ function generatePDF(mode) {
     
     if (mode === 'full' || mode === 'all') {
         tableContainer.classList.remove('hidden');
-        tableContainer.style.display = 'block';
     } else {
         tableContainer.classList.add('hidden');
-        tableContainer.style.display = 'none';
     }
     
     if (mode === 'charts' || mode === 'all') {
         chartsContainer.classList.remove('hidden');
-        chartsContainer.style.display = 'block';
     } else {
         chartsContainer.classList.add('hidden');
-        chartsContainer.style.display = 'none';
     }
 
-    // 2. Rellenar tabla si toca
     if (mode === 'full' || mode === 'all') {
         const tbody = document.getElementById('printTableBody');
         tbody.innerHTML = '';
         filtered.forEach(i => {
             const tr = document.createElement('tr');
-            const td = (txt) => { const c = document.createElement('td'); c.style.border = '1px solid #ccc'; c.style.padding = '4px'; c.style.verticalAlign = 'top'; c.textContent = txt; return c; };
+            const td = (txt) => { const c = document.createElement('td'); c.className='border px-2 py-1 align-top'; c.textContent = txt; return c; };
             tr.appendChild(td(i.date.replace('T',' ')));
             tr.appendChild(td(i.student));
             tr.appendChild(td(`${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`));
@@ -1295,71 +1292,10 @@ function generatePDF(mode) {
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 
-    // 3. Si hay gráficos, prepararlos en el contenedor invisible
-    if (mode === 'charts' || mode === 'all') {
-        const chartStudentFilter = document.getElementById('chartStudentFilter');
-        const selectedStudent = chartStudentFilter.value || fStudent;
-        
-        if (!selectedStudent) {
-            alert(t('selectStudentForCharts'));
-            return;
-        }
-        
-        const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
-        
-        if (chartFiltered.length === 0) {
-            alert(t('noIncidents'));
-            return;
-        }
-
-        const countsByDate = {};
-        [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
-        const labels = Object.keys(countsByDate);
-        const data = labels.map(l => countsByDate[l]);
-
-        const slotCount = {};
-        chartFiltered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
-        const slotLabels = Object.keys(slotCount).sort();
-        const slotData = slotLabels.map(l=>slotCount[l]);
-
-        const blockCounts = { class: 0, break: 0, peri: 0 };
-        chartFiltered.forEach(i => {
-            if (i.slotEu === 'Klasea') blockCounts.class++;
-            else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
-            else blockCounts.peri++;
-        });
-        const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
-        const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
-
-        const subjectCount = {};
-        chartFiltered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
-        const subjLabels = Object.keys(subjectCount);
-        const subjData = subjLabels.map(l=>subjectCount[l]);
-        const subjColors = subjLabels.map(s=>getSubjectColor(s));
-
-        if(window.printChart1) window.printChart1.destroy();
-        if(window.printChart2) window.printChart2.destroy();
-        if(window.printChart3) window.printChart3.destroy();
-        if(window.printChart4) window.printChart4.destroy();
-
-        window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
-            type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-        });
-        window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
-            type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-        });
-        window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
-            type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-        });
-        window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
-            type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-        });
-    }
-
-    // 4. Esperar a que los gráficos se dibujen y lanzar la impresión nativa
+    // Imprimimos directamente (CSS @media print oculta la app y muestra el reporte)
     setTimeout(() => {
         window.print();
-    }, 500);
+    }, 200);
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
