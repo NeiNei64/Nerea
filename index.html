@@ -14,24 +14,31 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
+  /* ============ CSS PARA IMPRESIÓN ============ */
   @media print {
+    body { background: white !important; margin: 0; padding: 0; }
     .no-print { display: none !important; }
-    .print-only { display: block !important; }
-    body { background: white !important; }
     
-    /* Forzar que el contenedor de impresión sea visible y ocupe todo */
+    /* Ocultar todo lo que hay en el body excepto la vista de impresión */
+    body > *:not(#printView) { display: none !important; }
+    
+    /* Mostrar la vista de impresión */
     #printView { 
       display: block !important; 
-      position: absolute; 
-      left: 0; 
-      top: 0; 
+      position: relative; 
       width: 100%; 
-      background: white; 
-      z-index: 9999;
+      background: white;
     }
+    
+    /* Asegurar que los canvas se escalen bien en el papel */
     canvas { max-width: 100% !important; height: auto !important; }
+    
+    /* Evitar cortes de página en medio de un gráfico o tabla */
+    .page-break { page-break-inside: avoid; }
   }
   .print-only { display: none; }
+
+  /* Utilidades normales de la app */
   .editable-item { display: flex; align-items: center; justify-content: space-between; padding: 4px; border-radius: 4px; }
   .editable-item:hover { background-color: #f3f4f6; }
   .delete-icon { cursor: pointer; color: #ef4444; font-weight: bold; padding: 0 6px; font-size: 1.1em; }
@@ -43,8 +50,8 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
 
-<!-- Modal para añadir opciones personalizadas -->
-<div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+<!-- Modales -->
+<div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3" id="modalTitle">Aukera berria</h3>
     <input type="text" id="modalInput" class="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:border-indigo-500">
@@ -55,8 +62,7 @@
   </div>
 </div>
 
-<!-- Modal de selección de PDF -->
-<div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+<div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
     <div class="space-y-3">
@@ -79,10 +85,10 @@
   </div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4">
+<div class="max-w-6xl mx-auto p-4 no-print">
 
   <!-- Header -->
-  <header class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
+  <header class="flex flex-wrap justify-between items-center mb-6 gap-3">
     <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="NereApp - Eguneroko gorabeherak">
     <div class="flex gap-2 flex-wrap">
       <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
@@ -100,7 +106,7 @@
   </header>
 
   <!-- Tabs -->
-  <nav class="no-print flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
+  <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
     <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
     </button>
@@ -343,8 +349,10 @@
 
 </div>
 
-<!-- PRINT VIEW (Se rellena dinámicamente al imprimir) -->
-<div id="printView" class="print-only max-w-4xl mx-auto p-8">
+<!-- ========================================== -->
+<!-- VISTA DE IMPRESIÓN (Se oculta en pantalla) -->
+<!-- ========================================== -->
+<div id="printView" class="print-only max-w-4xl mx-auto p-8 bg-white absolute top-0 left-0 w-full z-[-1] opacity-0">
   <div class="text-center mb-6">
     <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
     <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
@@ -352,19 +360,20 @@
   <div id="printStats" class="mb-6 text-sm"></div>
   
   <!-- Contenedor de Gráficos -->
-  <div id="printChartsContainer" class="hidden mb-8">
+  <div id="printChartsContainer" class="mb-8 page-break hidden">
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
-      <div class="grid grid-cols-2 gap-4">
-          <div class="h-64"><canvas id="printChart1"></canvas></div>
-          <div class="h-64"><canvas id="printChart2"></canvas></div>
-          <div class="h-64"><canvas id="printChart3"></canvas></div>
-          <div class="h-64"><canvas id="printChart4"></canvas></div>
+      <div class="grid grid-cols-2 gap-4 mt-4">
+          <div class="h-64 relative"><canvas id="printChart1"></canvas></div>
+          <div class="h-64 relative"><canvas id="printChart2"></canvas></div>
+          <div class="h-64 relative"><canvas id="printChart3"></canvas></div>
+          <div class="h-64 relative"><canvas id="printChart4"></canvas></div>
       </div>
   </div>
 
   <!-- Contenedor de Tabla -->
-  <div id="printTableContainer">
-      <table class="w-full border-collapse text-xs">
+  <div id="printTableContainer" class="page-break hidden">
+      <h2 class="text-lg font-bold border-b mb-2 mt-4">Historikoa / Historique</h2>
+      <table class="w-full border-collapse text-xs mt-2">
         <thead>
           <tr class="bg-gray-200">
             <th class="border px-2 py-1 text-left"><span data-eu="Data" data-fr="Date">Data</span></th>
@@ -388,7 +397,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '2.4.0'; // Actualizado para forzar la limpieza
+const APP_VERSION = '2.6.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1202,19 +1211,59 @@ document.getElementById('pdfBtn').onclick = () => {
     document.getElementById('pdfModal').classList.add('flex');
 };
 
+// Se llama cada vez que se renderizan los gráficos en pantalla para actualizar los del PDF en la sombra
+function updatePrintCharts(studentData) {
+    if (!studentData || studentData.length === 0) return;
+    
+    const countsByDate = {};
+    [...studentData].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
+    const labels = Object.keys(countsByDate);
+    const data = labels.map(l => countsByDate[l]);
+
+    const slotCount = {};
+    studentData.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
+    const slotLabels = Object.keys(slotCount).sort();
+    const slotData = slotLabels.map(l=>slotCount[l]);
+
+    const blockCounts = { class: 0, break: 0, peri: 0 };
+    studentData.forEach(i => {
+        if (i.slotEu === 'Klasea') blockCounts.class++;
+        else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
+        else blockCounts.peri++;
+    });
+    const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
+    const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
+
+    const subjectCount = {};
+    studentData.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
+    const subjLabels = Object.keys(subjectCount);
+    const subjData = subjLabels.map(l=>subjectCount[l]);
+    const subjColors = subjLabels.map(s=>getSubjectColor(s));
+
+    // Destruir gráficos del PDF si ya existían
+    if(window.printChart1) window.printChart1.destroy();
+    if(window.printChart2) window.printChart2.destroy();
+    if(window.printChart3) window.printChart3.destroy();
+    if(window.printChart4) window.printChart4.destroy();
+
+    // Crear los gráficos del PDF
+    window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
+        type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+    });
+    window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
+        type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+    });
+    window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
+        type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+    });
+    window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
+        type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+
 function generatePDF(mode) {
     document.getElementById('pdfModal').classList.add('hidden');
     
-    // 1. Limpiar por completo la vista de impresión antes de empezar
-    document.getElementById('printChartsContainer').classList.add('hidden');
-    document.getElementById('printTableContainer').classList.add('hidden');
-    
-    if(window.printChart1) { window.printChart1.destroy(); window.printChart1 = null; }
-    if(window.printChart2) { window.printChart2.destroy(); window.printChart2 = null; }
-    if(window.printChart3) { window.printChart3.destroy(); window.printChart3 = null; }
-    if(window.printChart4) { window.printChart4.destroy(); window.printChart4 = null; }
-
-    // 2. Preparar los datos
     const filtered = getFilteredIncidents();
     const fStudent = document.getElementById('filterStudent').value;
     const fFrom = document.getElementById('filterFrom').value;
@@ -1235,11 +1284,31 @@ function generatePDF(mode) {
     statsHtml += `<div class="mt-2 pt-2 border-t text-sm font-bold">${t('total')}: ${filtered.length}</div>`;
     document.getElementById('printStats').innerHTML = statsHtml;
 
-    // 3. Configurar qué se va a imprimir y preparar los datos
+    const tableContainer = document.getElementById('printTableContainer');
+    const chartsContainer = document.getElementById('printChartsContainer');
+    
+    // CONTROL DE VISIBILIDAD
     if (mode === 'full' || mode === 'all') {
-        const tableContainer = document.getElementById('printTableContainer');
         tableContainer.classList.remove('hidden');
-        
+    } else {
+        tableContainer.classList.add('hidden');
+    }
+    
+    if (mode === 'charts' || mode === 'all') {
+        chartsContainer.classList.remove('hidden');
+        // Asegurarse de que los gráficos del PDF están actualizados con el alumno seleccionado
+        const chartStudentFilter = document.getElementById('chartStudentFilter');
+        const selectedStudent = chartStudentFilter.value || fStudent;
+        if (selectedStudent) {
+             const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
+             updatePrintCharts(chartFiltered);
+        }
+    } else {
+        chartsContainer.classList.add('hidden');
+    }
+
+    // RELLENAR TABLA
+    if (mode === 'full' || mode === 'all') {
         const tbody = document.getElementById('printTableBody');
         tbody.innerHTML = '';
         filtered.forEach(i => {
@@ -1256,78 +1325,6 @@ function generatePDF(mode) {
             tbody.appendChild(tr);
         });
     }
-    
-    if (mode === 'charts' || mode === 'all') {
-        const chartsContainer = document.getElementById('printChartsContainer');
-        chartsContainer.classList.remove('hidden');
-        
-        const chartStudentFilter = document.getElementById('chartStudentFilter');
-        const selectedStudent = chartStudentFilter.value || fStudent;
-        
-        if (!selectedStudent) {
-            alert(t('selectStudentForCharts'));
-            return; // Detiene la impresión si no hay alumno
-        }
-        
-        const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
-        
-        if (chartFiltered.length === 0) {
-            alert(t('noIncidents'));
-            return; // Detiene la impresión si no hay datos
-        }
-
-        // Generar datos para gráficos
-        const countsByDate = {};
-        [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
-        const labels = Object.keys(countsByDate);
-        const data = labels.map(l => countsByDate[l]);
-
-        const slotCount = {};
-        chartFiltered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
-        const slotLabels = Object.keys(slotCount).sort();
-        const slotData = slotLabels.map(l=>slotCount[l]);
-
-        const blockCounts = { class: 0, break: 0, peri: 0 };
-        chartFiltered.forEach(i => {
-            if (i.slotEu === 'Klasea') blockCounts.class++;
-            else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
-            else blockCounts.peri++;
-        });
-        const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
-        const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
-
-        const subjectCount = {};
-        chartFiltered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
-        const subjLabels = Object.keys(subjectCount);
-        const subjData = subjLabels.map(l=>subjectCount[l]);
-        const subjColors = subjLabels.map(s=>getSubjectColor(s));
-
-        // Dibujar gráficos (con un pequeño delay para asegurar que el canvas es visible)
-        setTimeout(() => {
-            window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
-                type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-            });
-            window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
-                type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-            });
-            window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
-                type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-            });
-            window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
-                type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-            });
-            
-            // 4. Ejecutar la impresión después de que los gráficos se hayan dibujado
-            setTimeout(() => {
-                window.print();
-            }, 500); // Medio segundo extra para que se pinten los gráficos
-        }, 100); // Esperar a que el DOM se actualice
-    } else {
-        // Si solo es la tabla, imprimir directamente
-        setTimeout(() => {
-            window.print();
-        }, 500);
-    }
 
     // Empaquetar datos de respaldo ocultos en el PDF
     const backupData = {
@@ -1339,6 +1336,11 @@ function generatePDF(mode) {
       title: document.getElementById('mainTitle').value
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
+
+    // Imprimir (con un pequeño delay para asegurar que el DOM se ha actualizado)
+    setTimeout(() => {
+        window.print();
+    }, 500);
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
