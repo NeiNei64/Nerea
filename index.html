@@ -29,7 +29,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
 
-<!-- Modal para añadir opciones personalizadas -->
+<!-- Modales -->
 <div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3" id="modalTitle">Aukera berria</h3>
@@ -41,7 +41,6 @@
   </div>
 </div>
 
-<!-- Modal de selección de PDF -->
 <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
@@ -152,7 +151,6 @@
         </div>
       </div>
 
-      <!-- Triggers -->
       <fieldset class="border rounded p-3">
         <legend class="px-2 text-sm font-semibold flex items-center gap-2">
           <span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span>
@@ -163,7 +161,6 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="triggersGroup"></div>
       </fieldset>
 
-      <!-- Behaviors -->
       <fieldset class="border rounded p-3">
         <legend class="px-2 text-sm font-semibold flex items-center gap-2">
           <span data-eu="Ikusitako jokabidea" data-fr="Comportement observé">Ikusitako jokabidea</span>
@@ -174,7 +171,6 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="behaviorsGroup"></div>
       </fieldset>
 
-      <!-- Interventions -->
       <fieldset class="border rounded p-3">
         <legend class="px-2 text-sm font-semibold flex items-center gap-2">
           <span data-eu="Ezarritako esku-hartzea" data-fr="Intervention appliquée">Ezarritako esku-hartzea</span>
@@ -206,9 +202,14 @@
   <!-- HISTORY TAB -->
   <section id="tab-history" class="tab-content hidden">
     <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
-      <h2 class="text-lg font-bold mb-3">
-        <span data-eu="Iragazkiak" data-fr="Filtres">Iragazkiak</span>
-      </h2>
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-bold">
+          <span data-eu="Iragazkiak" data-fr="Filtres">Iragazkiak</span>
+        </h2>
+        <button onclick="generatePDF('full')" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-semibold flex items-center gap-2">
+          🖨️ <span data-eu="Inprimatu Historia" data-fr="Imprimer l'historique">Inprimatu Historia</span>
+        </button>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label class="block text-xs font-semibold mb-1">
@@ -249,9 +250,14 @@
   <!-- CHARTS TAB -->
   <section id="tab-charts" class="tab-content hidden">
     <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
-      <h2 class="text-lg font-bold mb-3">
-        <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
-      </h2>
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-bold">
+          <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
+        </h2>
+        <button onclick="generatePDF('charts')" class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-semibold flex items-center gap-2">
+          🖨️ <span data-eu="Inprimatu Grafikoak" data-fr="Imprimer les graphiques">Inprimatu Grafikoak</span>
+        </button>
+      </div>
       <p class="text-sm text-gray-500 mb-4">
         <span data-eu="Ikasle bat hautatu behar da grafikoak ikusteko." data-fr="Sélectionnez un élève pour voir les graphiques.">Ikasle bat hautatu behar da grafikoak ikusteko.</span>
       </p>
@@ -377,7 +383,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '2.7.0'; 
+const APP_VERSION = '2.9.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1112,9 +1118,6 @@ function renderCharts() {
     <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
     <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
   `;
-
-  // Actualizar los gráficos del PDF ocultos con los mismos datos
-  updatePrintCharts(filtered);
 }
 
 function renderStats(filtered) {
@@ -1194,57 +1197,10 @@ document.getElementById('pdfBtn').onclick = () => {
     document.getElementById('pdfModal').classList.add('flex');
 };
 
-// Función que crea los gráficos del PDF de forma invisible
-function updatePrintCharts(studentData) {
-    if (!studentData || studentData.length === 0) return;
-    
-    const countsByDate = {};
-    [...studentData].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
-    const labels = Object.keys(countsByDate);
-    const data = labels.map(l => countsByDate[l]);
-
-    const slotCount = {};
-    studentData.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
-    const slotLabels = Object.keys(slotCount).sort();
-    const slotData = slotLabels.map(l=>slotCount[l]);
-
-    const blockCounts = { class: 0, break: 0, peri: 0 };
-    studentData.forEach(i => {
-        if (i.slotEu === 'Klasea') blockCounts.class++;
-        else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
-        else blockCounts.peri++;
-    });
-    const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
-    const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
-
-    const subjectCount = {};
-    studentData.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
-    const subjLabels = Object.keys(subjectCount);
-    const subjData = subjLabels.map(l=>subjectCount[l]);
-    const subjColors = subjLabels.map(s=>getSubjectColor(s));
-
-    if(window.printChart1) window.printChart1.destroy();
-    if(window.printChart2) window.printChart2.destroy();
-    if(window.printChart3) window.printChart3.destroy();
-    if(window.printChart4) window.printChart4.destroy();
-
-    window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
-        type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-    });
-    window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
-        type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
-    });
-    window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
-        type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-    });
-    window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
-        type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
-    });
-}
-
 function generatePDF(mode) {
     document.getElementById('pdfModal').classList.add('hidden');
     
+    // 1. Preparar contenedores y datos
     const filtered = getFilteredIncidents();
     const fStudent = document.getElementById('filterStudent').value;
     const fFrom = document.getElementById('filterFrom').value;
@@ -1279,12 +1235,12 @@ function generatePDF(mode) {
     if (mode === 'charts' || mode === 'all') {
         chartsContainer.classList.remove('hidden');
         chartsContainer.style.display = 'block';
-        // Los gráficos ya se han renderizado invisibles al seleccionar al alumno
     } else {
         chartsContainer.classList.add('hidden');
         chartsContainer.style.display = 'none';
     }
 
+    // 2. Rellenar tabla si toca
     if (mode === 'full' || mode === 'all') {
         const tbody = document.getElementById('printTableBody');
         tbody.innerHTML = '';
@@ -1313,33 +1269,112 @@ function generatePDF(mode) {
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 
-    // MAGIA: Copiamos la vista de impresión a un iframe temporal y lo imprimimos
-    // Esto evita TODOS los problemas de caché y visualización en móviles.
-    const printContent = document.getElementById('printView').innerHTML;
-    const originalContent = document.body.innerHTML;
-
-    document.body.innerHTML = printContent;
+    // 3. Copiar el HTML de impresión a un contenedor temporal
+    const printHTML = document.getElementById('printView').innerHTML;
     
-    // Añadir estilos básicos para la impresión
-    const style = document.createElement('style');
-    style.innerHTML = `
-        body { font-family: Arial, sans-serif; background: white; color: black; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
-        th { background: #eee; }
-        h1 { font-size: 24px; margin: 0; }
-        h2 { font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
-        canvas { max-width: 100% !important; height: auto !important; }
-        .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    `;
-    document.head.appendChild(style);
+    // 4. Crear una nueva ventana para imprimir (evita bloqueos de caché)
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>NereApp - Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; background: white; color: black; padding: 20px; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+                th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+                th { background: #eee; }
+                h1 { font-size: 24px; margin: 0; }
+                h2 { font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px; }
+                .grid-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                .chart-container { width: 100%; height: 250px; margin-bottom: 20px; }
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+        </head>
+        <body>
+            ${printHTML}
+        </body>
+        </html>
+    `);
 
-    setTimeout(() => {
-        window.print();
-        // Restaurar la app después de imprimir
-        document.body.innerHTML = originalContent;
-        window.location.reload(); // Recargar para restaurar los event listeners
-    }, 500);
+    // 5. Si hay gráficos, dibujarlos en la nueva ventana y luego imprimir
+    if (mode === 'charts' || mode === 'all') {
+        printWindow.document.close();
+        
+        // Esperamos a que cargue el script de Chart.js
+        setTimeout(() => {
+            const chartStudentFilter = document.getElementById('chartStudentFilter');
+            const selectedStudent = chartStudentFilter.value || fStudent;
+            
+            if (!selectedStudent) {
+                alert(t('selectStudentForCharts'));
+                printWindow.close();
+                return;
+            }
+            
+            const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
+            
+            if (chartFiltered.length === 0) {
+                alert(t('noIncidents'));
+                printWindow.close();
+                return;
+            }
+
+            const countsByDate = {};
+            [...chartFiltered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
+            const labels = Object.keys(countsByDate);
+            const data = labels.map(l => countsByDate[l]);
+
+            const slotCount = {};
+            chartFiltered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
+            const slotLabels = Object.keys(slotCount).sort();
+            const slotData = slotLabels.map(l=>slotCount[l]);
+
+            const blockCounts = { class: 0, break: 0, peri: 0 };
+            chartFiltered.forEach(i => {
+                if (i.slotEu === 'Klasea') blockCounts.class++;
+                else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
+                else blockCounts.peri++;
+            });
+            const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
+            const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
+
+            const subjectCount = {};
+            chartFiltered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
+            const subjLabels = Object.keys(subjectCount);
+            const subjData = subjLabels.map(l=>subjectCount[l]);
+            const subjColors = subjLabels.map(s=>getSubjectColor(s));
+
+            // Dibujar en la nueva ventana
+            new Chart(printWindow.document.getElementById('printChart1').getContext('2d'), {
+                type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+            });
+            new Chart(printWindow.document.getElementById('printChart2').getContext('2d'), {
+                type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+            });
+            new Chart(printWindow.document.getElementById('printChart3').getContext('2d'), {
+                type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+            });
+            new Chart(printWindow.document.getElementById('printChart4').getContext('2d'), {
+                type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Lanzar la impresión
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close(); // Cerrar después de imprimir
+            }, 800); // Damos tiempo a que se pinten los gráficos
+
+        }, 1000); // Esperar a que cargue la librería
+    } else {
+        // Si solo es la tabla, imprimir directamente
+        printWindow.document.close();
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    }
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
