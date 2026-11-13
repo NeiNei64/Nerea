@@ -23,30 +23,44 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
   
-  /* ============ ESTILOS PARA IMPRESIÓN ============ */
+  /* ============ ESTILOS PARA IMPRESIÓN A4 ============ */
   @media print {
     .no-print { display: none !important; }
     .print-only { display: block !important; }
     body { background: white !important; margin: 0; padding: 0; }
     
+    /* Configurar la hoja A4 vertical */
     @page { size: A4 portrait; margin: 15mm; }
     
-    /* Forzar que el contenedor de los gráficos se vea */
+    /* Contenedor de gráficos: 2 columnas exactas */
     #printChartsContainer { display: block !important; page-break-inside: avoid; }
-    #printTableContainer { display: block !important; page-break-before: always; }
-    
     .chart-grid { 
         display: grid; 
         grid-template-columns: 1fr 1fr; 
-        gap: 15px; 
+        gap: 20px; 
         width: 100%; 
         margin-top: 10px;
     }
+    
+    /* LA CLAVE: Ajustar los canvas para que no se corten */
     .chart-box { 
         width: 100%; 
-        height: 250px; 
-        object-fit: contain;
+        height: 250px; /* Altura fija para que quepan 2 filas en A4 */
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
+    .chart-box canvas {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain; /* Evita que se estire y se corte */
+    }
+
+    /* Tabla */
+    #printTableContainer { display: block !important; page-break-before: always; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
     th { background: #eee; }
@@ -372,14 +386,14 @@
   </div>
   <div id="printStats" class="mb-6 text-sm"></div>
   
-  <!-- Contenedor de Gráficos (Ahora usa IMG) -->
+  <!-- Contenedor de Gráficos -->
   <div id="printChartsContainer" class="hidden mb-8">
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="chart-grid">
-          <img id="printImg1" class="chart-box" src="" alt="Grafico 1" />
-          <img id="printImg2" class="chart-box" src="" alt="Grafico 2" />
-          <img id="printImg3" class="chart-box" src="" alt="Grafico 3" />
-          <img id="printImg4" class="chart-box" src="" alt="Grafico 4" />
+          <div class="chart-box"><canvas id="printChart1"></canvas></div>
+          <div class="chart-box"><canvas id="printChart2"></canvas></div>
+          <div class="chart-box"><canvas id="printChart3"></canvas></div>
+          <div class="chart-box"><canvas id="printChart4"></canvas></div>
       </div>
   </div>
 
@@ -410,7 +424,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '3.9.0'; 
+const APP_VERSION = '3.10.0'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1127,18 +1141,57 @@ function renderCharts() {
     <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
   `;
 
-  // Conversión a imágenes
-  setTimeout(() => {
-    const img1 = document.getElementById('printImg1');
-    const img2 = document.getElementById('printImg2');
-    const img3 = document.getElementById('printImg3');
-    const img4 = document.getElementById('printImg4');
+  // Actualizamos los gráficos del PDF (solo si no estamos imprimiendo, para no romper la vista)
+  if (!window.isPrinting) {
+      updatePrintCharts(filtered);
+  }
+}
+
+function updatePrintCharts(studentData) {
+    if (!studentData || studentData.length === 0) return;
     
-    if (img1 && myChart) img1.src = myChart.toBase64Image();
-    if (img2 && mySlotChart) img2.src = mySlotChart.toBase64Image();
-    if (img3 && myBlockChart) img3.src = myBlockChart.toBase64Image();
-    if (img4 && mySubjectChart) img4.src = mySubjectChart.toBase64Image();
-  }, 100);
+    const countsByDate = {};
+    [...studentData].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
+    const labels = Object.keys(countsByDate);
+    const data = labels.map(l => countsByDate[l]);
+
+    const slotCount = {};
+    studentData.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange]||0)+1; });
+    const slotLabels = Object.keys(slotCount).sort();
+    const slotData = slotLabels.map(l=>slotCount[l]);
+
+    const blockCounts = { class: 0, break: 0, peri: 0 };
+    studentData.forEach(i => {
+        if (i.slotEu === 'Klasea') blockCounts.class++;
+        else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
+        else blockCounts.peri++;
+    });
+    const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
+    const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
+
+    const subjectCount = {};
+    studentData.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
+    const subjLabels = Object.keys(subjectCount);
+    const subjData = subjLabels.map(l=>subjectCount[l]);
+    const subjColors = subjLabels.map(s=>getSubjectColor(s));
+
+    if(window.printChart1) window.printChart1.destroy();
+    if(window.printChart2) window.printChart2.destroy();
+    if(window.printChart3) window.printChart3.destroy();
+    if(window.printChart4) window.printChart4.destroy();
+
+    window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
+        type: 'line', data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+    });
+    window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
+        type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, animation: false, plugins: { legend: { display: false } } }
+    });
+    window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
+        type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'] }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+    });
+    window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
+        type: 'doughnut', data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors }] }, options: { responsive: true, animation: false, plugins: { legend: { position: 'bottom' } } }
+    });
 }
 
 function renderStats(filtered) {
@@ -1220,6 +1273,7 @@ document.getElementById('pdfBtn').onclick = () => {
 
 function generatePDF(mode) {
     document.getElementById('pdfModal').classList.add('hidden');
+    window.isPrinting = true;
     
     const filtered = getFilteredIncidents();
     const fStudent = document.getElementById('filterStudent').value;
@@ -1288,7 +1342,33 @@ function generatePDF(mode) {
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 
-    window.print();
+    // Si el modo incluye gráficos, nos aseguramos de que estén dibujados en el contenedor de impresión
+    if (mode === 'charts' || mode === 'all') {
+        const chartStudentFilter = document.getElementById('chartStudentFilter');
+        const selectedStudent = chartStudentFilter.value || fStudent;
+        
+        if (!selectedStudent) {
+            alert(t('selectStudentForCharts'));
+            window.isPrinting = false;
+            return;
+        }
+        
+        const chartFiltered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
+        
+        if (chartFiltered.length === 0) {
+            alert(t('noIncidents'));
+            window.isPrinting = false;
+            return;
+        }
+
+        // Forzamos el redibujado de los gráficos del PDF antes de imprimir
+        updatePrintCharts(chartFiltered);
+    }
+
+    setTimeout(() => {
+        window.print();
+        window.isPrinting = false;
+    }, 300);
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
