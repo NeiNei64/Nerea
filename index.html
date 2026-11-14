@@ -35,6 +35,7 @@
     color: #111;
   }
 
+  /* Salto de página SOLO para secciones concretas, no por defecto */
   .page-break-before { page-break-before: always; break-before: page; }
 
   .chart-grid {
@@ -91,6 +92,7 @@
       font-size: 8px; 
       margin-top: 5px; 
       page-break-inside: auto;
+      table-layout: fixed; /* IMPORTANTE: fija el ancho de las columnas */
   }
   th, td { 
       border: 1px solid #999; 
@@ -98,7 +100,7 @@
       text-align: left; 
       vertical-align: top;
       word-wrap: break-word;
-      overflow-wrap: anywhere; /* Más agresivo que break-word */
+      overflow-wrap: anywhere;
       white-space: normal;
       line-height: 1.2;
   }
@@ -109,14 +111,14 @@
       padding: 4px 3px;
   }
   
-  /* Reparto de anchos: Ordutegia reducida, Oharrak ampliada */
+  /* Reparto de anchos */
   table colgroup col:nth-child(1) { width: 11%; } /* Data */
-  table colgroup col:nth-child(2) { width: 11%; } /* Ordutegia (solo hora) */
-  table colgroup col:nth-child(3) { width: 7%; }  /* Ik. (3 letras) */
+  table colgroup col:nth-child(2) { width: 11%; } /* Ordua */
+  table colgroup col:nth-child(3) { width: 7%; }  /* Ik. */
   table colgroup col:nth-child(4) { width: 18%; } /* Eragilea */
   table colgroup col:nth-child(5) { width: 16%; } /* Jokabidea */
   table colgroup col:nth-child(6) { width: 16%; } /* Esku-hartzea */
-  table colgroup col:nth-child(7) { width: 21%; } /* Oharrak (más ancha) */
+  table colgroup col:nth-child(7) { width: 21%; } /* Oharrak */
 
   tr { page-break-inside: avoid; }
   
@@ -204,7 +206,7 @@
     </div>
   </header>
 
-  <!-- Tabs -->
+  <!-- Tabs (se eliminan los botones de imprimir) -->
   <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
     <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
@@ -326,9 +328,7 @@
         <h2 class="text-lg font-bold">
           <span data-eu="Iragazkiak" data-fr="Filtres">Iragazkiak</span>
         </h2>
-        <button onclick="generatePDF('full')" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-semibold flex items-center gap-2">
-          🖨️ <span data-eu="Inprimatu Historia" data-fr="Imprimer l'historique">Inprimatu Historia</span>
-        </button>
+        <!-- Botón "Inprimatu Historia" ELIMINADO -->
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
@@ -374,9 +374,7 @@
         <h2 class="text-lg font-bold">
           <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
         </h2>
-        <button onclick="generatePDF('charts')" class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-semibold flex items-center gap-2">
-          🖨️ <span data-eu="Inprimatu Grafikoak" data-fr="Imprimer les graphiques">Inprimatu Grafikoak</span>
-        </button>
+        <!-- Botón "Inprimatu Grafikoak" ELIMINADO -->
       </div>
       <p class="text-sm text-gray-500 mb-4">
         <span data-eu="Ikasle bat hautatu behar da grafikoak ikusteko." data-fr="Sélectionnez un élève pour voir les graphiques.">Ikasle bat hautatu behar da grafikoak ikusteko.</span>
@@ -459,13 +457,12 @@
 <!-- VISTA DE EXPORTACIÓN (Oculta para html2pdf) -->
 <!-- ========================================== -->
 <div id="printView">
-  <div class="text-center mb-6">
-    <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
-    <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
-  </div>
-  
-  <!-- 1. GRÁFICOS -->
+  <!-- GRÁFICOS -->
   <div id="printChartsContainer" class="hidden mb-8">
+      <div class="text-center mb-6">
+        <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
+        <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
+      </div>
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       
       <div class="chart-grid">
@@ -488,17 +485,15 @@
       </div>
   </div>
 
-  <!-- 2. ANÁLISIS -->
+  <!-- ANÁLISIS -->
   <div id="printAnalysisContainer" class="hidden">
       <div class="page-break-before"></div>
       <h2 class="text-lg font-bold border-b mb-4">Analisia / Analyse</h2>
       <div id="printAnalysisDetails" class="text-sm space-y-2"></div>
   </div>
 
-  <!-- 3. TABLA -->
+  <!-- TABLA -->
   <div id="printTableContainer" class="hidden">
-      <div id="forceTablePageBreak" class="page-break-before"></div>
-      
       <div id="printStatsInline"></div>
       
       <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
@@ -535,7 +530,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.1.7';
+const APP_VERSION = '4.1.8';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1335,57 +1330,57 @@ function updatePrintCharts(studentData) {
 
 function renderPrintTable(filtered) {
     const tbody = document.getElementById('printTableBody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = ''; // Limpiar tabla
+
     if (!filtered || filtered.length === 0) return;
-    
+
     const usedSubjects = new Set();
-    
+    const langLocal = lang; // Capturamos para uso interno
+
     filtered.forEach(i => {
-        const tr = document.createElement('tr');
-        
+        const tr = document.createElement('tr'); // Crear fila
         // 1. Data (solo fecha)
         const tdDate = document.createElement('td');
-        tdDate.className = 'border px-2 py-1 align-top';
-        tdDate.textContent = i.date.slice(0, 10);
+        tdDate.textContent = i.date.slice(0, 10); 
         tr.appendChild(tdDate);
-        
-        // 2. Ordua (SOLO HORA, sin bloque)
+
+        // 2. Ordua (solo hora)
         const tdSlot = document.createElement('td');
-        tdSlot.className = 'border px-2 py-1 align-top';
-        tdSlot.textContent = i.slotRange; // "09:00-10:20"
+        tdSlot.textContent = i.slotRange;
         tr.appendChild(tdSlot);
-        
-        // 3. Ik. (3 letras, coloreada)
+
+        // 3. Ik. (3 letras)
         const tdSubj = document.createElement('td');
-        tdSubj.className = 'border px-2 py-1 align-top subject-cell';
         if (i.subject) {
             const color = getSubjectColor(i.subject);
             tdSubj.style.backgroundColor = color;
-            tdSubj.textContent = getSubjectShort(i.subject);
+            tdSubj.style.color = 'white';
+            tdSubj.style.fontWeight = 'bold';
+            tdSubj.style.textAlign = 'center';
+            tdSubj.textContent = i.subject.substring(0, 3);
             usedSubjects.add(i.subject);
         } else {
             tdSubj.textContent = '-';
         }
         tr.appendChild(tdSubj);
-        
+
         // 4-6. Eragilea, Jokabidea, Esku-hartzea
         ['triggers', 'behaviors', 'interventions'].forEach(key => {
             const td = document.createElement('td');
-            td.className = 'border px-2 py-1 align-top';
             td.textContent = i[key].join(', ');
             tr.appendChild(td);
         });
-        
+
         // 7. Oharrak
         const tdNotes = document.createElement('td');
-        tdNotes.className = 'border px-2 py-1 align-top';
         tdNotes.textContent = i.notes || '';
         tr.appendChild(tdNotes);
         
-        tbody.appendChild(tr);
+        // Añadir la fila completa al cuerpo
+        tbody.appendChild(tr); 
     });
-    
-    // Generar leyenda de colores
+
+    // Generar leyenda
     const legendContainer = document.getElementById('subjectLegendInline');
     legendContainer.innerHTML = '';
     if (usedSubjects.size > 0) {
@@ -1514,11 +1509,13 @@ function generatePDF(mode) {
     const analysisContainer = document.getElementById('printAnalysisContainer');
     const forceTablePageBreak = document.getElementById('forceTablePageBreak');
 
+    // 1. Ocultar TODO primero
     tableContainer.classList.add('hidden');
     chartsContainer.classList.add('hidden');
     analysisContainer.classList.add('hidden');
-    forceTablePageBreak.classList.add('hidden');
+    if (forceTablePageBreak) forceTablePageBreak.remove(); // Eliminar el salto de página temporal
 
+    // 2. Mostrar lo que toque según el modo
     if (includeHistory) {
         tableContainer.classList.remove('hidden');
         renderPrintTable(filtered);
@@ -1550,16 +1547,24 @@ function generatePDF(mode) {
 
         updatePrintCharts(chartData);
         
+        // Si también hay historia, insertamos un salto de página antes de la tabla
         if (includeHistory) {
-            forceTablePageBreak.classList.remove('hidden');
+            // Buscar donde insertar el salto (antes del contenedor de la tabla)
+            const tableTitle = document.createElement('div');
+            tableTitle.className = 'page-break-before';
+            tableContainer.insertBefore(tableTitle, tableContainer.firstChild);
         }
 
+        // Dar tiempo a que Chart.js pinte
         setTimeout(() => {
             generarPDFconLibreria(mode);
         }, 300);
 
     } else {
-        generarPDFconLibreria(mode);
+        // Solo historia. No hay gráficos. Guardar directamente
+        setTimeout(() => {
+            generarPDFconLibreria(mode);
+        }, 100);
     }
 }
 
@@ -1574,14 +1579,19 @@ function generarPDFconLibreria(mode) {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    // Mostrar temporalmente la vista
     printView.style.display = 'block'; 
 
     html2pdf().set(opt).from(printView).save().then(() => {
+        // Limpiar
         printView.style.display = 'none';
         document.getElementById('printChartsContainer').classList.add('hidden');
         document.getElementById('printTableContainer').classList.add('hidden');
         document.getElementById('printAnalysisContainer').classList.add('hidden');
-        document.getElementById('forceTablePageBreak').classList.add('hidden');
+        
+        // Eliminar cualquier salto de página que hayamos añadido dinámicamente
+        const forcedBreak = document.querySelector('#printTableContainer > .page-break-before');
+        if (forcedBreak) forcedBreak.remove();
     });
 }
 
