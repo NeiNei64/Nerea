@@ -98,7 +98,7 @@
       text-align: left; 
       vertical-align: top;
       word-wrap: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere; /* Más agresivo que break-word */
       white-space: normal;
       line-height: 1.2;
   }
@@ -109,18 +109,17 @@
       padding: 4px 3px;
   }
   
-  /* Reparto de anchos: ya no hay "Ikaslea" */
+  /* Reparto de anchos: Ordutegia reducida, Oharrak ampliada */
   table colgroup col:nth-child(1) { width: 11%; } /* Data */
-  table colgroup col:nth-child(2) { width: 13%; } /* Ordutegia */
-  table colgroup col:nth-child(3) { width: 7%; }  /* Ikasgaia (3 letras) */
-  table colgroup col:nth-child(4) { width: 17%; } /* Eragilea */
+  table colgroup col:nth-child(2) { width: 11%; } /* Ordutegia (solo hora) */
+  table colgroup col:nth-child(3) { width: 7%; }  /* Ik. (3 letras) */
+  table colgroup col:nth-child(4) { width: 18%; } /* Eragilea */
   table colgroup col:nth-child(5) { width: 16%; } /* Jokabidea */
   table colgroup col:nth-child(6) { width: 16%; } /* Esku-hartzea */
-  table colgroup col:nth-child(7) { width: 20%; } /* Oharrak (más espacio) */
+  table colgroup col:nth-child(7) { width: 21%; } /* Oharrak (más ancha) */
 
   tr { page-break-inside: avoid; }
   
-  /* Celdas de asignaturas coloreadas */
   .subject-cell {
       font-weight: bold;
       color: white;
@@ -128,7 +127,6 @@
       border-radius: 3px;
   }
 
-  /* Leyenda de colores debajo de la tabla */
   #subjectLegendInline {
       margin-top: 10px;
       font-size: 9px;
@@ -517,7 +515,7 @@
         <thead>
           <tr>
             <th>Data</th>
-            <th>Ordutegia</th>
+            <th>Ordua</th>
             <th>Ik.</th>
             <th>Eragilea</th>
             <th>Jokabidea</th>
@@ -528,7 +526,6 @@
         <tbody id="printTableBody"></tbody>
       </table>
       
-      <!-- Leyenda de colores de asignaturas -->
       <div id="subjectLegendInline"></div>
   </div>
 
@@ -538,7 +535,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.1.6';
+const APP_VERSION = '4.1.7';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -606,7 +603,7 @@ const I18N = {
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
     selectStudentForCharts: "Ikasle bat hautatu behar da grafikoak ikusteko.",
-    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honetakoekin?",
+    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honekin?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
     restoreError: "Errorea fitxategia irakurtzean.",
     noDataInPdf: "Ez da daturik aurkitu PDFan. Ziurtatu PDF hau aplikazio honekin sortu dela.",
@@ -703,7 +700,6 @@ function getSubjectColor(subject) {
 
 function getSubjectShort(subject) {
   if (!subject) return '-';
-  // Devuelve las 3 primeras letras
   return subject.substring(0, 3);
 }
 
@@ -1342,25 +1338,24 @@ function renderPrintTable(filtered) {
     tbody.innerHTML = '';
     if (!filtered || filtered.length === 0) return;
     
-    // Usamos un Set para recoger las asignaturas usadas en esta tabla (para la leyenda)
     const usedSubjects = new Set();
     
     filtered.forEach(i => {
         const tr = document.createElement('tr');
         
-        // 1. Data (solo fecha, sin hora)
+        // 1. Data (solo fecha)
         const tdDate = document.createElement('td');
         tdDate.className = 'border px-2 py-1 align-top';
-        tdDate.textContent = i.date.slice(0, 10); // "2026-11-10"
+        tdDate.textContent = i.date.slice(0, 10);
         tr.appendChild(tdDate);
         
-        // 2. Ordutegia
+        // 2. Ordua (SOLO HORA, sin bloque)
         const tdSlot = document.createElement('td');
         tdSlot.className = 'border px-2 py-1 align-top';
-        tdSlot.textContent = `${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`;
+        tdSlot.textContent = i.slotRange; // "09:00-10:20"
         tr.appendChild(tdSlot);
         
-        // 3. Ikasgaia (3 letras, coloreada)
+        // 3. Ik. (3 letras, coloreada)
         const tdSubj = document.createElement('td');
         tdSubj.className = 'border px-2 py-1 align-top subject-cell';
         if (i.subject) {
@@ -1390,7 +1385,7 @@ function renderPrintTable(filtered) {
         tbody.appendChild(tr);
     });
     
-    // Generar leyenda de colores de asignaturas usadas
+    // Generar leyenda de colores
     const legendContainer = document.getElementById('subjectLegendInline');
     legendContainer.innerHTML = '';
     if (usedSubjects.size > 0) {
@@ -1519,7 +1514,6 @@ function generatePDF(mode) {
     const analysisContainer = document.getElementById('printAnalysisContainer');
     const forceTablePageBreak = document.getElementById('forceTablePageBreak');
 
-    // Resetear visibilidad
     tableContainer.classList.add('hidden');
     chartsContainer.classList.add('hidden');
     analysisContainer.classList.add('hidden');
@@ -1556,7 +1550,6 @@ function generatePDF(mode) {
 
         updatePrintCharts(chartData);
         
-        // Forzar salto de página para la tabla si también se incluye historia
         if (includeHistory) {
             forceTablePageBreak.classList.remove('hidden');
         }
