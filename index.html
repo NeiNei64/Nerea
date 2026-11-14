@@ -22,10 +22,10 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
-  
-  /* ============ ESTILOS PARA LA VISTA DE EXPORTACIÓN ============ */
+
+  /* ============ VISTA DE EXPORTACIÓN ============ */
   #printView {
-    display: none; 
+    display: none;
     background: white;
     width: 180mm;
     padding: 0;
@@ -35,7 +35,7 @@
     color: #111;
   }
 
-  /* Salto de página SOLO para secciones concretas, no por defecto */
+  /* Salto de página dinámico, se añade solo cuando hace falta */
   .page-break-before { page-break-before: always; break-before: page; }
 
   .chart-grid {
@@ -49,7 +49,7 @@
 
   .chart-box {
       width: 100%;
-      height: 290px; 
+      height: 290px;
       display: block;
       position: relative;
       page-break-inside: avoid;
@@ -70,14 +70,15 @@
       color: #374151;
   }
 
-  /* ============ TABLA ADAPTADA A4 ============ */
+  /* ==== TABLA ADAPTADA A4 CON ANCHOS EN MM ==== */
   #printTableContainer {
     margin: 0;
     padding: 0;
     page-break-inside: auto;
+    width: 180mm;
   }
 
-  #printStatsInline {
+  #printTableContainer #printStatsInline {
     margin-bottom: 12px;
     padding: 8px;
     background: #f9fafb;
@@ -86,48 +87,44 @@
     font-size: 10px;
   }
 
-  table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      font-size: 8px; 
-      margin-top: 5px; 
-      page-break-inside: auto;
-      table-layout: fixed; /* IMPORTANTE: fija el ancho de las columnas */
+  #printTableContainer table {
+      width: 180mm;
+      border-collapse: collapse;
+      font-size: 7px;
+      margin-top: 5px;
+      table-layout: fixed; /* CRÍTICO: fija el ancho */
   }
-  th, td { 
-      border: 1px solid #999; 
-      padding: 3px; 
-      text-align: left; 
+  #printTableContainer th,
+  #printTableContainer td {
+      border: 1px solid #999;
+      padding: 2px 3px;
+      text-align: left;
       vertical-align: top;
       word-wrap: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
       line-height: 1.2;
+      box-sizing: border-box;
+      overflow: hidden; /* Evita que la celda crezca más allá de su ancho */
   }
-  th { 
-      background: #e5e7eb; 
-      font-weight: bold; 
-      font-size: 8px;
+  #printTableContainer th {
+      background: #e5e7eb;
+      font-weight: bold;
+      font-size: 7px;
       padding: 4px 3px;
   }
-  
-  /* Reparto de anchos */
-  table colgroup col:nth-child(1) { width: 11%; } /* Data */
-  table colgroup col:nth-child(2) { width: 11%; } /* Ordua */
-  table colgroup col:nth-child(3) { width: 7%; }  /* Ik. */
-  table colgroup col:nth-child(4) { width: 18%; } /* Eragilea */
-  table colgroup col:nth-child(5) { width: 16%; } /* Jokabidea */
-  table colgroup col:nth-child(6) { width: 16%; } /* Esku-hartzea */
-  table colgroup col:nth-child(7) { width: 21%; } /* Oharrak */
 
-  tr { page-break-inside: avoid; }
-  
-  .subject-cell {
-      font-weight: bold;
-      color: white;
-      text-align: center;
-      border-radius: 3px;
-  }
+  /* Anchos en mm (suman 180mm) */
+  #printTableContainer col:nth-child(1) { width: 20mm; } /* Data */
+  #printTableContainer col:nth-child(2) { width: 20mm; } /* Ordua */
+  #printTableContainer col:nth-child(3) { width: 12mm; } /* Ik. */
+  #printTableContainer col:nth-child(4) { width: 33mm; } /* Eragilea */
+  #printTableContainer col:nth-child(5) { width: 28mm; } /* Jokabidea */
+  #printTableContainer col:nth-child(6) { width: 28mm; } /* Esku-hartzea */
+  #printTableContainer col:nth-child(7) { width: 39mm; } /* Oharrak */
+
+  #printTableContainer tr { page-break-inside: avoid; }
+  #printTableContainer tbody tr:nth-child(even) { background: #fafafa; }
 
   #subjectLegendInline {
       margin-top: 10px;
@@ -206,7 +203,7 @@
     </div>
   </header>
 
-  <!-- Tabs (se eliminan los botones de imprimir) -->
+  <!-- Tabs -->
   <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
     <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
@@ -328,7 +325,6 @@
         <h2 class="text-lg font-bold">
           <span data-eu="Iragazkiak" data-fr="Filtres">Iragazkiak</span>
         </h2>
-        <!-- Botón "Inprimatu Historia" ELIMINADO -->
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
@@ -374,7 +370,6 @@
         <h2 class="text-lg font-bold">
           <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
         </h2>
-        <!-- Botón "Inprimatu Grafikoak" ELIMINADO -->
       </div>
       <p class="text-sm text-gray-500 mb-4">
         <span data-eu="Ikasle bat hautatu behar da grafikoak ikusteko." data-fr="Sélectionnez un élève pour voir les graphiques.">Ikasle bat hautatu behar da grafikoak ikusteko.</span>
@@ -454,83 +449,12 @@
 </div>
 
 <!-- ========================================== -->
-<!-- VISTA DE EXPORTACIÓN (Oculta para html2pdf) -->
+<!-- VISTA DE EXPORTACIÓN (Se reconstruye dinámicamente) -->
 <!-- ========================================== -->
-<div id="printView">
-  <!-- GRÁFICOS -->
-  <div id="printChartsContainer" class="hidden mb-8">
-      <div class="text-center mb-6">
-        <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
-        <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
-      </div>
-      <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
-      
-      <div class="chart-grid">
-          <div>
-              <div class="chart-title" id="printChartTitle1">Gorabeherak denboran zehar</div>
-              <div class="chart-box"><canvas id="printChart1"></canvas></div>
-          </div>
-          <div>
-              <div class="chart-title" id="printChartTitle2">Gorabeherak orduaren arabera</div>
-              <div class="chart-box"><canvas id="printChart2"></canvas></div>
-          </div>
-          <div>
-              <div class="chart-title" id="printChartTitle3">Blokeen araberako banaketa</div>
-              <div class="chart-box"><canvas id="printChart3"></canvas></div>
-          </div>
-          <div>
-              <div class="chart-title" id="printChartTitle4">Gorabeherak ikasgaiaren arabera (Klasean)</div>
-              <div class="chart-box"><canvas id="printChart4"></canvas></div>
-          </div>
-      </div>
-  </div>
-
-  <!-- ANÁLISIS -->
-  <div id="printAnalysisContainer" class="hidden">
-      <div class="page-break-before"></div>
-      <h2 class="text-lg font-bold border-b mb-4">Analisia / Analyse</h2>
-      <div id="printAnalysisDetails" class="text-sm space-y-2"></div>
-  </div>
-
-  <!-- TABLA -->
-  <div id="printTableContainer" class="hidden">
-      <div id="printStatsInline"></div>
-      
-      <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
-      <table class="w-full border-collapse">
-        <colgroup>
-          <col>
-          <col>
-          <col>
-          <col>
-          <col>
-          <col>
-          <col>
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Ordua</th>
-            <th>Ik.</th>
-            <th>Eragilea</th>
-            <th>Jokabidea</th>
-            <th>Esku-hartzea</th>
-            <th>Oharrak</th>
-          </tr>
-        </thead>
-        <tbody id="printTableBody"></tbody>
-      </table>
-      
-      <div id="subjectLegendInline"></div>
-  </div>
-
-  <div id="pdfDataContainer" style="display:none;">
-    <script type="application/json" id="pdfDataScript"></script>
-  </div>
-</div>
+<div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.1.8';
+const APP_VERSION = '4.2.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -693,11 +617,6 @@ function getSubjectColor(subject) {
   return SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
 }
 
-function getSubjectShort(subject) {
-  if (!subject) return '-';
-  return subject.substring(0, 3);
-}
-
 function t(key) { return I18N[lang][key]; }
 
 function applyLang() {
@@ -713,7 +632,6 @@ function applyLang() {
   renderSubjectList();
   renderHistory();
   renderCharts();
-  renderPrintMeta();
   
   const titleInput = document.getElementById('mainTitle');
   if(!titleInput.value || titleInput.value === "NereApp - Eguneroko gorabeherak" || titleInput.value === "NereApp - Incidents quotidiens"){
@@ -1251,17 +1169,6 @@ function renderCharts() {
   `;
 
   document.getElementById('analysisDetails').innerHTML = analysisHtml;
-  document.getElementById('printAnalysisDetails').innerHTML = analysisHtml;
-
-  // Actualizar títulos de los gráficos de impresión por si cambia el idioma
-  document.getElementById('printChartTitle1').textContent = lang === 'eu' ? 'Gorabeherak denboran zehar' : 'Incidents dans le temps';
-  document.getElementById('printChartTitle2').textContent = lang === 'eu' ? 'Gorabeherak orduaren arabera' : 'Incidents par heure';
-  document.getElementById('printChartTitle3').textContent = lang === 'eu' ? 'Blokeen araberako banaketa' : 'Répartition par blocs';
-  document.getElementById('printChartTitle4').textContent = lang === 'eu' ? 'Gorabeherak ikasgaiaren arabera (Klasean)' : 'Incidents par matière (En classe)';
-
-  if (!window.isPrinting) {
-      updatePrintCharts(filtered);
-  }
 }
 
 function resetPrintCharts() {
@@ -1271,6 +1178,266 @@ function resetPrintCharts() {
             window[k] = null;
         }
     });
+}
+
+// ==== CONSTRUCCIÓN DEL HTML ESTÁTICO PARA EL PDF ====
+function buildChartsHTML() {
+    return `
+        <div id="printChartsContainer" class="mb-8">
+            <div class="text-center mb-6">
+                <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
+                <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
+            </div>
+            <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
+            <div class="chart-grid">
+                <div>
+                    <div class="chart-title" id="printChartTitle1">Gorabeherak denboran zehar</div>
+                    <div class="chart-box"><canvas id="printChart1"></canvas></div>
+                </div>
+                <div>
+                    <div class="chart-title" id="printChartTitle2">Gorabeherak orduaren arabera</div>
+                    <div class="chart-box"><canvas id="printChart2"></canvas></div>
+                </div>
+                <div>
+                    <div class="chart-title" id="printChartTitle3">Blokeen araberako banaketa</div>
+                    <div class="chart-box"><canvas id="printChart3"></canvas></div>
+                </div>
+                <div>
+                    <div class="chart-title" id="printChartTitle4">Gorabeherak ikasgaiaren arabera (Klasean)</div>
+                    <div class="chart-box"><canvas id="printChart4"></canvas></div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function buildAnalysisHTML(analysisHtml) {
+    return `
+        <div id="printAnalysisContainer" style="page-break-before: always;">
+            <h2 class="text-lg font-bold border-b mb-4">Analisia / Analyse</h2>
+            <div id="printAnalysisDetails" class="text-sm space-y-2">${analysisHtml}</div>
+        </div>
+    `;
+}
+
+function buildTableHTML(filtered, fStudent, withPageBreak) {
+    // Stats
+    const byStudent = {};
+    filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
+    
+    let statsHtml = `<div id="printStatsInline">`;
+    if (fStudent) {
+        statsHtml += `<div style="margin-bottom: 5px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
+    } else {
+        statsHtml += Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
+            .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
+    }
+    statsHtml += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
+    statsHtml += `</div>`;
+
+    // Filas
+    const usedSubjects = new Set();
+    let rowsHtml = '';
+    filtered.forEach(i => {
+        const dateStr = i.date.slice(0, 10);
+        const slotStr = i.slotRange;
+        let subjShort = '-';
+        let subjColor = '';
+        if (i.subject) {
+            subjShort = i.subject.substring(0, 3);
+            subjColor = getSubjectColor(i.subject);
+            usedSubjects.add(i.subject);
+        }
+        const triggers = i.triggers.join(', ');
+        const behaviors = i.behaviors.join(', ');
+        const interventions = i.interventions.join(', ');
+        const notes = i.notes || '';
+
+        rowsHtml += `<tr>
+            <td>${dateStr}</td>
+            <td>${slotStr}</td>
+            <td style="background-color:${subjColor}; color:white; font-weight:bold; text-align:center;">${subjShort}</td>
+            <td>${triggers}</td>
+            <td>${behaviors}</td>
+            <td>${interventions}</td>
+            <td>${notes}</td>
+        </tr>`;
+    });
+
+    // Leyenda
+    let legendHtml = `<div id="subjectLegendInline">`;
+    if (usedSubjects.size > 0) {
+        Array.from(usedSubjects).sort().forEach(subj => {
+            const color = getSubjectColor(subj);
+            legendHtml += `<span class="legend-item"><span class="legend-color" style="background:${color}"></span>${subj}</span>`;
+        });
+    }
+    legendHtml += `</div>`;
+
+    const pageBreakStyle = withPageBreak ? 'style="page-break-before: always;"' : '';
+
+    return `
+        <div id="printTableContainer" ${pageBreakStyle}>
+            ${statsHtml}
+            <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
+            <table>
+                <colgroup>
+                    <col><col><col><col><col><col><col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Ordua</th>
+                        <th>Ik.</th>
+                        <th>Eragilea</th>
+                        <th>Jokabidea</th>
+                        <th>Esku-hartzea</th>
+                        <th>Oharrak</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+            ${legendHtml}
+        </div>
+    `;
+}
+
+// ==== LECTURA DEL ANÁLISIS ACTUAL ====
+function getCurrentAnalysisHTML() {
+    const sel = document.getElementById('chartStudentFilter').value;
+    if (!sel) return '';
+    const filtered = incidents.filter(i => i.student === sel).sort((a,b)=> b.date.localeCompare(a.date));
+    if (filtered.length === 0) return '';
+    
+    // Generar el mismo HTML que en renderCharts
+    const countsByDate = {};
+    [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
+    const data = Object.values(countsByDate);
+    
+    let evolutionText = t('stableEvolution');
+    if (data.length >= 2) {
+        const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+        const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+        if (secondHalf < firstHalf) evolutionText = t('positiveEvolution');
+        else if (secondHalf > firstHalf) evolutionText = t('negativeEvolution');
+    }
+    
+    const slotCount = {};
+    filtered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange] || 0) + 1; });
+    const slotLabels = Object.keys(slotCount).sort();
+    const slotData = slotLabels.map(l => slotCount[l]);
+    let peakSlot = '';
+    if (slotLabels.length > 0) {
+        const maxIdx = slotData.indexOf(Math.max(...slotData));
+        peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} incidents)`;
+    }
+    
+    const triggerCount = {};
+    const behaviorCount = {};
+    filtered.forEach(i => {
+        i.triggers.forEach(t => triggerCount[t] = (triggerCount[t]||0)+1);
+        i.behaviors.forEach(b => behaviorCount[b] = (behaviorCount[b]||0)+1);
+    });
+    const topTriggers = Object.entries(triggerCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    return `
+        <div class="mb-4"><h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4><p class="${evolutionText === t('positiveEvolution') ? 'text-green-600 font-bold' : (evolutionText === t('negativeEvolution') ? 'text-red-600 font-bold' : 'text-gray-600')}">${evolutionText}</p></div>
+        ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
+        <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
+        <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
+    `;
+}
+
+// ==== GENERACIÓN DEL PDF ====
+function generatePDF(mode) {
+    document.getElementById('pdfModal').classList.add('hidden');
+    
+    const validModes = ['full', 'charts', 'all'];
+    if (!validModes.includes(mode)) return;
+
+    const includeHistory = (mode === 'full' || mode === 'all');
+    const includeCharts  = (mode === 'charts' || mode === 'all');
+
+    const filtered = getFilteredIncidents();
+    const fStudent = document.getElementById('filterStudent').value;
+    const fFrom = document.getElementById('filterFrom').value;
+    const fTo = document.getElementById('filterTo').value;
+    
+    const selectedStudent = document.getElementById('chartStudentFilter').value || fStudent;
+    
+    if (includeCharts && !selectedStudent) {
+        alert(t('selectStudentForCharts'));
+        return;
+    }
+    if (includeCharts) {
+        const chartData = incidents.filter(i => i.student === selectedStudent);
+        if (chartData.length === 0) {
+            alert(t('noIncidents'));
+            return;
+        }
+    }
+
+    // 1. Construir el HTML del PDF como string
+    const printView = document.getElementById('printView');
+    let html = '';
+
+    if (includeCharts) {
+        html += buildChartsHTML();
+    }
+
+    if (includeCharts) {
+        const analysisHtml = getCurrentAnalysisHTML();
+        html += buildAnalysisHTML(analysisHtml);
+    }
+
+    if (includeHistory) {
+        // Si hay gráficos + historia, añadir salto de página antes de la tabla
+        const withPageBreak = includeCharts;
+        html += buildTableHTML(filtered, fStudent, withPageBreak);
+    }
+
+    // 2. Inyectar el HTML en el printView
+    printView.innerHTML = html;
+
+    // 3. Rellenar los metadatos en el HTML generado
+    const printTitle = document.getElementById('printTitle');
+    const printMeta = document.getElementById('printMeta');
+    if (printTitle && printMeta) {
+        printTitle.textContent = document.getElementById('mainTitle').value + " — " + t('report');
+        const period = (fFrom || fTo)
+            ? `${t('period')}: ${fFrom || '...'} → ${fTo || '...'}`
+            : `${t('period')}: ${t('allPeriod')}`;
+        printMeta.textContent = `${t('generated')}: ${new Date().toLocaleString(lang==='eu'?'eu-ES':'fr-FR')} · ${period}`;
+    }
+
+    // 4. Generar gráficos si hay que incluirlos
+    if (includeCharts) {
+        const chartData = incidents
+            .filter(i => i.student === selectedStudent)
+            .sort((a,b)=> b.date.localeCompare(a.date));
+        
+        updatePrintCharts(chartData);
+    }
+
+    // 5. Esperar un poco y generar el PDF
+    setTimeout(() => {
+        const opt = {
+            margin:       15,
+            filename:     `NereApp_${mode}_${new Date().toISOString().slice(0,10)}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        printView.style.display = 'block';
+        
+        html2pdf().set(opt).from(printView).save().then(() => {
+            printView.style.display = 'none';
+            printView.innerHTML = ''; // Limpiar
+            resetPrintCharts();
+        });
+    }, 300);
 }
 
 function updatePrintCharts(studentData) {
@@ -1306,292 +1473,31 @@ function updatePrintCharts(studentData) {
 
     resetPrintCharts();
 
-    window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
+    const c1 = document.getElementById('printChart1');
+    const c2 = document.getElementById('printChart2');
+    const c3 = document.getElementById('printChart3');
+    const c4 = document.getElementById('printChart4');
+    if (!c1 || !c2 || !c3 || !c4) return;
+
+    window.printChart1 = new Chart(c1.getContext('2d'), {
         type: 'line',
         data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
     });
-    window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
+    window.printChart2 = new Chart(c2.getContext('2d'), {
         type: 'bar',
         data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
     });
-    window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
+    window.printChart3 = new Chart(c3.getContext('2d'), {
         type: 'doughnut',
         data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'], borderColor: '#ffffff', borderWidth: 2 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
     });
-    window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
+    window.printChart4 = new Chart(c4.getContext('2d'), {
         type: 'doughnut',
         data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors, borderColor: '#ffffff', borderWidth: 2 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } } } }
-    });
-}
-
-function renderPrintTable(filtered) {
-    const tbody = document.getElementById('printTableBody');
-    tbody.innerHTML = ''; // Limpiar tabla
-
-    if (!filtered || filtered.length === 0) return;
-
-    const usedSubjects = new Set();
-    const langLocal = lang; // Capturamos para uso interno
-
-    filtered.forEach(i => {
-        const tr = document.createElement('tr'); // Crear fila
-        // 1. Data (solo fecha)
-        const tdDate = document.createElement('td');
-        tdDate.textContent = i.date.slice(0, 10); 
-        tr.appendChild(tdDate);
-
-        // 2. Ordua (solo hora)
-        const tdSlot = document.createElement('td');
-        tdSlot.textContent = i.slotRange;
-        tr.appendChild(tdSlot);
-
-        // 3. Ik. (3 letras)
-        const tdSubj = document.createElement('td');
-        if (i.subject) {
-            const color = getSubjectColor(i.subject);
-            tdSubj.style.backgroundColor = color;
-            tdSubj.style.color = 'white';
-            tdSubj.style.fontWeight = 'bold';
-            tdSubj.style.textAlign = 'center';
-            tdSubj.textContent = i.subject.substring(0, 3);
-            usedSubjects.add(i.subject);
-        } else {
-            tdSubj.textContent = '-';
-        }
-        tr.appendChild(tdSubj);
-
-        // 4-6. Eragilea, Jokabidea, Esku-hartzea
-        ['triggers', 'behaviors', 'interventions'].forEach(key => {
-            const td = document.createElement('td');
-            td.textContent = i[key].join(', ');
-            tr.appendChild(td);
-        });
-
-        // 7. Oharrak
-        const tdNotes = document.createElement('td');
-        tdNotes.textContent = i.notes || '';
-        tr.appendChild(tdNotes);
-        
-        // Añadir la fila completa al cuerpo
-        tbody.appendChild(tr); 
-    });
-
-    // Generar leyenda
-    const legendContainer = document.getElementById('subjectLegendInline');
-    legendContainer.innerHTML = '';
-    if (usedSubjects.size > 0) {
-        Array.from(usedSubjects).sort().forEach(subj => {
-            const color = getSubjectColor(subj);
-            const span = document.createElement('span');
-            span.className = 'legend-item';
-            span.innerHTML = `<span class="legend-color" style="background:${color}"></span>${subj}`;
-            legendContainer.appendChild(span);
-        });
-    }
-}
-
-function renderPrintStatsInline(filtered, fStudent) {
-    const container = document.getElementById('printStatsInline');
-    const byStudent = {};
-    filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
-    
-    let statsHtml = '';
-    if (fStudent) {
-        statsHtml = `<div style="margin-bottom: 5px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
-    } else {
-        statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
-            .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
-    }
-    statsHtml += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
-    container.innerHTML = statsHtml;
-}
-
-function renderStats(filtered) {
-  const byStudent = {};
-  filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
-  const sStudents = document.getElementById('statsStudents');
-  if (sStudents) {
-    sStudents.innerHTML = '';
-    const sKeys = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]);
-    if (sKeys.length === 0) sStudents.innerHTML = `<li class="text-gray-400">—</li>`;
-    sKeys.forEach(k => {
-      const li = document.createElement('li');
-      li.className = 'flex justify-between';
-      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byStudent[k]}</span>`;
-      sStudents.appendChild(li);
-    });
-    const totalLi = document.createElement('li');
-    totalLi.className = 'flex justify-between border-t pt-1 mt-1 font-bold';
-    totalLi.innerHTML = `<span>${t('total')}</span><span>${filtered.length}</span>`;
-    sStudents.appendChild(totalLi);
-  }
-
-  const byBeh = {};
-  filtered.forEach(i => i.behaviors.forEach(b => { byBeh[b]=(byBeh[b]||0)+1; }));
-  const sBeh = document.getElementById('statsBehaviors');
-  if (sBeh) {
-    sBeh.innerHTML = '';
-    const bKeys = Object.keys(byBeh).sort((a,b)=>byBeh[b]-byBeh[a]);
-    if (bKeys.length === 0) sBeh.innerHTML = `<li class="text-gray-400">—</li>`;
-    bKeys.forEach(k => {
-      const li = document.createElement('li');
-      li.className = 'flex justify-between';
-      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byBeh[k]}</span>`;
-      sBeh.appendChild(li);
-    });
-  }
-}
-
-['filterStudent','filterFrom','filterTo'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('change', renderHistory);
-});
-document.getElementById('clearFilters').onclick = () => {
-  document.getElementById('filterStudent').value = '';
-  document.getElementById('filterFrom').value = '';
-  document.getElementById('filterTo').value = '';
-  renderHistory();
-};
-
-document.getElementById('clearAll').onclick = () => {
-  if (confirm(t('confirmClearAll'))) {
-    incidents = [];
-    saveIncidents();
-    renderHistory();
-    renderCharts();
-  }
-};
-
-document.getElementById('exportCsv').onclick = () => {
-  const filtered = getFilteredIncidents();
-  if (filtered.length === 0) { alert(t('noIncidents')); return; }
-  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
-  const header = ['Date','Élève','Matière','Créneau','Déclencheur','Comportement','Intervention','Notes'];
-  const rows = filtered.map(i => [ i.date.replace('T',' '), i.student, i.subject || '', `${i.slotRange} - ${i.slotFr}`, i.triggers.join('; '), i.behaviors.join('; '), i.interventions.join('; '), i.notes ].map(esc).join(','));
-  const csv = '\uFEFF' + header.join(',') + '\n' + rows.join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `aesh_incidents_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-};
-
-function renderPrintMeta() {}
-
-function generatePDF(mode) {
-    document.getElementById('pdfModal').classList.add('hidden');
-    
-    const validModes = ['full', 'charts', 'all'];
-    if (!validModes.includes(mode)) return;
-
-    const includeHistory = (mode === 'full' || mode === 'all');
-    const includeCharts  = (mode === 'charts' || mode === 'all');
-
-    const filtered = getFilteredIncidents();
-    const fStudent = document.getElementById('filterStudent').value;
-    const fFrom = document.getElementById('filterFrom').value;
-    const fTo = document.getElementById('filterTo').value;
-
-    document.getElementById('printTitle').textContent =
-        document.getElementById('mainTitle').value + " — " + t('report');
-    const period = (fFrom || fTo)
-        ? `${t('period')}: ${fFrom || '...'} → ${fTo || '...'}`
-        : `${t('period')}: ${t('allPeriod')}`;
-    document.getElementById('printMeta').textContent =
-        `${t('generated')}: ${new Date().toLocaleString(lang==='eu'?'eu-ES':'fr-FR')} · ${period}`;
-
-    const tableContainer  = document.getElementById('printTableContainer');
-    const chartsContainer = document.getElementById('printChartsContainer');
-    const analysisContainer = document.getElementById('printAnalysisContainer');
-    const forceTablePageBreak = document.getElementById('forceTablePageBreak');
-
-    // 1. Ocultar TODO primero
-    tableContainer.classList.add('hidden');
-    chartsContainer.classList.add('hidden');
-    analysisContainer.classList.add('hidden');
-    if (forceTablePageBreak) forceTablePageBreak.remove(); // Eliminar el salto de página temporal
-
-    // 2. Mostrar lo que toque según el modo
-    if (includeHistory) {
-        tableContainer.classList.remove('hidden');
-        renderPrintTable(filtered);
-        renderPrintStatsInline(filtered, fStudent);
-    }
-
-    if (includeCharts) {
-        chartsContainer.classList.remove('hidden');
-        analysisContainer.classList.remove('hidden');
-        
-        const selectedStudent = document.getElementById('chartStudentFilter').value || fStudent;
-        if (!selectedStudent) {
-            alert(t('selectStudentForCharts'));
-            chartsContainer.classList.add('hidden');
-            analysisContainer.classList.add('hidden');
-            return;
-        }
-
-        const chartData = incidents
-            .filter(i => i.student === selectedStudent)
-            .sort((a,b)=> b.date.localeCompare(a.date));
-
-        if (chartData.length === 0) {
-            alert(t('noIncidents'));
-            chartsContainer.classList.add('hidden');
-            analysisContainer.classList.add('hidden');
-            return;
-        }
-
-        updatePrintCharts(chartData);
-        
-        // Si también hay historia, insertamos un salto de página antes de la tabla
-        if (includeHistory) {
-            // Buscar donde insertar el salto (antes del contenedor de la tabla)
-            const tableTitle = document.createElement('div');
-            tableTitle.className = 'page-break-before';
-            tableContainer.insertBefore(tableTitle, tableContainer.firstChild);
-        }
-
-        // Dar tiempo a que Chart.js pinte
-        setTimeout(() => {
-            generarPDFconLibreria(mode);
-        }, 300);
-
-    } else {
-        // Solo historia. No hay gráficos. Guardar directamente
-        setTimeout(() => {
-            generarPDFconLibreria(mode);
-        }, 100);
-    }
-}
-
-function generarPDFconLibreria(mode) {
-    const printView = document.getElementById('printView');
-    
-    const opt = {
-        margin:       15, 
-        filename:     `NereApp_${mode}_${new Date().toISOString().slice(0,10)}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Mostrar temporalmente la vista
-    printView.style.display = 'block'; 
-
-    html2pdf().set(opt).from(printView).save().then(() => {
-        // Limpiar
-        printView.style.display = 'none';
-        document.getElementById('printChartsContainer').classList.add('hidden');
-        document.getElementById('printTableContainer').classList.add('hidden');
-        document.getElementById('printAnalysisContainer').classList.add('hidden');
-        
-        // Eliminar cualquier salto de página que hayamos añadido dinámicamente
-        const forcedBreak = document.querySelector('#printTableContainer > .page-break-before');
-        if (forcedBreak) forcedBreak.remove();
     });
 }
 
