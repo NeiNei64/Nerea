@@ -32,6 +32,8 @@
     #printView { display: block !important; }
     #printTableContainer { page-break-before: auto; margin-top: 20px; }
     #printChartsContainer:not(.hidden) + #printTableContainer { page-break-before: always; }
+    
+    /* IMPORTANTE: Aseguramos que los divs ocultos con Tailwind (hidden) se muestren al imprimir */
     #printChartsContainer:not(.hidden) { display: block !important; }
     #printTableContainer:not(.hidden) { display: block !important; }
 
@@ -47,18 +49,20 @@
     .chart-box {
         width: 100%;
         height: 300px;
-        display: block;
-        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         page-break-inside: avoid;
+        position: relative;
     }
 
-    /* Ocultamos los canvas e imprimimos solo las imágenes generadas */
-    .chart-box canvas { display: none !important; }
-    .chart-box img { 
-        display: block !important; 
-        width: 100%; 
-        height: 100%; 
-        object-fit: contain; 
+    /* Forzamos que el canvas (que contiene el SVG) sea visible y ocupe el 100% */
+    .chart-box canvas { 
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
     }
 
     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
@@ -392,10 +396,11 @@
   <div id="printChartsContainer" class="hidden mb-8">
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="chart-grid">
-          <div class="chart-box"><canvas id="printChart1"></canvas><img id="printImg1" alt="Grafico 1" /></div>
-          <div class="chart-box"><canvas id="printChart2"></canvas><img id="printImg2" alt="Grafico 2" /></div>
-          <div class="chart-box"><canvas id="printChart3"></canvas><img id="printImg3" alt="Grafico 3" /></div>
-          <div class="chart-box"><canvas id="printChart4"></canvas><img id="printImg4" alt="Grafico 4" /></div>
+          <!-- Usamos canvas sin imagen, confiando en el repintado de Chart.js -->
+          <div class="chart-box"><canvas id="printChart1"></canvas></div>
+          <div class="chart-box"><canvas id="printChart2"></canvas></div>
+          <div class="chart-box"><canvas id="printChart3"></canvas></div>
+          <div class="chart-box"><canvas id="printChart4"></canvas></div>
       </div>
   </div>
 
@@ -425,7 +430,7 @@
 </div>
 
 <script>
-const APP_VERSION = '3.10.5';
+const APP_VERSION = '3.10.6';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1365,44 +1370,19 @@ function generatePDF(mode) {
             return;
         }
 
-        // 1. Renderizar los gráficos en el DOM (aunque sea en un div oculto, se generan)
+        // 1. Renderizamos los gráficos en el DOM.
         updatePrintCharts(chartData);
         
-        // 2. Esperar un poco y extraer la imagen Base64, asignarla al src de las <img> del DOM de impresión
+        // 2. Esperamos un segundo para que Chart.js termine de pintar.
+        // Al no usar imágenes, el navegador los captura directamente al darle a imprimir.
         setTimeout(() => {
-            try {
-                ['printChart1','printChart2','printChart3','printChart4'].forEach((canvasId, index) => {
-                    const canvas = document.getElementById(canvasId);
-                    const img = document.getElementById('printImg' + (index + 1));
-                    
-                    if (canvas && img) {
-                        // Forzamos un tamaño de lienzo temporal en caso de que esté a 0
-                        const tempCanvas = document.createElement('canvas');
-                        tempCanvas.width = canvas.width || 400;
-                        tempCanvas.height = canvas.height || 300;
-                        const ctx = tempCanvas.getContext('2d');
-                        
-                        ctx.fillStyle = '#ffffff'; // Fondo blanco
-                        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                        ctx.drawImage(canvas, 0, 0);
-                        
-                        // Asignamos el Base64 DIRECTAMENTE. Al ser un string, se renderiza sin descargas asíncronas.
-                        img.src = tempCanvas.toDataURL('image/jpeg', 1.0);
-                    }
-                });
-            } catch(e) { console.error("Error convirtiendo a imagen:", e); }
-
-            // Esperamos un instante mínimo solo para que el hilo principal pinte la imagen en el DOM
+            window.print();
+            // Restaurar estado
             setTimeout(() => {
-                window.print();
-                // Restaurar estado
-                setTimeout(() => {
-                    chartsContainer.classList.add('hidden');
-                    tableContainer.classList.add('hidden');
-                }, 500);
-            }, 100);
-
-        }, 200);
+                chartsContainer.classList.add('hidden');
+                tableContainer.classList.add('hidden');
+            }, 500);
+        }, 300);
 
     } else {
         resetPrintCharts();
