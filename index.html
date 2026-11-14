@@ -14,7 +14,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
-  /* Utilidades normales de la app */
   .editable-item { display: flex; align-items: center; justify-content: space-between; padding: 4px; border-radius: 4px; }
   .editable-item:hover { background-color: #f3f4f6; }
   .delete-icon { cursor: pointer; color: #ef4444; font-weight: bold; padding: 0 6px; font-size: 1.1em; }
@@ -23,7 +22,6 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
   
-  /* ============ ESTILOS PARA IMPRESIÓN A4 ============ */
   @media print {
     .no-print { display: none !important; }
     .print-only { display: block !important; }
@@ -31,25 +29,12 @@
 
     @page { size: A4 portrait; margin: 15mm; }
 
-    /* Forzamos la visualización de la vista de impresión */
     #printView { display: block !important; }
-    
-    /* Control de saltos de página */
-    #printTableContainer { 
-        page-break-before: auto; 
-        margin-top: 20px;
-    }
-    
-    /* Si el contenedor de gráficos está visible, la tabla salta de página */
-    #printChartsContainer:not(.hidden) + #printTableContainer {
-        page-break-before: always;
-    }
-
-    /* Forzar visualización si tienen la clase hidden quitada por JS */
+    #printTableContainer { page-break-before: auto; margin-top: 20px; }
+    #printChartsContainer:not(.hidden) + #printTableContainer { page-break-before: always; }
     #printChartsContainer:not(.hidden) { display: block !important; }
     #printTableContainer:not(.hidden) { display: block !important; }
 
-    /* LA CLAVE PARA LOS GRÁFICOS: Cuadrícula 2x2 adaptada a A4 */
     .chart-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -61,22 +46,22 @@
 
     .chart-box {
         width: 100%;
-        height: 300px; /* Altura fija para que quepan 2 filas perfectas */
-        position: relative;
+        height: 300px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         page-break-inside: avoid;
-        display: block;
     }
 
-    /* El canvas ocupa todo el chart-box y Chart.js lo rellena */
-    .chart-box canvas {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        max-height: 100% !important;
+    /* Ocultamos canvas e imprimimos solo las imágenes generadas */
+    .chart-box canvas { display: none !important; }
+    .chart-box img { 
+        display: block !important; 
+        width: 100%; 
+        height: 100%; 
+        object-fit: contain; 
     }
 
-    /* La tabla se adapta a la página */
     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
     th { background: #eee; }
@@ -408,10 +393,10 @@
   <div id="printChartsContainer" class="hidden mb-8">
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="chart-grid">
-          <div class="chart-box"><canvas id="printChart1"></canvas></div>
-          <div class="chart-box"><canvas id="printChart2"></canvas></div>
-          <div class="chart-box"><canvas id="printChart3"></canvas></div>
-          <div class="chart-box"><canvas id="printChart4"></canvas></div>
+          <div class="chart-box"><canvas id="printChart1"></canvas><img id="printImg1" alt="Grafico 1" /></div>
+          <div class="chart-box"><canvas id="printChart2"></canvas><img id="printImg2" alt="Grafico 2" /></div>
+          <div class="chart-box"><canvas id="printChart3"></canvas><img id="printImg3" alt="Grafico 3" /></div>
+          <div class="chart-box"><canvas id="printChart4"></canvas><img id="printImg4" alt="Grafico 4" /></div>
       </div>
   </div>
 
@@ -441,8 +426,7 @@
 </div>
 
 <script>
-/* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '3.10.3'; // <-- Subida de versión para forzar limpieza de caché
+const APP_VERSION = '3.10.4';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -452,7 +436,6 @@ if (savedVersion !== APP_VERSION) {
     console.log('Datos antiguos eliminados. Instalación limpia.');
 }
 
-/* ============ Plugin para mostrar % dentro del doughnut ============ */
 const doughnutLabelsPlugin = {
   id: 'doughnutLabels',
   afterDatasetsDraw(chart, args, options) {
@@ -482,7 +465,6 @@ const doughnutLabelsPlugin = {
 };
 Chart.register(doughnutLabelsPlugin);
 
-/* ============ i18n & State ============ */
 const I18N = {
   eu: {
     confirmDelete: "Ziur zaude gorabehera hau ezabatu nahi duzula?",
@@ -1209,42 +1191,22 @@ function updatePrintCharts(studentData) {
     window.printChart1 = new Chart(document.getElementById('printChart1').getContext('2d'), {
         type: 'line',
         data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
     });
     window.printChart2 = new Chart(document.getElementById('printChart2').getContext('2d'), {
         type: 'bar',
         data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
     });
     window.printChart3 = new Chart(document.getElementById('printChart3').getContext('2d'), {
         type: 'doughnut',
         data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: ['#4f46e5', '#ca8a04', '#ea580c'], borderColor: '#ffffff', borderWidth: 2 }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: { legend: { position: 'bottom' } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } }
     });
     window.printChart4 = new Chart(document.getElementById('printChart4').getContext('2d'), {
         type: 'doughnut',
         data: { labels: subjLabels, datasets: [{ data: subjData, backgroundColor: subjColors, borderColor: '#ffffff', borderWidth: 2 }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: { legend: { position: 'bottom' } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'bottom' } } }
     });
 }
 
@@ -1353,7 +1315,6 @@ function generatePDF(mode) {
     const fFrom = document.getElementById('filterFrom').value;
     const fTo = document.getElementById('filterTo').value;
 
-    // 1. Cabecera
     document.getElementById('printTitle').textContent =
         document.getElementById('mainTitle').value + " — " + t('report');
     const period = (fFrom || fTo)
@@ -1362,7 +1323,6 @@ function generatePDF(mode) {
     document.getElementById('printMeta').textContent =
         `${t('generated')}: ${new Date().toLocaleString(lang==='eu'?'eu-ES':'fr-FR')} · ${period}`;
 
-    // 2. Estadísticas
     const byStudent = {};
     filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
     let statsHtml = '';
@@ -1375,7 +1335,6 @@ function generatePDF(mode) {
     statsHtml += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
     document.getElementById('printStats').innerHTML = statsHtml;
 
-    // 3. Visibilidad con clases (NO con style.display)
     const tableContainer  = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
 
@@ -1407,38 +1366,63 @@ function generatePDF(mode) {
             return;
         }
 
-        // Primero, aseguramos que Chart.js pinte en los canvas de impresión
+        // 1. Renderizar los gráficos (aunque estén en un div oculto, se generan internamente)
         updatePrintCharts(chartData);
         
-        // Forzamos a Chart.js a redimensionar y pintar
+        // 2. Esperar un momento para que Chart.js pinte, luego pasarlos a imagen y esperar a que carguen
         setTimeout(() => {
             try {
-                ['printChart1','printChart2','printChart3','printChart4'].forEach(k => {
-                    if (window[k]) {
-                        window[k].resize();
-                        window[k].update('none');
+                let imgLoadPromises = [];
+                ['printChart1','printChart2','printChart3','printChart4'].forEach((canvasId, index) => {
+                    const canvas = document.getElementById(canvasId);
+                    const img = document.getElementById('printImg' + (index + 1));
+                    
+                    if (canvas && img) {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = canvas.width || 400;
+                        tempCanvas.height = canvas.height || 300;
+                        const ctx = tempCanvas.getContext('2d');
+                        
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                        ctx.drawImage(canvas, 0, 0);
+                        
+                        const imgData = tempCanvas.toDataURL('image/jpeg', 1.0);
+                        
+                        // Crear una promesa que se resuelva cuando la imagen cargue
+                        const p = new Promise((resolve) => {
+                            img.onload = () => resolve();
+                            img.onerror = () => resolve(); // resolver en caso de error para no bloquear
+                        });
+                        imgLoadPromises.push(p);
+                        
+                        img.src = imgData;
                     }
                 });
-            } catch(e) { console.error("Error al redimensionar:", e); }
-
-            // Esperamos un frame más antes de imprimir para asegurar el pintado
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    window.print();
-                    // Restaurar estado después de imprimir
+                
+                // 3. Esperar a que TODAS las imágenes estén cargadas antes de imprimir
+                Promise.all(imgLoadPromises).then(() => {
+                    // Pequeño timeout extra para asegurar el renderizado del navegador
                     setTimeout(() => {
-                        chartsContainer.classList.add('hidden');
-                        tableContainer.classList.add('hidden');
-                    }, 500);
-                }, 100);
-            });
+                        window.print();
+                        // Restaurar estado
+                        setTimeout(() => {
+                            chartsContainer.classList.add('hidden');
+                            tableContainer.classList.add('hidden');
+                        }, 500);
+                    }, 100);
+                });
+                
+            } catch(e) { 
+                console.error("Error convirtiendo a imagen:", e); 
+                window.print();
+            }
         }, 200);
 
     } else {
         resetPrintCharts();
         chartsContainer.classList.add('hidden');
         
-        // Si no hay gráficos, esperamos un poco y imprimimos
         requestAnimationFrame(() => {
             setTimeout(() => {
                 window.print();
@@ -1449,7 +1433,6 @@ function generatePDF(mode) {
         });
     }
 
-    // 4. Datos embebidos para el "Restore desde PDF"
     const backupData = {
         version: APP_VERSION,
         students, subjects, incidents, customOptions,
@@ -1458,7 +1441,6 @@ function generatePDF(mode) {
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 }
 
-// Abrir el modal de PDF
 document.getElementById('pdfBtn').onclick = () => {
     document.getElementById('pdfModal').classList.remove('hidden');
     document.getElementById('pdfModal').classList.add('flex');
