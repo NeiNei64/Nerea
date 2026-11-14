@@ -26,15 +26,14 @@
   
   /* ============ ESTILOS PARA LA VISTA DE EXPORTACIÓN ============ */
   #printView {
-    display: none; /* Oculto en pantalla normal */
+    display: none; 
     background: white;
     width: 100%;
-    max-width: 180mm; /* Ajuste para que quepa en A4 con márgenes de 15mm (210 - 15 - 15 = 180) */
+    max-width: 180mm; /* Ajuste para que quepa en A4 con márgenes de 15mm */
     padding: 0;
     box-sizing: border-box;
   }
 
-  /* IMPORTANTE: La rejilla ocupa el 100% del ancho disponible */
   .chart-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -44,10 +43,9 @@
       margin-top: 10px;
   }
 
-  /* Cada caja tiene una altura fija y NO se corta */
   .chart-box {
       width: 100%;
-      height: 280px; /* Altura perfecta para A4 */
+      height: 250px; /* Un poco más bajo para dejar espacio al título y análisis */
       display: block;
       position: relative;
       page-break-inside: avoid;
@@ -58,6 +56,14 @@
       display: block !important;
       width: 100% !important;
       height: 100% !important;
+  }
+
+  .chart-title {
+      text-align: center;
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 5px;
+      color: #374151;
   }
 
   /* Control de saltos de página */
@@ -392,18 +398,32 @@
   <!-- Contenedor de Gráficos -->
   <div id="printChartsContainer" class="hidden mb-8">
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
+      
       <div class="chart-grid">
-          <div class="chart-box"><canvas id="printChart1"></canvas></div>
-          <div class="chart-box"><canvas id="printChart2"></canvas></div>
-          <div class="chart-box"><canvas id="printChart3"></canvas></div>
-          <div class="chart-box"><canvas id="printChart4"></canvas></div>
+          <div>
+              <div class="chart-title" id="printChartTitle1">Gorabeherak denboran zehar</div>
+              <div class="chart-box"><canvas id="printChart1"></canvas></div>
+          </div>
+          <div>
+              <div class="chart-title" id="printChartTitle2">Gorabeherak orduaren arabera</div>
+              <div class="chart-box"><canvas id="printChart2"></canvas></div>
+          </div>
+          <div>
+              <div class="chart-title" id="printChartTitle3">Blokeen araberako banaketa</div>
+              <div class="chart-box"><canvas id="printChart3"></canvas></div>
+          </div>
+          <div>
+              <div class="chart-title" id="printChartTitle4">Gorabeherak ikasgaiaren arabera (Klasean)</div>
+              <div class="chart-box"><canvas id="printChart4"></canvas></div>
+          </div>
       </div>
+      
+      <!-- Bloque de análisis de texto -->
+      <div id="printAnalysisDetails" class="text-sm space-y-2 mt-4"></div>
   </div>
 
   <!-- Tabla -->
-  <!-- IMPORTANTE: Le añadimos la clase page-break para que siempre empiece en página nueva si hay gráficos -->
   <div id="printTableContainer" class="hidden">
-      <!-- Este div invisible fuerza el salto de página solo si los gráficos están visibles -->
       <div id="forcePageBreak" class="hidden page-break"></div>
       
       <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
@@ -430,7 +450,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.1.0';
+const APP_VERSION = '4.1.1';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1138,12 +1158,21 @@ function renderCharts() {
   const topTriggers = Object.entries(triggerCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
   const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
-  document.getElementById('analysisDetails').innerHTML = `
+  const analysisHtml = `
     <div class="mb-4"><h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4><p class="${evolutionColor}">${evolutionText}</p></div>
     ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
     <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
     <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
   `;
+
+  document.getElementById('analysisDetails').innerHTML = analysisHtml;
+  document.getElementById('printAnalysisDetails').innerHTML = analysisHtml;
+
+  // Actualizar títulos de los gráficos de impresión por si cambia el idioma
+  document.getElementById('printChartTitle1').textContent = lang === 'eu' ? 'Gorabeherak denboran zehar' : 'Incidents dans le temps';
+  document.getElementById('printChartTitle2').textContent = lang === 'eu' ? 'Gorabeherak orduaren arabera' : 'Incidents par heure';
+  document.getElementById('printChartTitle3').textContent = lang === 'eu' ? 'Blokeen araberako banaketa' : 'Répartition par blocs';
+  document.getElementById('printChartTitle4').textContent = lang === 'eu' ? 'Gorabeherak ikasgaiaren arabera (Klasean)' : 'Incidents par matière (En classe)';
 
   if (!window.isPrinting) {
       updatePrintCharts(filtered);
@@ -1341,8 +1370,6 @@ function generatePDF(mode) {
 
     const tableContainer  = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
-    
-    // Manejar el salto de página para la tabla
     const forcePageBreak = document.getElementById('forcePageBreak');
 
     if (includeHistory) {
