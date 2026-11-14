@@ -47,13 +47,12 @@
     .chart-box {
         width: 100%;
         height: 300px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        display: block;
+        position: relative;
         page-break-inside: avoid;
     }
 
-    /* Ocultamos canvas e imprimimos solo las imágenes generadas */
+    /* Ocultamos los canvas e imprimimos solo las imágenes generadas */
     .chart-box canvas { display: none !important; }
     .chart-box img { 
         display: block !important; 
@@ -426,7 +425,7 @@
 </div>
 
 <script>
-const APP_VERSION = '3.10.4';
+const APP_VERSION = '3.10.5';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1366,57 +1365,43 @@ function generatePDF(mode) {
             return;
         }
 
-        // 1. Renderizar los gráficos (aunque estén en un div oculto, se generan internamente)
+        // 1. Renderizar los gráficos en el DOM (aunque sea en un div oculto, se generan)
         updatePrintCharts(chartData);
         
-        // 2. Esperar un momento para que Chart.js pinte, luego pasarlos a imagen y esperar a que carguen
+        // 2. Esperar un poco y extraer la imagen Base64, asignarla al src de las <img> del DOM de impresión
         setTimeout(() => {
             try {
-                let imgLoadPromises = [];
                 ['printChart1','printChart2','printChart3','printChart4'].forEach((canvasId, index) => {
                     const canvas = document.getElementById(canvasId);
                     const img = document.getElementById('printImg' + (index + 1));
                     
                     if (canvas && img) {
+                        // Forzamos un tamaño de lienzo temporal en caso de que esté a 0
                         const tempCanvas = document.createElement('canvas');
                         tempCanvas.width = canvas.width || 400;
                         tempCanvas.height = canvas.height || 300;
                         const ctx = tempCanvas.getContext('2d');
                         
-                        ctx.fillStyle = '#ffffff';
+                        ctx.fillStyle = '#ffffff'; // Fondo blanco
                         ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                         ctx.drawImage(canvas, 0, 0);
                         
-                        const imgData = tempCanvas.toDataURL('image/jpeg', 1.0);
-                        
-                        // Crear una promesa que se resuelva cuando la imagen cargue
-                        const p = new Promise((resolve) => {
-                            img.onload = () => resolve();
-                            img.onerror = () => resolve(); // resolver en caso de error para no bloquear
-                        });
-                        imgLoadPromises.push(p);
-                        
-                        img.src = imgData;
+                        // Asignamos el Base64 DIRECTAMENTE. Al ser un string, se renderiza sin descargas asíncronas.
+                        img.src = tempCanvas.toDataURL('image/jpeg', 1.0);
                     }
                 });
-                
-                // 3. Esperar a que TODAS las imágenes estén cargadas antes de imprimir
-                Promise.all(imgLoadPromises).then(() => {
-                    // Pequeño timeout extra para asegurar el renderizado del navegador
-                    setTimeout(() => {
-                        window.print();
-                        // Restaurar estado
-                        setTimeout(() => {
-                            chartsContainer.classList.add('hidden');
-                            tableContainer.classList.add('hidden');
-                        }, 500);
-                    }, 100);
-                });
-                
-            } catch(e) { 
-                console.error("Error convirtiendo a imagen:", e); 
+            } catch(e) { console.error("Error convirtiendo a imagen:", e); }
+
+            // Esperamos un instante mínimo solo para que el hilo principal pinte la imagen en el DOM
+            setTimeout(() => {
                 window.print();
-            }
+                // Restaurar estado
+                setTimeout(() => {
+                    chartsContainer.classList.add('hidden');
+                    tableContainer.classList.add('hidden');
+                }, 500);
+            }, 100);
+
         }, 200);
 
     } else {
