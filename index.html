@@ -31,15 +31,18 @@
 
     @page { size: A4 portrait; margin: 15mm; }
 
-    /* IMPORTANTE: NO forzamos display:block !important en los contenedores
-       de historia/gráficos. La visibilidad la controla el JS con style.display
-       en línea (ver generatePDF). Si pusiéramos !important aquí, anularía
-       la selección del usuario y las 3 opciones darían el mismo PDF. */
+    /* Forzamos la visualización del contenedor raíz de impresión */
     #printView { display: block !important; }
 
-    /* La rejilla de gráficos puede fluir entre páginas.
-       Cada .chart-box individualmente NO se corta. */
-    #printChartsContainer { display: block; }
+    /* Forzamos la visualización de los contenedores cuando el JS les pone display: block */
+    #printChartsContainer, #printTableContainer { display: block !important; }
+    
+    /* IMPORTANTE: Si el JS les pone display:none, respetamos esa decisión con esta regla */
+    #printChartsContainer[style*="display: none"], 
+    #printTableContainer[style*="display: none"] { 
+        display: none !important; 
+    }
+
     .chart-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -48,8 +51,6 @@
         margin-top: 10px;
     }
 
-    /* Cada gráfico ocupa su espacio, sin cortarse, y puede saltar de página.
-       Eliminamos flex + align-items:center que descentraban el canvas. */
     .chart-box {
         width: 100%;
         height: 260px;
@@ -58,18 +59,21 @@
         break-inside: avoid;
         display: block;
     }
+    
     .chart-box canvas {
         display: block;
         max-width: 100% !important;
         max-height: 100% !important;
+        /* Forzamos un tamaño mínimo para que el canvas no colapse */
+        min-width: 200px;
+        min-height: 200px;
     }
 
-    /* La tabla empieza en página nueva y puede ocupar varias */
-    #printTableContainer { display: block; page-break-before: always; }
+    #printTableContainer { page-break-before: always; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
     th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
     th { background: #eee; }
-    thead { display: table-header-group; }  /* repite cabecera en cada página */
+    thead { display: table-header-group; }
     tr { page-break-inside: avoid; }
   }
   .print-only { display: none; }
@@ -431,7 +435,7 @@
 
 <script>
 /* ============ Control de versión y limpieza ============ */
-const APP_VERSION = '3.10.0'; 
+const APP_VERSION = '3.10.1'; 
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1384,29 +1388,26 @@ function generatePDF(mode) {
     statsHtml += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
     document.getElementById('printStats').innerHTML = statsHtml;
 
-    // ====== 4. VISIBILIDAD: controlada SOLO por JS, no por CSS ======
+    // ====== 4. VISIBILIDAD: controlada SOLO por JS ======
     const tableContainer  = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
 
     tableContainer.style.display  = includeHistory ? 'block' : 'none';
     chartsContainer.style.display = includeCharts  ? 'block' : 'none';
 
-    // ====== 5. HISTORIA: rellenar tabla solo si aplica ======
+    // ====== 5. HISTORIA ======
     if (includeHistory) {
         renderPrintTable(filtered);
     } else {
         document.getElementById('printTableBody').innerHTML = '';
     }
 
-    // ====== 6. GRÁFICOS: preparar solo si aplica ======
+    // ====== 6. GRÁFICOS ======
     if (includeCharts) {
-        // Prioridad: filtro de gráficos > filtro de historia
-        const selectedStudent =
-            document.getElementById('chartStudentFilter').value || fStudent;
+        const selectedStudent = document.getElementById('chartStudentFilter').value || fStudent;
 
         if (!selectedStudent) {
             alert(t('selectStudentForCharts'));
-            // Restauramos visibilidad y salimos sin imprimir
             tableContainer.style.display  = 'none';
             chartsContainer.style.display = 'none';
             return;
@@ -1425,11 +1426,10 @@ function generatePDF(mode) {
 
         updatePrintCharts(chartData);
     } else {
-        // Modo "solo historia": destruir cualquier gráfico residual
         resetPrintCharts();
     }
 
-    // ====== 7. Datos embebidos para el "Restore desde PDF" ======
+    // ====== 7. Datos embebidos ======
     const backupData = {
         version: APP_VERSION,
         students, subjects, incidents, customOptions,
@@ -1437,24 +1437,28 @@ function generatePDF(mode) {
     };
     document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
 
-    // ====== 8. Forzar resize() y luego imprimir ======
-    const doPrint = () => {
+    // ====== 8. TRUCO PARA FORZAR EL RENDERIZADO EN IMPRESIÓN ======
+    // Añadimos una clase temporal al body para simular el entorno de impresión
+    // y forzar a Chart.js a recalcular sus dimensiones.
+    document.body.classList.add('is-printing-simulation');
+
+    setTimeout(() => {
         try {
+            // Redimensionamos cada gráfico para que se adapte al contenedor de impresión
             ['printChart1','printChart2','printChart3','printChart4'].forEach(k => {
-                if (window[k]) window[k].resize();
+                if (window[k]) {
+                    window[k].resize();
+                    window[k].update('none'); // Forzar actualización sin animación
+                }
             });
-        } catch(e) { /* noop */ }
+        } catch(e) { console.error("Error al redimensionar gráficos:", e); }
 
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                window.print();
-            }, 80);
-        });
-    };
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(doPrint);
-    });
+        // Esperamos un poco más para asegurar que los canvas se han pintado
+        setTimeout(() => {
+            document.body.classList.remove('is-printing-simulation');
+            window.print();
+        }, 250); // 250ms es un buen equilibrio
+    }, 100);
 }
 
 // Abrir el modal de PDF
