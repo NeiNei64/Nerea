@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aesh-cache-v36'; // <-- v36 para forzar la actualización
+const CACHE_NAME = 'aesh-cache-v37'; // <-- v37 para forzar la actualización
 const ASSETS = [
   './',
   './index.html',
