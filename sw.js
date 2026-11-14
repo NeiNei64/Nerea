@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aesh-cache-v43';
+const CACHE_NAME = 'aesh-cache-v44';
 const ASSETS = [
   './',
   './index.html',
