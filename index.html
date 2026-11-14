@@ -454,7 +454,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.2.7';
+const APP_VERSION = '4.2.8';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1042,7 +1042,6 @@ function renderHistory() {
   renderStats(filtered);
 }
 
-// Delegación de eventos para los botones de las tarjetas
 document.getElementById('historyList').addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');
     const delBtn = e.target.closest('.del-btn');
@@ -1378,6 +1377,15 @@ function generatePDF(mode) {
         }
     }
 
+    // Nombre del archivo según el alumno y el modo
+    let fileNameBase = selectedStudent || fStudent || 'Todos';
+    fileNameBase = fileNameBase.replace(/\s+/g, '_');
+    let fileNameSuffix = '';
+    if (mode === 'full') fileNameSuffix = '_HIST';
+    else if (mode === 'charts') fileNameSuffix = '_GRAF';
+    else if (mode === 'all') fileNameSuffix = '_ALL';
+    const finalFileName = `${fileNameBase}${fileNameSuffix}.pdf`;
+
     const printView = document.getElementById('printView');
     let html = '';
 
@@ -1417,7 +1425,7 @@ function generatePDF(mode) {
     setTimeout(() => {
         const opt = {
             margin:       15,
-            filename:     `NereApp_${mode}_${new Date().toISOString().slice(0,10)}.pdf`,
+            filename:     finalFileName,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
