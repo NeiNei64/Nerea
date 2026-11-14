@@ -67,14 +67,12 @@
       color: #374151;
   }
 
-  /* ==== TABLA ADAPTADA A4 ==== */
+  /* ==== TABLA COMO GRID DE DIVS (RESPETADO POR html2pdf) ==== */
   #printTableContainer {
     margin: 0;
     padding: 0;
-    page-break-inside: auto;
     width: 180mm;
     max-width: 180mm;
-    overflow: hidden;
   }
 
   #printTableContainer #printStatsInline {
@@ -86,46 +84,53 @@
     font-size: 10px;
   }
 
-  #printTableContainer table {
-      width: 180mm;
-      max-width: 180mm;
-      border-collapse: collapse;
-      font-size: 7px;
-      margin-top: 5px;
-      box-sizing: border-box;
-      table-layout: fixed; /* Esto es clave para que respete los anchos */
+  /* Cada fila es un flex */
+  .prow {
+    display: flex;
+    width: 100%;
+    border-left: 1px solid #999;
+    border-right: 1px solid #999;
+    box-sizing: border-box;
   }
-  #printTableContainer th,
-  #printTableContainer td {
-      border: 1px solid #999;
-      padding: 2px 2px;
-      text-align: left;
-      vertical-align: top;
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
-      white-space: normal;
-      line-height: 1.2;
-      box-sizing: border-box;
+  .prow.header {
+    background: #e5e7eb;
+    border-top: 1px solid #999;
+    font-weight: bold;
   }
-  #printTableContainer th {
-      background: #e5e7eb;
-      font-weight: bold;
-      font-size: 7px;
-      padding: 4px 2px;
+  .prow:last-child {
+    border-bottom: 1px solid #999;
+  }
+  /* Cada celda */
+  .pcell {
+    border-right: 1px solid #999;
+    border-bottom: 1px solid #999;
+    padding: 2px 2px;
+    font-size: 7px;
+    line-height: 1.2;
+    box-sizing: border-box;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    vertical-align: top;
+  }
+  .prow.header .pcell {
+    border-bottom: 1px solid #999;
+    padding: 4px 2px;
+    font-size: 7px;
+  }
+  .prow .pcell:last-child {
+    border-right: none;
   }
 
-  /* Anchos reducidos para dejar margen a la derecha.
-     La suma total es de 168mm, dejando 12mm de margen de seguridad. */
-  #printTableContainer th:nth-child(1) { width: 16mm; } /* Data */
-  #printTableContainer th:nth-child(2) { width: 16mm; } /* Ordua */
-  #printTableContainer th:nth-child(3) { width: 9mm; }  /* Ik. */
-  #printTableContainer th:nth-child(4) { width: 32mm; } /* Eragilea */
-  #printTableContainer th:nth-child(5) { width: 28mm; } /* Jokabidea */
-  #printTableContainer th:nth-child(6) { width: 28mm; } /* Esku-hartzea */
-  #printTableContainer th:nth-child(7) { width: 39mm; } /* Oharrak */
-
-  #printTableContainer tr { page-break-inside: avoid; }
-  #printTableContainer tbody tr:nth-child(even) { background: #fafafa; }
+  /* Anchos fijos en mm (suman 176mm) */
+  .pc-data    { width: 16mm; flex: 0 0 16mm; }
+  .pc-ordua   { width: 16mm; flex: 0 0 16mm; }
+  .pc-ik      { width: 9mm;  flex: 0 0 9mm;  }
+  .pc-erag    { width: 32mm; flex: 0 0 32mm; }
+  .pc-jok     { width: 28mm; flex: 0 0 28mm; }
+  .pc-esku    { width: 28mm; flex: 0 0 28mm; }
+  .pc-ohar    { width: 47mm; flex: 0 0 47mm; }
 
   #subjectLegendInline {
       margin-top: 10px;
@@ -455,7 +460,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.2.2';
+const APP_VERSION = '4.2.3';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1252,15 +1257,15 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
         const interventions = i.interventions.join(', ');
         const notes = i.notes || '';
 
-        rowsHtml += `<tr>
-            <td>${dateStr}</td>
-            <td>${slotStr}</td>
-            <td style="background-color:${subjColor}; color:white; font-weight:bold; text-align:center;">${subjShort}</td>
-            <td>${triggers}</td>
-            <td>${behaviors}</td>
-            <td>${interventions}</td>
-            <td>${notes}</td>
-        </tr>`;
+        rowsHtml += `<div class="prow">
+            <div class="pcell pc-data">${dateStr}</div>
+            <div class="pcell pc-ordua">${slotStr}</div>
+            <div class="pcell pc-ik" style="background-color:${subjColor}; color:white; font-weight:bold; text-align:center;">${subjShort}</div>
+            <div class="pcell pc-erag">${triggers}</div>
+            <div class="pcell pc-jok">${behaviors}</div>
+            <div class="pcell pc-esku">${interventions}</div>
+            <div class="pcell pc-ohar">${notes}</div>
+        </div>`;
     });
 
     let legendHtml = `<div id="subjectLegendInline">`;
@@ -1278,20 +1283,16 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
         <div id="printTableContainer" ${pageBreakStyle}>
             ${statsHtml}
             <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:16mm">Data</th>
-                        <th style="width:16mm">Ordua</th>
-                        <th style="width:9mm">Ik.</th>
-                        <th style="width:32mm">Eragilea</th>
-                        <th style="width:28mm">Jokabidea</th>
-                        <th style="width:28mm">Esku-hartzea</th>
-                        <th style="width:39mm">Oharrak</th>
-                    </tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
+            <div class="prow header">
+                <div class="pcell pc-data">Data</div>
+                <div class="pcell pc-ordua">Ordua</div>
+                <div class="pcell pc-ik">Ik.</div>
+                <div class="pcell pc-erag">Eragilea</div>
+                <div class="pcell pc-jok">Jokabidea</div>
+                <div class="pcell pc-esku">Esku-hartzea</div>
+                <div class="pcell pc-ohar">Oharrak</div>
+            </div>
+            ${rowsHtml}
             ${legendHtml}
         </div>
     `;
