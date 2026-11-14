@@ -84,7 +84,6 @@
     font-size: 10px;
   }
 
-  /* Cada fila es un flex SIN borde derecho (se lo damos a la última celda) */
   .prow {
     display: flex;
     width: 100%;
@@ -94,8 +93,6 @@
     background: #e5e7eb;
     font-weight: bold;
   }
-
-  /* Cada celda */
   .pcell {
     border-top: 1px solid #999;
     border-right: 1px solid #999;
@@ -110,31 +107,24 @@
     white-space: normal;
     vertical-align: top;
   }
-
-  /* La primera celda de cada fila tiene borde izquierdo */
   .prow .pcell:first-child {
     border-left: 1px solid #999;
   }
-
-  /* La última celda de cada fila mantiene su borde derecho y se cierra la tabla */
   .prow .pcell:last-child {
     border-right: 1px solid #999;
   }
-
-  /* Estilo específico del header */
   .prow.header .pcell {
     padding: 4px 2px;
     font-size: 7px;
   }
 
-  /* Anchos fijos en mm (suman 176mm de 180mm útiles, quedan 4mm de margen) */
   .pc-data    { width: 16mm; flex: 0 0 16mm; }
   .pc-ordua   { width: 16mm; flex: 0 0 16mm; }
   .pc-ik      { width: 9mm;  flex: 0 0 9mm;  }
   .pc-erag    { width: 30mm; flex: 0 0 30mm; }
   .pc-jok     { width: 28mm; flex: 0 0 28mm; }
   .pc-esku    { width: 35mm; flex: 0 0 35mm; }
-  .pc-ohar    { width: 42mm; flex: 0 0 42mm; } /* Más ancha porque había espacio libre */
+  .pc-ohar    { width: 42mm; flex: 0 0 42mm; }
 
   #subjectLegendInline {
       margin-top: 10px;
@@ -464,7 +454,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.2.5';
+const APP_VERSION = '4.2.6';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1040,20 +1030,37 @@ function renderHistory() {
             ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${inc.notes}</div>` : ''}
           </div>
           <div class="flex flex-col gap-1 no-print">
-            <button class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" title="${t('editBtn')}">✏️</button>
-            <button class="del-btn text-red-600 hover:text-red-800 font-bold px-2" title="${t('deleteBtn')}">✕</button>
+            <button type="button" class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" title="${t('editBtn')}">✏️</button>
+            <button type="button" class="del-btn text-red-600 hover:text-red-800 font-bold px-2" title="${t('deleteBtn')}">✕</button>
           </div>
         </div>
       `;
-      card.querySelector('.edit-btn').onclick = () => editIncident(inc.id);
-      card.querySelector('.del-btn').onclick = () => {
-        if (confirm(t('confirmDelete'))) {
-          incidents = incidents.filter(x => x.id !== inc.id);
-          saveIncidents();
-          renderHistory();
-          renderCharts();
-        }
-      };
+      
+      // Asignar eventos con addEventListener (más robusto)
+      const editBtn = card.querySelector('.edit-btn');
+      const delBtn = card.querySelector('.del-btn');
+      
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editIncident(inc.id);
+        });
+      }
+      
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm(t('confirmDelete'))) {
+                incidents = incidents.filter(x => x.id !== inc.id);
+                saveIncidents();
+                renderHistory();
+                renderCharts();
+            }
+        });
+      }
+      
       list.appendChild(card);
     });
   }
