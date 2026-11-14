@@ -35,9 +35,6 @@
     color: #111;
   }
 
-  /* Salto de página dinámico, se añade solo cuando hace falta */
-  .page-break-before { page-break-before: always; break-before: page; }
-
   .chart-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -70,12 +67,14 @@
       color: #374151;
   }
 
-  /* ==== TABLA ADAPTADA A4 CON ANCHOS EN MM ==== */
+  /* ==== TABLA ADAPTADA A4 CON ANCHOS EN TH ==== */
   #printTableContainer {
     margin: 0;
     padding: 0;
     page-break-inside: auto;
     width: 180mm;
+    max-width: 180mm;
+    overflow: hidden;
   }
 
   #printTableContainer #printStatsInline {
@@ -89,15 +88,17 @@
 
   #printTableContainer table {
       width: 180mm;
+      max-width: 180mm;
       border-collapse: collapse;
       font-size: 7px;
       margin-top: 5px;
-      table-layout: fixed; /* CRÍTICO: fija el ancho */
+      box-sizing: border-box;
+      /* Sin table-layout: fixed, dejamos que el navegador calcule */
   }
   #printTableContainer th,
   #printTableContainer td {
       border: 1px solid #999;
-      padding: 2px 3px;
+      padding: 2px 2px;
       text-align: left;
       vertical-align: top;
       word-wrap: break-word;
@@ -105,23 +106,22 @@
       white-space: normal;
       line-height: 1.2;
       box-sizing: border-box;
-      overflow: hidden; /* Evita que la celda crezca más allá de su ancho */
   }
   #printTableContainer th {
       background: #e5e7eb;
       font-weight: bold;
       font-size: 7px;
-      padding: 4px 3px;
+      padding: 4px 2px;
   }
 
-  /* Anchos en mm (suman 180mm) */
-  #printTableContainer col:nth-child(1) { width: 20mm; } /* Data */
-  #printTableContainer col:nth-child(2) { width: 20mm; } /* Ordua */
-  #printTableContainer col:nth-child(3) { width: 12mm; } /* Ik. */
-  #printTableContainer col:nth-child(4) { width: 33mm; } /* Eragilea */
-  #printTableContainer col:nth-child(5) { width: 28mm; } /* Jokabidea */
-  #printTableContainer col:nth-child(6) { width: 28mm; } /* Esku-hartzea */
-  #printTableContainer col:nth-child(7) { width: 39mm; } /* Oharrak */
+  /* Anchos en mm (suman 176mm, deja 4mm de margen por si acaso) */
+  #printTableContainer th:nth-child(1) { width: 18mm; } /* Data */
+  #printTableContainer th:nth-child(2) { width: 18mm; } /* Ordua */
+  #printTableContainer th:nth-child(3) { width: 10mm; } /* Ik. */
+  #printTableContainer th:nth-child(4) { width: 32mm; } /* Eragilea */
+  #printTableContainer th:nth-child(5) { width: 28mm; } /* Jokabidea */
+  #printTableContainer th:nth-child(6) { width: 28mm; } /* Esku-hartzea */
+  #printTableContainer th:nth-child(7) { width: 42mm; } /* Oharrak */
 
   #printTableContainer tr { page-break-inside: avoid; }
   #printTableContainer tbody tr:nth-child(even) { background: #fafafa; }
@@ -454,7 +454,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.2.1';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1180,7 +1180,7 @@ function resetPrintCharts() {
     });
 }
 
-// ==== CONSTRUCCIÓN DEL HTML ESTÁTICO PARA EL PDF ====
+// ==== GENERACIÓN DEL HTML PARA EL PDF ====
 function buildChartsHTML() {
     return `
         <div id="printChartsContainer" class="mb-8">
@@ -1221,7 +1221,6 @@ function buildAnalysisHTML(analysisHtml) {
 }
 
 function buildTableHTML(filtered, fStudent, withPageBreak) {
-    // Stats
     const byStudent = {};
     filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
     
@@ -1235,7 +1234,6 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
     statsHtml += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
     statsHtml += `</div>`;
 
-    // Filas
     const usedSubjects = new Set();
     let rowsHtml = '';
     filtered.forEach(i => {
@@ -1264,7 +1262,6 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
         </tr>`;
     });
 
-    // Leyenda
     let legendHtml = `<div id="subjectLegendInline">`;
     if (usedSubjects.size > 0) {
         Array.from(usedSubjects).sort().forEach(subj => {
@@ -1281,18 +1278,15 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
             ${statsHtml}
             <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
             <table>
-                <colgroup>
-                    <col><col><col><col><col><col><col>
-                </colgroup>
                 <thead>
                     <tr>
-                        <th>Data</th>
-                        <th>Ordua</th>
-                        <th>Ik.</th>
-                        <th>Eragilea</th>
-                        <th>Jokabidea</th>
-                        <th>Esku-hartzea</th>
-                        <th>Oharrak</th>
+                        <th style="width:18mm">Data</th>
+                        <th style="width:18mm">Ordua</th>
+                        <th style="width:10mm">Ik.</th>
+                        <th style="width:32mm">Eragilea</th>
+                        <th style="width:28mm">Jokabidea</th>
+                        <th style="width:28mm">Esku-hartzea</th>
+                        <th style="width:42mm">Oharrak</th>
                     </tr>
                 </thead>
                 <tbody>${rowsHtml}</tbody>
@@ -1302,24 +1296,23 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
     `;
 }
 
-// ==== LECTURA DEL ANÁLISIS ACTUAL ====
 function getCurrentAnalysisHTML() {
     const sel = document.getElementById('chartStudentFilter').value;
     if (!sel) return '';
     const filtered = incidents.filter(i => i.student === sel).sort((a,b)=> b.date.localeCompare(a.date));
     if (filtered.length === 0) return '';
     
-    // Generar el mismo HTML que en renderCharts
     const countsByDate = {};
     [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
     const data = Object.values(countsByDate);
     
     let evolutionText = t('stableEvolution');
+    let evolutionClass = 'text-gray-600';
     if (data.length >= 2) {
         const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
         const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
-        if (secondHalf < firstHalf) evolutionText = t('positiveEvolution');
-        else if (secondHalf > firstHalf) evolutionText = t('negativeEvolution');
+        if (secondHalf < firstHalf) { evolutionText = t('positiveEvolution'); evolutionClass = 'text-green-600 font-bold'; }
+        else if (secondHalf > firstHalf) { evolutionText = t('negativeEvolution'); evolutionClass = 'text-red-600 font-bold'; }
     }
     
     const slotCount = {};
@@ -1342,14 +1335,13 @@ function getCurrentAnalysisHTML() {
     const topBehaviors = Object.entries(behaviorCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
     return `
-        <div class="mb-4"><h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4><p class="${evolutionText === t('positiveEvolution') ? 'text-green-600 font-bold' : (evolutionText === t('negativeEvolution') ? 'text-red-600 font-bold' : 'text-gray-600')}">${evolutionText}</p></div>
+        <div class="mb-4"><h4 class="font-semibold text-gray-700 mb-1">${lang==='eu'?'Eboluzioa':'Évolution'}:</h4><p class="${evolutionClass}">${evolutionText}</p></div>
         ${peakSlot ? `<div class="mb-2"><h4 class="font-semibold text-gray-700">${t('peakSlot')}:</h4><p>${peakSlot}</p></div>` : ''}
         <div class="mb-2"><h4 class="font-semibold text-gray-700">${t('topTriggers')}:</h4><ul class="list-disc pl-5">${topTriggers.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
         <div><h4 class="font-semibold text-gray-700">${t('topBehaviors')}:</h4><ul class="list-disc pl-5">${topBehaviors.map(([name, count]) => `<li>${name} (${count})</li>`).join('') || '<li>-</li>'}</ul></div>
     `;
 }
 
-// ==== GENERACIÓN DEL PDF ====
 function generatePDF(mode) {
     document.getElementById('pdfModal').classList.add('hidden');
     
@@ -1378,7 +1370,6 @@ function generatePDF(mode) {
         }
     }
 
-    // 1. Construir el HTML del PDF como string
     const printView = document.getElementById('printView');
     let html = '';
 
@@ -1392,15 +1383,12 @@ function generatePDF(mode) {
     }
 
     if (includeHistory) {
-        // Si hay gráficos + historia, añadir salto de página antes de la tabla
         const withPageBreak = includeCharts;
         html += buildTableHTML(filtered, fStudent, withPageBreak);
     }
 
-    // 2. Inyectar el HTML en el printView
     printView.innerHTML = html;
 
-    // 3. Rellenar los metadatos en el HTML generado
     const printTitle = document.getElementById('printTitle');
     const printMeta = document.getElementById('printMeta');
     if (printTitle && printMeta) {
@@ -1411,16 +1399,13 @@ function generatePDF(mode) {
         printMeta.textContent = `${t('generated')}: ${new Date().toLocaleString(lang==='eu'?'eu-ES':'fr-FR')} · ${period}`;
     }
 
-    // 4. Generar gráficos si hay que incluirlos
     if (includeCharts) {
         const chartData = incidents
             .filter(i => i.student === selectedStudent)
             .sort((a,b)=> b.date.localeCompare(a.date));
-        
         updatePrintCharts(chartData);
     }
 
-    // 5. Esperar un poco y generar el PDF
     setTimeout(() => {
         const opt = {
             margin:       15,
@@ -1434,7 +1419,7 @@ function generatePDF(mode) {
         
         html2pdf().set(opt).from(printView).save().then(() => {
             printView.style.display = 'none';
-            printView.innerHTML = ''; // Limpiar
+            printView.innerHTML = '';
             resetPrintCharts();
         });
     }, 300);
