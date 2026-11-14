@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aesh-cache-v24'; // <-- v24 para invalidar caché
+const CACHE_NAME = 'aesh-cache-v26'; // <-- v26 para forzar actualización tras los cambios
 const ASSETS = [
   './',
   './index.html',
