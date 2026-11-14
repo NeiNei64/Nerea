@@ -73,33 +73,55 @@
   #printTableContainer {
     margin: 0;
     padding: 0;
+    page-break-inside: auto;
+  }
+
+  /* Estadísticas integradas dentro del contenedor de la tabla */
+  #printStatsInline {
+    margin-bottom: 15px;
+    padding: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 10px;
   }
 
   table { 
       width: 100%; 
       border-collapse: collapse; 
-      font-size: 8px; 
-      margin-top: 10px; 
-      table-layout: fixed; 
-      word-break: break-all; /* Fuerza el corte de palabras largas */
+      font-size: 7px; 
+      margin-top: 5px; 
+      page-break-inside: auto;
   }
   th, td { 
-      border: 1px solid #aaa; 
-      padding: 3px; 
+      border: 1px solid #999; 
+      padding: 2px; 
       text-align: left; 
       vertical-align: top;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
+      line-height: 1.2;
   }
-  th { background: #f3f4f6; font-weight: bold; }
+  th { 
+      background: #e5e7eb; 
+      font-weight: bold; 
+      font-size: 7px;
+      padding: 3px 2px;
+  }
   
-  /* Reparto de anchos */
-  th:nth-child(1) { width: 10%; } /* Data */
-  th:nth-child(2) { width: 9%; }  /* Ikaslea */
-  th:nth-child(3) { width: 12%; } /* Ordutegia */
-  th:nth-child(4) { width: 9%; }  /* Ikasgaia */
-  th:nth-child(5) { width: 15%; } /* Eragilea */
-  th:nth-child(6) { width: 15%; } /* Jokabidea */
-  th:nth-child(7) { width: 15%; } /* Esku-hartzea */
-  th:nth-child(8) { width: 15%; } /* Oharrak */
+  /* Reparto de anchos exactos para A4 (180mm útiles) */
+  table colgroup col:nth-child(1) { width: 12%; } /* Data */
+  table colgroup col:nth-child(2) { width: 8%; }  /* Ikaslea */
+  table colgroup col:nth-child(3) { width: 13%; } /* Ordutegia */
+  table colgroup col:nth-child(4) { width: 9%; }  /* Ikasgaia */
+  table colgroup col:nth-child(5) { width: 16%; } /* Eragilea */
+  table colgroup col:nth-child(6) { width: 15%; } /* Jokabidea */
+  table colgroup col:nth-child(7) { width: 15%; } /* Esku-hartzea */
+  table colgroup col:nth-child(8) { width: 12%; } /* Oharrak */
+
+  /* Evitar cortes raros en las filas */
+  tr { page-break-inside: avoid; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -418,7 +440,6 @@
     <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
     <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
   </div>
-  <div id="printStats" class="mb-6 text-sm"></div>
   
   <!-- 1. GRÁFICOS -->
   <div id="printChartsContainer" class="hidden mb-8">
@@ -451,11 +472,25 @@
       <div id="printAnalysisDetails" class="text-sm space-y-2"></div>
   </div>
 
-  <!-- 3. TABLA -->
+  <!-- 3. TABLA (con estadísticas integradas para evitar bloque fantasma) -->
   <div id="printTableContainer" class="hidden">
       <div id="forceTablePageBreak" class="page-break-before"></div>
+      
+      <!-- Bloque de estadísticas integrado DENTRO del contenedor de la tabla -->
+      <div id="printStatsInline"></div>
+      
       <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
       <table class="w-full border-collapse">
+        <colgroup>
+          <col>
+          <col>
+          <col>
+          <col>
+          <col>
+          <col>
+          <col>
+          <col>
+        </colgroup>
         <thead>
           <tr>
             <th>Data</th>
@@ -478,7 +513,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.1.4';
+const APP_VERSION = '4.1.5';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -546,7 +581,7 @@ const I18N = {
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
     selectStudentForCharts: "Ikasle bat hautatu behar da grafikoak ikusteko.",
-    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honetakoekin?",
+    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honekin?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
     restoreError: "Errorea fitxategia irakurtzean.",
     noDataInPdf: "Ez da daturik aurkitu PDFan. Ziurtatu PDF hau aplikazio honekin sortu dela.",
@@ -1290,6 +1325,22 @@ function renderPrintTable(filtered) {
     });
 }
 
+function renderPrintStatsInline(filtered, fStudent) {
+    const container = document.getElementById('printStatsInline');
+    const byStudent = {};
+    filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
+    
+    let statsHtml = '';
+    if (fStudent) {
+        statsHtml = `<div style="margin-bottom: 5px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
+    } else {
+        statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
+            .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
+    }
+    statsHtml += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
+    container.innerHTML = statsHtml;
+}
+
 function renderStats(filtered) {
   const byStudent = {};
   filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
@@ -1384,18 +1435,6 @@ function generatePDF(mode) {
     document.getElementById('printMeta').textContent =
         `${t('generated')}: ${new Date().toLocaleString(lang==='eu'?'eu-ES':'fr-FR')} · ${period}`;
 
-    const byStudent = {};
-    filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
-    let statsHtml = '';
-    if (fStudent) {
-        statsHtml = `<div style="margin-bottom: 10px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
-    } else {
-        statsHtml = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
-            .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
-    }
-    statsHtml += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
-    document.getElementById('printStats').innerHTML = statsHtml;
-
     const tableContainer  = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
     const analysisContainer = document.getElementById('printAnalysisContainer');
@@ -1410,6 +1449,7 @@ function generatePDF(mode) {
     if (includeHistory) {
         tableContainer.classList.remove('hidden');
         renderPrintTable(filtered);
+        renderPrintStatsInline(filtered, fStudent);
     }
 
     if (includeCharts) {
