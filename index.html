@@ -454,7 +454,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.2.9';
+const APP_VERSION = '4.3.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -943,39 +943,68 @@ function resetForm() {
 }
 
 function editIncident(id) {
-    const inc = incidents.find(i => i.id === id);
-    if (!inc) return;
+    // Log para debug
+    console.log("editIncident llamado con id:", id);
+
+    const inc = incidents.find(i => String(i.id) === String(id));
+    if (!inc) {
+        console.warn("No se encontró el incidente con id:", id);
+        return;
+    }
     
-    editingIncidentId = id;
-    
-    document.getElementById('incidentDate').value = inc.date;
-    document.getElementById('incidentStudent').value = inc.student;
-    document.getElementById('incidentSubject').value = inc.subject || '';
-    
-    const slotVal = `${inc.slotRange}|${inc.slotEu}|${inc.slotFr}`;
-    document.getElementById('incidentSlot').value = slotVal;
-    
-    document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
-    const markChecks = (name, vals) => {
-        vals.forEach(v => {
-            const cb = Array.from(document.querySelectorAll(`input[name="${name}"]`)).find(c => c.value === v);
-            if (cb) cb.checked = true;
-        });
-    };
-    markChecks('trigger', inc.triggers || []);
-    markChecks('behavior', inc.behaviors || []);
-    markChecks('intervention', inc.interventions || []);
-    
-    document.getElementById('incidentNotes').value = inc.notes || '';
-    
-    document.getElementById('cancelEditBtn').classList.remove('hidden');
-    const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.classList.remove('bg-indigo-600');
-    submitBtn.classList.add('bg-green-600');
-    submitBtn.innerHTML = `<span data-eu="✓ Eguneratu gorabehera" data-fr="✓ Mettre à jour l'incident">✓ Eguneratu gorabehera</span>`;
-    applyLang();
-    
+    // Forzar el cambio a la pestaña "Erregistroa" antes de rellenar
     document.querySelector('[data-tab="form"]').click();
+
+    editingIncidentId = inc.id;
+    
+    try {
+        // 1. Fecha y hora
+        document.getElementById('incidentDate').value = inc.date;
+        
+        // 2. Alumno (desplegable)
+        document.getElementById('incidentStudent').value = inc.student;
+        
+        // 3. Asignatura (desplegable)
+        document.getElementById('incidentSubject').value = inc.subject || '';
+        
+        // 4. Franja horaria (desplegable)
+        const slotVal = `${inc.slotRange}|${inc.slotEu}|${inc.slotFr}`;
+        document.getElementById('incidentSlot').value = slotVal;
+
+        // 5. Checkboxes: desmarcar todos primero
+        document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+
+        const markChecks = (name, vals) => {
+            (vals || []).forEach(v => {
+                // Buscamos coincidencia exacta O parcial (trim) para evitar problemas con espacios
+                const cb = Array.from(document.querySelectorAll(`input[name="${name}"]`))
+                    .find(c => c.value.trim() === v.trim());
+                if (cb) cb.checked = true;
+            });
+        };
+        markChecks('trigger', inc.triggers);
+        markChecks('behavior', inc.behaviors);
+        markChecks('intervention', inc.interventions);
+
+        // 6. Notas
+        document.getElementById('incidentNotes').value = inc.notes || '';
+
+        // 7. Cambiar el botón de guardar a "actualizar"
+        document.getElementById('cancelEditBtn').classList.remove('hidden');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.classList.remove('bg-indigo-600');
+        submitBtn.classList.add('bg-green-600');
+        submitBtn.innerHTML = `<span data-eu="✓ Eguneratu gorabehera" data-fr="✓ Mettre à jour l'incident">✓ Eguneratu gorabehera</span>`;
+        applyLang();
+
+        // Hacer scroll hacia arriba para ver el formulario
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        console.log("Formulario rellenado con éxito para:", inc);
+    } catch (err) {
+        console.error("Error al rellenar el formulario:", err);
+        alert("Error al cargar los datos: " + err.message);
+    }
 }
 
 let myChart = null;
@@ -1030,36 +1059,11 @@ function renderHistory() {
             ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${inc.notes}</div>` : ''}
           </div>
           <div class="flex flex-col gap-1 no-print">
-            <button type="button" class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" title="${t('editBtn')}">✏️</button>
-            <button type="button" class="del-btn text-red-600 hover:text-red-800 font-bold px-2" title="${t('deleteBtn')}">✕</button>
+            <button type="button" class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" data-id="${inc.id}" title="${t('editBtn')}">✏️</button>
+            <button type="button" class="del-btn text-red-600 hover:text-red-800 font-bold px-2" data-id="${inc.id}" title="${t('deleteBtn')}">✕</button>
           </div>
         </div>
       `;
-      
-      // Asignar el evento onclick DIRECTO al botón, no al contenedor
-      const editBtn = card.querySelector('.edit-btn');
-      const delBtn = card.querySelector('.del-btn');
-      
-      if (editBtn) {
-        editBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editIncident(inc.id);
-        });
-      }
-      
-      if (delBtn) {
-        delBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (confirm(t('confirmDelete'))) {
-                incidents = incidents.filter(x => x.id !== inc.id);
-                saveIncidents();
-                renderHistory();
-                renderCharts();
-            }
-        });
-      }
       
       list.appendChild(card);
     });
@@ -1067,6 +1071,29 @@ function renderHistory() {
 
   renderStats(filtered);
 }
+
+// Delegación de eventos para los botones de las tarjetas
+document.getElementById('historyList').addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.edit-btn');
+    const delBtn = e.target.closest('.del-btn');
+    
+    if (editBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = editBtn.getAttribute('data-id');
+        editIncident(id);
+    } else if (delBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = delBtn.getAttribute('data-id');
+        if (confirm(t('confirmDelete'))) {
+            incidents = incidents.filter(x => String(x.id) !== String(id));
+            saveIncidents();
+            renderHistory();
+            renderCharts();
+        }
+    }
+});
 
 function renderCharts() {
   const chartFilter = document.getElementById('chartStudentFilter');
