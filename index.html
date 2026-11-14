@@ -32,20 +32,25 @@
     max-width: 180mm; /* Ajuste para que quepa en A4 con márgenes de 15mm */
     padding: 0;
     box-sizing: border-box;
+    font-family: sans-serif;
   }
+
+  /* Clases de utilidad para forzar saltos de página exactos */
+  .page-break-before { page-break-before: always; break-before: page; }
+  .page-break-after { page-break-after: always; break-after: page; }
 
   .chart-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      gap: 10px;
+      gap: 15px;
       width: 100%;
       margin-top: 10px;
   }
 
   .chart-box {
       width: 100%;
-      height: 250px; /* Un poco más bajo para dejar espacio al título y análisis */
+      height: 270px; 
       display: block;
       position: relative;
       page-break-inside: avoid;
@@ -66,15 +71,27 @@
       color: #374151;
   }
 
-  /* Control de saltos de página */
-  .page-break {
-      page-break-before: always;
-      break-before: page;
+  /* LA CLAVE PARA QUE LA TABLA NO SE CORTE: table-layout fixed */
+  table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 9px; 
+      margin-top: 10px; 
+      table-layout: fixed; /* Fuerza a que las columnas respeten el ancho */
+      word-wrap: break-word;
   }
-
-  table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-  th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+  th, td { border: 1px solid #ccc; padding: 4px; text-align: left; vertical-align: top; }
   th { background: #eee; }
+  
+  /* Ajuste de anchos de columna para A4 (Suma 100%) */
+  th:nth-child(1) { width: 12%; } /* Data */
+  th:nth-child(2) { width: 10%; } /* Ikaslea */
+  th:nth-child(3) { width: 12%; } /* Ordutegia */
+  th:nth-child(4) { width: 10%; } /* Ikasgaia */
+  th:nth-child(5) { width: 14%; } /* Eragilea */
+  th:nth-child(6) { width: 14%; } /* Jokabidea */
+  th:nth-child(7) { width: 14%; } /* Esku-hartzea */
+  th:nth-child(8) { width: 14%; } /* Oharrak */
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -417,15 +434,18 @@
               <div class="chart-box"><canvas id="printChart4"></canvas></div>
           </div>
       </div>
-      
-      <!-- Bloque de análisis de texto -->
-      <div id="printAnalysisDetails" class="text-sm space-y-2 mt-4"></div>
   </div>
 
-  <!-- Tabla -->
+  <!-- Bloque de análisis de texto (SALTO DE PÁGINA ANTES) -->
+  <div id="printAnalysisContainer" class="hidden">
+      <div class="page-break-before"></div>
+      <h2 class="text-lg font-bold border-b mb-4">Analisia / Analyse</h2>
+      <div id="printAnalysisDetails" class="text-sm space-y-2"></div>
+  </div>
+
+  <!-- Tabla (SALTO DE PÁGINA ANTES) -->
   <div id="printTableContainer" class="hidden">
-      <div id="forcePageBreak" class="hidden page-break"></div>
-      
+      <div id="forceTablePageBreak" class="page-break-before"></div>
       <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
       <table class="w-full border-collapse text-xs">
         <thead>
@@ -450,7 +470,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.1.1';
+const APP_VERSION = '4.1.2';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1370,7 +1390,10 @@ function generatePDF(mode) {
 
     const tableContainer  = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
-    const forcePageBreak = document.getElementById('forcePageBreak');
+    const analysisContainer = document.getElementById('printAnalysisContainer');
+    
+    // Manejar saltos de página
+    const forceTablePageBreak = document.getElementById('forceTablePageBreak');
 
     if (includeHistory) {
         tableContainer.classList.remove('hidden');
@@ -1381,13 +1404,11 @@ function generatePDF(mode) {
 
     if (includeCharts) {
         chartsContainer.classList.remove('hidden');
-        forcePageBreak.classList.remove('hidden'); // Forzar salto de página si hay gráficos
         
         const selectedStudent = document.getElementById('chartStudentFilter').value || fStudent;
         if (!selectedStudent) {
             alert(t('selectStudentForCharts'));
             chartsContainer.classList.add('hidden');
-            forcePageBreak.classList.add('hidden');
             return;
         }
 
@@ -1398,19 +1419,29 @@ function generatePDF(mode) {
         if (chartData.length === 0) {
             alert(t('noIncidents'));
             chartsContainer.classList.add('hidden');
-            forcePageBreak.classList.add('hidden');
             return;
         }
 
         updatePrintCharts(chartData);
         
+        // Mostrar el análisis de texto (que ya tiene un page-break-before interno)
+        analysisContainer.classList.remove('hidden');
+
+        // Forzar salto de página si hay historia
+        if (includeHistory) {
+            forceTablePageBreak.classList.remove('hidden');
+        } else {
+            forceTablePageBreak.classList.add('hidden');
+        }
+
         setTimeout(() => {
             generarPDFconLibreria(mode);
         }, 300);
 
     } else {
         chartsContainer.classList.add('hidden');
-        forcePageBreak.classList.add('hidden'); // No forzar salto si solo hay tabla
+        analysisContainer.classList.add('hidden');
+        forceTablePageBreak.classList.add('hidden'); 
         generarPDFconLibreria(mode);
     }
 }
@@ -1418,27 +1449,23 @@ function generatePDF(mode) {
 function generarPDFconLibreria(mode) {
     const printView = document.getElementById('printView');
     
-    // Configuración de html2pdf
     const opt = {
-        margin:       15, // 15mm de margen
+        margin:       15, 
         filename:     `NereApp_${mode}_${new Date().toISOString().slice(0,10)}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Hacemos visible el div temporalmente para html2canvas
     printView.style.display = 'block'; 
 
-    // Ejecutamos la generación del PDF
     html2pdf().set(opt).from(printView).save().then(() => {
-        // Restaurar estilos
         printView.style.display = 'none';
 
-        // Ocultar contenedores
         document.getElementById('printChartsContainer').classList.add('hidden');
         document.getElementById('printTableContainer').classList.add('hidden');
-        document.getElementById('forcePageBreak').classList.add('hidden');
+        document.getElementById('printAnalysisContainer').classList.add('hidden');
+        document.getElementById('forceTablePageBreak').classList.add('hidden');
     });
 }
 
