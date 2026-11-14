@@ -454,7 +454,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.3.0';
+const APP_VERSION = '4.3.1';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -943,14 +943,8 @@ function resetForm() {
 }
 
 function editIncident(id) {
-    // Log para debug
-    console.log("editIncident llamado con id:", id);
-
     const inc = incidents.find(i => String(i.id) === String(id));
-    if (!inc) {
-        console.warn("No se encontró el incidente con id:", id);
-        return;
-    }
+    if (!inc) return;
     
     // Forzar el cambio a la pestaña "Erregistroa" antes de rellenar
     document.querySelector('[data-tab="form"]').click();
@@ -958,25 +952,17 @@ function editIncident(id) {
     editingIncidentId = inc.id;
     
     try {
-        // 1. Fecha y hora
         document.getElementById('incidentDate').value = inc.date;
-        
-        // 2. Alumno (desplegable)
         document.getElementById('incidentStudent').value = inc.student;
-        
-        // 3. Asignatura (desplegable)
         document.getElementById('incidentSubject').value = inc.subject || '';
         
-        // 4. Franja horaria (desplegable)
         const slotVal = `${inc.slotRange}|${inc.slotEu}|${inc.slotFr}`;
         document.getElementById('incidentSlot').value = slotVal;
 
-        // 5. Checkboxes: desmarcar todos primero
         document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
 
         const markChecks = (name, vals) => {
             (vals || []).forEach(v => {
-                // Buscamos coincidencia exacta O parcial (trim) para evitar problemas con espacios
                 const cb = Array.from(document.querySelectorAll(`input[name="${name}"]`))
                     .find(c => c.value.trim() === v.trim());
                 if (cb) cb.checked = true;
@@ -986,10 +972,8 @@ function editIncident(id) {
         markChecks('behavior', inc.behaviors);
         markChecks('intervention', inc.interventions);
 
-        // 6. Notas
         document.getElementById('incidentNotes').value = inc.notes || '';
 
-        // 7. Cambiar el botón de guardar a "actualizar"
         document.getElementById('cancelEditBtn').classList.remove('hidden');
         const submitBtn = document.querySelector('button[type="submit"]');
         submitBtn.classList.remove('bg-indigo-600');
@@ -997,13 +981,9 @@ function editIncident(id) {
         submitBtn.innerHTML = `<span data-eu="✓ Eguneratu gorabehera" data-fr="✓ Mettre à jour l'incident">✓ Eguneratu gorabehera</span>`;
         applyLang();
 
-        // Hacer scroll hacia arriba para ver el formulario
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        console.log("Formulario rellenado con éxito para:", inc);
     } catch (err) {
         console.error("Error al rellenar el formulario:", err);
-        alert("Error al cargar los datos: " + err.message);
     }
 }
 
@@ -1064,15 +1044,51 @@ function renderHistory() {
           </div>
         </div>
       `;
-      
       list.appendChild(card);
     });
   }
 
+  // ESTA ERA LA FUNCIÓN QUE FALTABA
   renderStats(filtered);
 }
 
-// Delegación de eventos para los botones de las tarjetas
+// ✅ FUNCIÓN RESTAURADA
+function renderStats(filtered) {
+  const byStudent = {};
+  filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
+  const sStudents = document.getElementById('statsStudents');
+  if (sStudents) {
+    sStudents.innerHTML = '';
+    const sKeys = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]);
+    if (sKeys.length === 0) sStudents.innerHTML = `<li class="text-gray-400">—</li>`;
+    sKeys.forEach(k => {
+      const li = document.createElement('li');
+      li.className = 'flex justify-between';
+      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byStudent[k]}</span>`;
+      sStudents.appendChild(li);
+    });
+    const totalLi = document.createElement('li');
+    totalLi.className = 'flex justify-between border-t pt-1 mt-1 font-bold';
+    totalLi.innerHTML = `<span>${t('total')}</span><span>${filtered.length}</span>`;
+    sStudents.appendChild(totalLi);
+  }
+
+  const byBeh = {};
+  filtered.forEach(i => i.behaviors.forEach(b => { byBeh[b]=(byBeh[b]||0)+1; }));
+  const sBeh = document.getElementById('statsBehaviors');
+  if (sBeh) {
+    sBeh.innerHTML = '';
+    const bKeys = Object.keys(byBeh).sort((a,b)=>byBeh[b]-byBeh[a]);
+    if (bKeys.length === 0) sBeh.innerHTML = `<li class="text-gray-400">—</li>`;
+    bKeys.forEach(k => {
+      const li = document.createElement('li');
+      li.className = 'flex justify-between';
+      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byBeh[k]}</span>`;
+      sBeh.appendChild(li);
+    });
+  }
+}
+
 document.getElementById('historyList').addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');
     const delBtn = e.target.closest('.del-btn');
