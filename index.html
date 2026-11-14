@@ -24,35 +24,46 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
   
-  /* ============ ESTILOS PARA LA VISTA DE EXPORTACIÓN (NO IMPRESIÓN) ============ */
+  /* ============ ESTILOS PARA LA VISTA DE EXPORTACIÓN ============ */
   #printView {
     display: none; /* Oculto en pantalla normal */
     background: white;
-    width: 210mm; /* Ancho A4 exacto */
-    padding: 15mm;
+    width: 100%;
+    max-width: 180mm; /* Ajuste para que quepa en A4 con márgenes de 15mm (210 - 15 - 15 = 180) */
+    padding: 0;
     box-sizing: border-box;
   }
 
+  /* IMPORTANTE: La rejilla ocupa el 100% del ancho disponible */
   .chart-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      gap: 15px;
+      gap: 10px;
       width: 100%;
       margin-top: 10px;
   }
 
+  /* Cada caja tiene una altura fija y NO se corta */
   .chart-box {
       width: 100%;
-      height: 300px;
+      height: 280px; /* Altura perfecta para A4 */
       display: block;
       position: relative;
+      page-break-inside: avoid;
+      break-inside: avoid;
   }
 
   .chart-box canvas {
       display: block !important;
       width: 100% !important;
       height: 100% !important;
+  }
+
+  /* Control de saltos de página */
+  .page-break {
+      page-break-before: always;
+      break-before: page;
   }
 
   table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
@@ -390,7 +401,11 @@
   </div>
 
   <!-- Tabla -->
+  <!-- IMPORTANTE: Le añadimos la clase page-break para que siempre empiece en página nueva si hay gráficos -->
   <div id="printTableContainer" class="hidden">
+      <!-- Este div invisible fuerza el salto de página solo si los gráficos están visibles -->
+      <div id="forcePageBreak" class="hidden page-break"></div>
+      
       <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
       <table class="w-full border-collapse text-xs">
         <thead>
@@ -415,7 +430,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.1.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1326,6 +1341,9 @@ function generatePDF(mode) {
 
     const tableContainer  = document.getElementById('printTableContainer');
     const chartsContainer = document.getElementById('printChartsContainer');
+    
+    // Manejar el salto de página para la tabla
+    const forcePageBreak = document.getElementById('forcePageBreak');
 
     if (includeHistory) {
         tableContainer.classList.remove('hidden');
@@ -1336,11 +1354,13 @@ function generatePDF(mode) {
 
     if (includeCharts) {
         chartsContainer.classList.remove('hidden');
+        forcePageBreak.classList.remove('hidden'); // Forzar salto de página si hay gráficos
         
         const selectedStudent = document.getElementById('chartStudentFilter').value || fStudent;
         if (!selectedStudent) {
             alert(t('selectStudentForCharts'));
             chartsContainer.classList.add('hidden');
+            forcePageBreak.classList.add('hidden');
             return;
         }
 
@@ -1351,6 +1371,7 @@ function generatePDF(mode) {
         if (chartData.length === 0) {
             alert(t('noIncidents'));
             chartsContainer.classList.add('hidden');
+            forcePageBreak.classList.add('hidden');
             return;
         }
 
@@ -1361,6 +1382,8 @@ function generatePDF(mode) {
         }, 300);
 
     } else {
+        chartsContainer.classList.add('hidden');
+        forcePageBreak.classList.add('hidden'); // No forzar salto si solo hay tabla
         generarPDFconLibreria(mode);
     }
 }
@@ -1388,6 +1411,7 @@ function generarPDFconLibreria(mode) {
         // Ocultar contenedores
         document.getElementById('printChartsContainer').classList.add('hidden');
         document.getElementById('printTableContainer').classList.add('hidden');
+        document.getElementById('forcePageBreak').classList.add('hidden');
     });
 }
 
