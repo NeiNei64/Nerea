@@ -76,9 +76,8 @@
     page-break-inside: auto;
   }
 
-  /* Estadísticas integradas dentro del contenedor de la tabla */
   #printStatsInline {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     padding: 8px;
     background: #f9fafb;
     border: 1px solid #e5e7eb;
@@ -89,13 +88,13 @@
   table { 
       width: 100%; 
       border-collapse: collapse; 
-      font-size: 7px; 
+      font-size: 8px; 
       margin-top: 5px; 
       page-break-inside: auto;
   }
   th, td { 
       border: 1px solid #999; 
-      padding: 2px; 
+      padding: 3px; 
       text-align: left; 
       vertical-align: top;
       word-wrap: break-word;
@@ -106,22 +105,48 @@
   th { 
       background: #e5e7eb; 
       font-weight: bold; 
-      font-size: 7px;
-      padding: 3px 2px;
+      font-size: 8px;
+      padding: 4px 3px;
   }
   
-  /* Reparto de anchos exactos para A4 (180mm útiles) */
-  table colgroup col:nth-child(1) { width: 12%; } /* Data */
-  table colgroup col:nth-child(2) { width: 8%; }  /* Ikaslea */
-  table colgroup col:nth-child(3) { width: 13%; } /* Ordutegia */
-  table colgroup col:nth-child(4) { width: 9%; }  /* Ikasgaia */
-  table colgroup col:nth-child(5) { width: 16%; } /* Eragilea */
-  table colgroup col:nth-child(6) { width: 15%; } /* Jokabidea */
-  table colgroup col:nth-child(7) { width: 15%; } /* Esku-hartzea */
-  table colgroup col:nth-child(8) { width: 12%; } /* Oharrak */
+  /* Reparto de anchos: ya no hay "Ikaslea" */
+  table colgroup col:nth-child(1) { width: 11%; } /* Data */
+  table colgroup col:nth-child(2) { width: 13%; } /* Ordutegia */
+  table colgroup col:nth-child(3) { width: 7%; }  /* Ikasgaia (3 letras) */
+  table colgroup col:nth-child(4) { width: 17%; } /* Eragilea */
+  table colgroup col:nth-child(5) { width: 16%; } /* Jokabidea */
+  table colgroup col:nth-child(6) { width: 16%; } /* Esku-hartzea */
+  table colgroup col:nth-child(7) { width: 20%; } /* Oharrak (más espacio) */
 
-  /* Evitar cortes raros en las filas */
   tr { page-break-inside: avoid; }
+  
+  /* Celdas de asignaturas coloreadas */
+  .subject-cell {
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      border-radius: 3px;
+  }
+
+  /* Leyenda de colores debajo de la tabla */
+  #subjectLegendInline {
+      margin-top: 10px;
+      font-size: 9px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+  }
+  #subjectLegendInline .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+  }
+  #subjectLegendInline .legend-color {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+  }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -472,11 +497,10 @@
       <div id="printAnalysisDetails" class="text-sm space-y-2"></div>
   </div>
 
-  <!-- 3. TABLA (con estadísticas integradas para evitar bloque fantasma) -->
+  <!-- 3. TABLA -->
   <div id="printTableContainer" class="hidden">
       <div id="forceTablePageBreak" class="page-break-before"></div>
       
-      <!-- Bloque de estadísticas integrado DENTRO del contenedor de la tabla -->
       <div id="printStatsInline"></div>
       
       <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
@@ -489,14 +513,12 @@
           <col>
           <col>
           <col>
-          <col>
         </colgroup>
         <thead>
           <tr>
             <th>Data</th>
-            <th>Ikaslea</th>
             <th>Ordutegia</th>
-            <th>Ikasgaia</th>
+            <th>Ik.</th>
             <th>Eragilea</th>
             <th>Jokabidea</th>
             <th>Esku-hartzea</th>
@@ -505,6 +527,9 @@
         </thead>
         <tbody id="printTableBody"></tbody>
       </table>
+      
+      <!-- Leyenda de colores de asignaturas -->
+      <div id="subjectLegendInline"></div>
   </div>
 
   <div id="pdfDataContainer" style="display:none;">
@@ -513,7 +538,7 @@
 </div>
 
 <script>
-const APP_VERSION = '4.1.5';
+const APP_VERSION = '4.1.6';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -581,7 +606,7 @@ const I18N = {
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
     selectStudentForCharts: "Ikasle bat hautatu behar da grafikoak ikusteko.",
-    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honekin?",
+    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honetakoekin?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
     restoreError: "Errorea fitxategia irakurtzean.",
     noDataInPdf: "Ez da daturik aurkitu PDFan. Ziurtatu PDF hau aplikazio honekin sortu dela.",
@@ -674,6 +699,12 @@ function getSubjectColor(subject) {
   if (!subject) return '#e5e7eb';
   const idx = subjects.indexOf(subject);
   return SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
+}
+
+function getSubjectShort(subject) {
+  if (!subject) return '-';
+  // Devuelve las 3 primeras letras
+  return subject.substring(0, 3);
 }
 
 function t(key) { return I18N[lang][key]; }
@@ -1310,19 +1341,67 @@ function renderPrintTable(filtered) {
     const tbody = document.getElementById('printTableBody');
     tbody.innerHTML = '';
     if (!filtered || filtered.length === 0) return;
+    
+    // Usamos un Set para recoger las asignaturas usadas en esta tabla (para la leyenda)
+    const usedSubjects = new Set();
+    
     filtered.forEach(i => {
         const tr = document.createElement('tr');
-        const td = (txt) => { const c = document.createElement('td'); c.className='border px-2 py-1 align-top'; c.textContent = txt; return c; };
-        tr.appendChild(td(i.date.replace('T',' ')));
-        tr.appendChild(td(i.student));
-        tr.appendChild(td(`${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`));
-        tr.appendChild(td(i.subject || '-'));
-        tr.appendChild(td(i.triggers.join(', ')));
-        tr.appendChild(td(i.behaviors.join(', ')));
-        tr.appendChild(td(i.interventions.join(', ')));
-        tr.appendChild(td(i.notes));
+        
+        // 1. Data (solo fecha, sin hora)
+        const tdDate = document.createElement('td');
+        tdDate.className = 'border px-2 py-1 align-top';
+        tdDate.textContent = i.date.slice(0, 10); // "2026-11-10"
+        tr.appendChild(tdDate);
+        
+        // 2. Ordutegia
+        const tdSlot = document.createElement('td');
+        tdSlot.className = 'border px-2 py-1 align-top';
+        tdSlot.textContent = `${i.slotRange} ${lang==='eu'?i.slotEu:i.slotFr}`;
+        tr.appendChild(tdSlot);
+        
+        // 3. Ikasgaia (3 letras, coloreada)
+        const tdSubj = document.createElement('td');
+        tdSubj.className = 'border px-2 py-1 align-top subject-cell';
+        if (i.subject) {
+            const color = getSubjectColor(i.subject);
+            tdSubj.style.backgroundColor = color;
+            tdSubj.textContent = getSubjectShort(i.subject);
+            usedSubjects.add(i.subject);
+        } else {
+            tdSubj.textContent = '-';
+        }
+        tr.appendChild(tdSubj);
+        
+        // 4-6. Eragilea, Jokabidea, Esku-hartzea
+        ['triggers', 'behaviors', 'interventions'].forEach(key => {
+            const td = document.createElement('td');
+            td.className = 'border px-2 py-1 align-top';
+            td.textContent = i[key].join(', ');
+            tr.appendChild(td);
+        });
+        
+        // 7. Oharrak
+        const tdNotes = document.createElement('td');
+        tdNotes.className = 'border px-2 py-1 align-top';
+        tdNotes.textContent = i.notes || '';
+        tr.appendChild(tdNotes);
+        
         tbody.appendChild(tr);
     });
+    
+    // Generar leyenda de colores de asignaturas usadas
+    const legendContainer = document.getElementById('subjectLegendInline');
+    legendContainer.innerHTML = '';
+    if (usedSubjects.size > 0) {
+        Array.from(usedSubjects).sort().forEach(subj => {
+            const color = getSubjectColor(subj);
+            const span = document.createElement('span');
+            span.className = 'legend-item';
+            span.innerHTML = `<span class="legend-color" style="background:${color}"></span>${subj}`;
+            legendContainer.appendChild(span);
+        });
+    }
 }
 
 function renderPrintStatsInline(filtered, fStudent) {
