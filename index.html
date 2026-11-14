@@ -13,6 +13,8 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<!-- LIBRERÍA PARA GENERAR PDF SIN USAR EL NAVEGADOR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   .editable-item { display: flex; align-items: center; justify-content: space-between; padding: 4px; border-radius: 4px; }
   .editable-item:hover { background-color: #f3f4f6; }
@@ -22,56 +24,40 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
   
-  @media print {
-    .no-print { display: none !important; }
-    .print-only { display: block !important; }
-    body { background: white !important; margin: 0; padding: 0; }
-
-    @page { size: A4 portrait; margin: 15mm; }
-
-    #printView { display: block !important; }
-    #printTableContainer { page-break-before: auto; margin-top: 20px; }
-    #printChartsContainer:not(.hidden) + #printTableContainer { page-break-before: always; }
-    
-    /* IMPORTANTE: Aseguramos que los divs ocultos con Tailwind (hidden) se muestren al imprimir */
-    #printChartsContainer:not(.hidden) { display: block !important; }
-    #printTableContainer:not(.hidden) { display: block !important; }
-
-    .chart-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        gap: 15px;
-        width: 100%;
-        page-break-inside: avoid;
-    }
-
-    .chart-box {
-        width: 100%;
-        height: 300px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        page-break-inside: avoid;
-        position: relative;
-    }
-
-    /* Forzamos que el canvas (que contiene el SVG) sea visible y ocupe el 100% */
-    .chart-box canvas { 
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        max-height: 100% !important;
-    }
-
-    table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
-    th { background: #eee; }
-    thead { display: table-header-group; }
-    tr { page-break-inside: avoid; }
+  /* ============ ESTILOS PARA LA VISTA DE EXPORTACIÓN (NO IMPRESIÓN) ============ */
+  #printView {
+    display: none; /* Oculto en pantalla normal */
+    background: white;
+    width: 210mm; /* Ancho A4 exacto */
+    padding: 15mm;
+    box-sizing: border-box;
   }
-  .print-only { display: none; }
+
+  .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 15px;
+      width: 100%;
+      margin-top: 10px;
+  }
+
+  .chart-box {
+      width: 100%;
+      height: 300px;
+      display: block;
+      position: relative;
+  }
+
+  .chart-box canvas {
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
+  th, td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+  th { background: #eee; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -383,9 +369,9 @@
 </div>
 
 <!-- ========================================== -->
-<!-- VISTA DE IMPRESIÓN (Oculta en pantalla) -->
+<!-- VISTA DE EXPORTACIÓN (Oculta para html2pdf) -->
 <!-- ========================================== -->
-<div id="printView" class="print-only max-w-4xl mx-auto p-8">
+<div id="printView">
   <div class="text-center mb-6">
     <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
     <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
@@ -396,7 +382,6 @@
   <div id="printChartsContainer" class="hidden mb-8">
       <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
       <div class="chart-grid">
-          <!-- Usamos canvas sin imagen, confiando en el repintado de Chart.js -->
           <div class="chart-box"><canvas id="printChart1"></canvas></div>
           <div class="chart-box"><canvas id="printChart2"></canvas></div>
           <div class="chart-box"><canvas id="printChart3"></canvas></div>
@@ -430,7 +415,7 @@
 </div>
 
 <script>
-const APP_VERSION = '3.10.6';
+const APP_VERSION = '4.0.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1347,7 +1332,6 @@ function generatePDF(mode) {
         renderPrintTable(filtered);
     } else {
         tableContainer.classList.add('hidden');
-        document.getElementById('printTableBody').innerHTML = '';
     }
 
     if (includeCharts) {
@@ -1370,40 +1354,41 @@ function generatePDF(mode) {
             return;
         }
 
-        // 1. Renderizamos los gráficos en el DOM.
         updatePrintCharts(chartData);
         
-        // 2. Esperamos un segundo para que Chart.js termine de pintar.
-        // Al no usar imágenes, el navegador los captura directamente al darle a imprimir.
         setTimeout(() => {
-            window.print();
-            // Restaurar estado
-            setTimeout(() => {
-                chartsContainer.classList.add('hidden');
-                tableContainer.classList.add('hidden');
-            }, 500);
+            generarPDFconLibreria(mode);
         }, 300);
 
     } else {
-        resetPrintCharts();
-        chartsContainer.classList.add('hidden');
-        
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    tableContainer.classList.add('hidden');
-                }, 500);
-            }, 100);
-        });
+        generarPDFconLibreria(mode);
     }
+}
 
-    const backupData = {
-        version: APP_VERSION,
-        students, subjects, incidents, customOptions,
-        title: document.getElementById('mainTitle').value
+function generarPDFconLibreria(mode) {
+    const printView = document.getElementById('printView');
+    
+    // Configuración de html2pdf
+    const opt = {
+        margin:       15, // 15mm de margen
+        filename:     `NereApp_${mode}_${new Date().toISOString().slice(0,10)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    document.getElementById('pdfDataScript').textContent = JSON.stringify(backupData);
+
+    // Hacemos visible el div temporalmente para html2canvas
+    printView.style.display = 'block'; 
+
+    // Ejecutamos la generación del PDF
+    html2pdf().set(opt).from(printView).save().then(() => {
+        // Restaurar estilos
+        printView.style.display = 'none';
+
+        // Ocultar contenedores
+        document.getElementById('printChartsContainer').classList.add('hidden');
+        document.getElementById('printTableContainer').classList.add('hidden');
+    });
 }
 
 document.getElementById('pdfBtn').onclick = () => {
