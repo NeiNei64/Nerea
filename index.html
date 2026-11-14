@@ -67,7 +67,7 @@
       color: #374151;
   }
 
-  /* ==== TABLA ADAPTADA A4 CON ANCHOS EN TH ==== */
+  /* ==== TABLA ADAPTADA A4 ==== */
   #printTableContainer {
     margin: 0;
     padding: 0;
@@ -93,7 +93,7 @@
       font-size: 7px;
       margin-top: 5px;
       box-sizing: border-box;
-      /* Sin table-layout: fixed, dejamos que el navegador calcule */
+      table-layout: fixed; /* Esto es clave para que respete los anchos */
   }
   #printTableContainer th,
   #printTableContainer td {
@@ -114,14 +114,15 @@
       padding: 4px 2px;
   }
 
-  /* Anchos en mm (suman 176mm, deja 4mm de margen por si acaso) */
-  #printTableContainer th:nth-child(1) { width: 18mm; } /* Data */
-  #printTableContainer th:nth-child(2) { width: 18mm; } /* Ordua */
-  #printTableContainer th:nth-child(3) { width: 10mm; } /* Ik. */
+  /* Anchos reducidos para dejar margen a la derecha.
+     La suma total es de 168mm, dejando 12mm de margen de seguridad. */
+  #printTableContainer th:nth-child(1) { width: 16mm; } /* Data */
+  #printTableContainer th:nth-child(2) { width: 16mm; } /* Ordua */
+  #printTableContainer th:nth-child(3) { width: 9mm; }  /* Ik. */
   #printTableContainer th:nth-child(4) { width: 32mm; } /* Eragilea */
   #printTableContainer th:nth-child(5) { width: 28mm; } /* Jokabidea */
   #printTableContainer th:nth-child(6) { width: 28mm; } /* Esku-hartzea */
-  #printTableContainer th:nth-child(7) { width: 42mm; } /* Oharrak */
+  #printTableContainer th:nth-child(7) { width: 39mm; } /* Oharrak */
 
   #printTableContainer tr { page-break-inside: avoid; }
   #printTableContainer tbody tr:nth-child(even) { background: #fafafa; }
@@ -454,7 +455,7 @@
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.2.1';
+const APP_VERSION = '4.2.2';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -1280,13 +1281,13 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
             <table>
                 <thead>
                     <tr>
-                        <th style="width:18mm">Data</th>
-                        <th style="width:18mm">Ordua</th>
-                        <th style="width:10mm">Ik.</th>
+                        <th style="width:16mm">Data</th>
+                        <th style="width:16mm">Ordua</th>
+                        <th style="width:9mm">Ik.</th>
                         <th style="width:32mm">Eragilea</th>
                         <th style="width:28mm">Jokabidea</th>
                         <th style="width:28mm">Esku-hartzea</th>
-                        <th style="width:42mm">Oharrak</th>
+                        <th style="width:39mm">Oharrak</th>
                     </tr>
                 </thead>
                 <tbody>${rowsHtml}</tbody>
