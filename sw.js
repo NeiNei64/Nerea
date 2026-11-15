@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aesh-cache-v52'; // <-- v52 para forzar actualización
+const CACHE_NAME = 'aesh-cache-v56';
 const ASSETS = [
   './',
   './index.html',
@@ -13,35 +13,57 @@ const ASSETS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-        return Promise.all(
-            ASSETS.map(url => cache.add(url).catch(err => console.warn('Fallo al cachear:', url, err)))
-        );
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then((cache) =>
+        Promise.all(
+          ASSETS.map((url) =>
+            cache.add(url).catch((err) => console.warn('Fallo al cachear:', url, err))
+          )
+        )
+      )
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) =>
+        Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))
+      )
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request).then((networkRes) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(e.request, networkRes.clone());
+  if (e.request.method !== 'GET') return;
+
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .then((networkRes) => {
+          const copy = networkRes.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(e.request, copy));
           return networkRes;
-        });
-      });
-    }).catch(() => {
-        if (e.request.mode === 'navigate') {
-            return caches.match('./index.html');
-        }
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  e.respondWith(
+    caches.match(e.request).then((cached) => {
+      const networkPromise = fetch(e.request)
+        .then((networkRes) => {
+          if (networkRes && networkRes.ok) {
+            const copy = networkRes.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(e.request, copy));
+          }
+          return networkRes;
+        })
+        .catch(() => cached);
+
+      return cached || networkPromise;
     })
   );
 });
