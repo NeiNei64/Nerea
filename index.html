@@ -2,14 +2,14 @@
 <html lang="eu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NereApp">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4f46e5">
-<title>NereApp - Gorabeherak</title>
+<title>NereApp</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -23,7 +23,6 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
 
-  /* ============ VISTA DE EXPORTACIÓN ============ */
   #printView {
     display: none;
     background: white;
@@ -67,7 +66,6 @@
       color: #374151;
   }
 
-  /* ==== TABLA COMO GRID DE DIVS (RESPETADO POR html2pdf) ==== */
   #printTableContainer {
     margin: 0;
     padding: 0;
@@ -84,15 +82,8 @@
     font-size: 10px;
   }
 
-  .prow {
-    display: flex;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .prow.header {
-    background: #e5e7eb;
-    font-weight: bold;
-  }
+  .prow { display: flex; width: 100%; box-sizing: border-box; }
+  .prow.header { background: #e5e7eb; font-weight: bold; }
   .pcell {
     border-top: 1px solid #999;
     border-right: 1px solid #999;
@@ -107,24 +98,17 @@
     white-space: normal;
     vertical-align: top;
   }
-  .prow .pcell:first-child {
-    border-left: 1px solid #999;
-  }
-  .prow .pcell:last-child {
-    border-right: 1px solid #999;
-  }
-  .prow.header .pcell {
-    padding: 4px 2px;
-    font-size: 7px;
-  }
+  .prow .pcell:first-child { border-left: 1px solid #999; }
+  .prow .pcell:last-child { border-right: 1px solid #999; }
+  .prow.header .pcell { padding: 4px 2px; font-size: 7px; }
 
-  .pc-data    { width: 16mm; flex: 0 0 16mm; }
-  .pc-ordua   { width: 16mm; flex: 0 0 16mm; }
-  .pc-ik      { width: 9mm;  flex: 0 0 9mm;  }
-  .pc-erag    { width: 30mm; flex: 0 0 30mm; }
-  .pc-jok     { width: 28mm; flex: 0 0 28mm; }
-  .pc-esku    { width: 35mm; flex: 0 0 35mm; }
-  .pc-ohar    { width: 42mm; flex: 0 0 42mm; }
+  .pc-data  { width: 16mm; flex: 0 0 16mm; }
+  .pc-ordua { width: 18mm; flex: 0 0 18mm; }
+  .pc-ik    { width: 9mm;  flex: 0 0 9mm;  }
+  .pc-erag  { width: 30mm; flex: 0 0 30mm; }
+  .pc-jok   { width: 28mm; flex: 0 0 28mm; }
+  .pc-esku  { width: 33mm; flex: 0 0 33mm; }
+  .pc-ohar  { width: 40mm; flex: 0 0 40mm; }
 
   #subjectLegendInline {
       margin-top: 10px;
@@ -133,17 +117,8 @@
       flex-wrap: wrap;
       gap: 8px;
   }
-  #subjectLegendInline .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-  }
-  #subjectLegendInline .legend-color {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-  }
+  #subjectLegendInline .legend-item { display: inline-flex; align-items: center; gap: 4px; }
+  #subjectLegendInline .legend-color { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
@@ -183,6 +158,29 @@
   </div>
 </div>
 
+<!-- Modal de doble confirmación para borrar todo -->
+<div id="clearAllModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+    <h3 class="font-bold text-lg mb-2 text-red-700">
+      <span data-eu="⚠️ Datu-base osoa garbitu" data-fr="⚠️ Vider toute la base">⚠️ Datu-base osoa garbitu</span>
+    </h3>
+    <p id="clearAllHint" class="text-sm text-gray-600 mb-4">
+      <span data-eu="Ekintza hau EZIN DA DESEGIN. Idatzi EZABATU azpian baieztatzeko."
+            data-fr="Cette action est IRRÉVERSIBLE. Tapez EFFACER ci-dessous pour confirmer.">
+      </span>
+    </p>
+    <input type="text" id="clearAllConfirmInput" class="w-full border rounded px-3 py-2 mb-4" placeholder="">
+    <div class="flex justify-end gap-2">
+      <button onclick="closeClearAllModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold">
+        <span data-eu="Utzi" data-fr="Annuler">Utzi</span>
+      </button>
+      <button id="clearAllConfirmBtn" disabled class="px-4 py-2 bg-red-600 rounded text-white font-semibold disabled:opacity-50">
+        <span data-eu="Ezabatu dena" data-fr="Tout effacer">Ezabatu dena</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="max-w-6xl mx-auto p-4 no-print">
 
   <!-- Header -->
@@ -192,10 +190,10 @@
       <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
         ⬇️ Backup
       </button>
-      <label for="importBackupInput" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold cursor-pointer" title="Importar copia de seguridad (JSON o PDF)">
+      <label for="importBackupInput" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold cursor-pointer" title="Importar copia de seguridad (JSON)">
         ⬆️ Restore
       </label>
-      <input type="file" id="importBackupInput" accept=".json,.pdf" class="hidden">
+      <input type="file" id="importBackupInput" accept=".json" class="hidden">
       <button id="langBtn" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-semibold">FR</button>
       <button id="pdfBtn" class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-semibold">
         <span data-eu="💾 Gorde PDF" data-fr="💾 Enregistrer PDF">💾 Gorde PDF</span>
@@ -204,26 +202,29 @@
   </header>
 
   <!-- Tabs -->
-  <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar">
-    <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap">
+  <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar" role="tablist">
+    <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap" role="tab" aria-selected="true">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
     </button>
-    <button data-tab="history" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+    <button data-tab="history" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
       <span data-eu="Historia" data-fr="Historique">Historia</span>
     </button>
-    <button data-tab="charts" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+    <button data-tab="charts" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
       <span data-eu="Grafikoak" data-fr="Graphiques">Grafikoak</span>
     </button>
-    <button data-tab="students" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+    <button data-tab="students" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
       <span data-eu="Ikasleak" data-fr="Élèves">Ikasleak</span>
     </button>
-    <button data-tab="subjects" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap">
+    <button data-tab="subjects" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
       <span data-eu="Ikasgaiak" data-fr="Matières">Ikasgaiak</span>
+    </button>
+    <button data-tab="schedule" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
+      <span data-eu="Ordutegia" data-fr="Horaires">Ordutegia</span>
     </button>
   </nav>
 
   <!-- FORM TAB -->
-  <section id="tab-form" class="tab-content">
+  <section id="tab-form" class="tab-content" role="tabpanel">
     <form id="incidentForm" class="bg-white rounded-lg shadow p-4 md:p-6 space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -249,15 +250,6 @@
           </label>
           <select id="incidentSlot" required class="w-full border rounded px-3 py-2">
             <option value="">--</option>
-            <option value="08:20-09:00|Zaintza|Garderie">08:20 - 09:00 — Zaintza / Garderie (Periskolarra)</option>
-            <option value="09:00-10:20|Klasea|Classe">09:00 - 10:20 — Klasea / Classe</option>
-            <option value="10:20-10:40|Atsedenaldia|Pause">10:20 - 10:40 — Atsedenaldia / Pause (Klasikoa)</option>
-            <option value="10:40-12:00|Klasea|Classe">10:40 - 12:00 — Klasea / Classe</option>
-            <option value="12:00-13:30|Jantegia|Cantine">12:00 - 13:30 — Jantegia / Cantine (Periskolarra)</option>
-            <option value="13:30-14:50|Klasea|Classe">13:30 - 14:50 — Klasea / Classe</option>
-            <option value="14:50-15:10|Atsedenaldia|Pause">14:50 - 15:10 — Atsedenaldia / Pause (Klasikoa)</option>
-            <option value="15:10-16:30|Klasea|Classe">15:10 - 16:30 — Klasea / Classe</option>
-            <option value="16:30-18:00|Zaintza|Garderie">16:30 - 18:00 — Zaintza / Garderie (Periskolarra)</option>
           </select>
         </div>
         <div>
@@ -319,7 +311,7 @@
   </section>
 
   <!-- HISTORY TAB -->
-  <section id="tab-history" class="tab-content hidden">
+  <section id="tab-history" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-lg font-bold">
@@ -364,58 +356,93 @@
   </section>
 
   <!-- CHARTS TAB -->
-  <section id="tab-charts" class="tab-content hidden">
-    <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-lg font-bold">
-          <span data-eu="Eboluzioaren Analisia" data-fr="Analyse de l'évolution">Eboluzioaren Analisia</span>
-        </h2>
-      </div>
-      <p class="text-sm text-gray-500 mb-4">
-        <span data-eu="Ikasle bat hautatu behar da grafikoak ikusteko." data-fr="Sélectionnez un élève pour voir les graphiques.">Ikasle bat hautatu behar da grafikoak ikusteko.</span>
-      </p>
-      <div class="mb-4">
-        <label class="block text-xs font-semibold mb-1">
+  <section id="tab-charts" class="tab-content hidden" role="tabpanel">
+    <div class="sticky top-0 z-10 bg-gray-100 pb-2 -mx-4 px-4 md:mx-0 md:px-0 mb-2">
+      <div class="bg-white rounded-lg shadow p-3 flex items-center gap-3">
+        <label class="text-sm font-semibold shrink-0">
           <span data-eu="Ikaslea" data-fr="Élève">Ikaslea</span>
         </label>
-        <select id="chartStudentFilter" class="w-full border rounded px-3 py-2 text-sm">
+        <select id="chartStudentFilter" class="flex-1 border rounded px-3 py-2 text-sm">
           <option value="" data-eu="Hautatu ikasle bat" data-fr="Sélectionnez un élève">Hautatu ikasle bat</option>
         </select>
+        <button id="clearChartStudent" class="text-gray-400 hover:text-gray-700 text-xl leading-none px-1" title="✕">✕</button>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
-            <span data-eu="Gorabeherak denboran zehar" data-fr="Incidents dans le temps">Gorabeherak denboran zehar</span>
-          </h4>
-          <div class="h-64 relative"><canvas id="evolutionChart"></canvas></div>
+    </div>
+
+    <div id="chartsEmptyState" class="bg-white rounded-lg shadow p-8 text-center">
+      <div class="text-5xl mb-3">📊</div>
+      <p class="text-gray-600 mb-4">
+        <span data-eu="Hautatu ikasle bat grafikoak ikusteko." data-fr="Sélectionnez un élève pour voir les graphiques.">Hautatu ikasle bat grafikoak ikusteko.</span>
+      </p>
+      <button onclick="document.getElementById('chartStudentFilter').focus()" class="px-4 py-2 bg-indigo-600 text-white rounded font-semibold">
+        <span data-eu="Ikaslea hautatu" data-fr="Choisir un élève">Ikaslea hautatu</span>
+      </button>
+    </div>
+
+    <div id="chartsContent" class="hidden">
+      <div id="chartsKpis" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-lg shadow p-3 text-center">
+          <div class="text-3xl font-bold text-indigo-700" id="kpiTotal">0</div>
+          <div class="text-xs text-gray-500">
+            <span data-eu="Guztira" data-fr="Total">Guztira</span>
+          </div>
         </div>
-        <div>
-          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
-            <span data-eu="Gorabeherak orduaren arabera" data-fr="Incidents par heure">Gorabeherak orduaren arabera</span>
-          </h4>
-          <div class="h-64 relative"><canvas id="slotChart"></canvas></div>
+        <div class="bg-white rounded-lg shadow p-3 text-center">
+          <div class="text-2xl font-bold text-orange-600" id="kpiPeak">—</div>
+          <div class="text-xs text-gray-500">
+            <span data-eu="Ordu kritikoa" data-fr="Heure critique">Ordu kritikoa</span>
+          </div>
         </div>
-        <div>
-          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
-            <span data-eu="Blokeen araberako banaketa" data-fr="Répartition par blocs">Blokeen araberako banaketa</span>
-          </h4>
-          <div class="h-64 relative"><canvas id="blockChart"></canvas></div>
-          <ul id="blockLegend" class="mt-2 text-xs space-y-1"></ul>
+        <div class="bg-white rounded-lg shadow p-3 text-center">
+          <div class="text-2xl font-bold" id="kpiTrend">—</div>
+          <div class="text-xs text-gray-500">
+            <span data-eu="Joera" data-fr="Tendance">Joera</span>
+          </div>
         </div>
-        <div>
-          <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
-            <span data-eu="Gorabeherak ikasgaiaren arabera (Klasean)" data-fr="Incidents par matière (En classe)">Gorabeherak ikasgaiaren arabera (Klasean)</span>
-          </h4>
-          <div class="h-64 relative"><canvas id="subjectChart"></canvas></div>
-          <ul id="subjectLegend" class="mt-2 text-xs space-y-1"></ul>
+        <div class="bg-white rounded-lg shadow p-3 text-center">
+          <div class="text-2xl font-bold text-gray-700" id="kpiTopBlock">—</div>
+          <div class="text-xs text-gray-500">
+            <span data-eu="Bloke ohikoena" data-fr="Bloc dominant">Bloke ohikoena</span>
+          </div>
         </div>
       </div>
-      <div id="analysisDetails" class="text-sm space-y-2 mt-4"></div>
+
+      <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+              <span data-eu="Gorabeherak denboran zehar" data-fr="Incidents dans le temps">Gorabeherak denboran zehar</span>
+            </h4>
+            <div class="h-64 relative"><canvas id="evolutionChart"></canvas></div>
+          </div>
+          <div>
+            <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+              <span data-eu="Gorabeherak orduaren arabera" data-fr="Incidents par créneau">Gorabeherak orduaren arabera</span>
+            </h4>
+            <div class="h-64 relative"><canvas id="slotChart"></canvas></div>
+          </div>
+          <div>
+            <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+              <span data-eu="Blokeen araberako banaketa" data-fr="Répartition par blocs">Blokeen araberako banaketa</span>
+            </h4>
+            <div class="h-64 relative"><canvas id="blockChart"></canvas></div>
+            <ul id="blockLegend" class="mt-2 text-xs space-y-1"></ul>
+          </div>
+          <div>
+            <h4 class="text-center font-semibold text-sm text-gray-700 mb-2">
+              <span data-eu="Gorabeherak ikasgaiaren arabera (Klasean)" data-fr="Incidents par matière (En classe)">Gorabeherak ikasgaiaren arabera (Klasean)</span>
+            </h4>
+            <div class="h-64 relative"><canvas id="subjectChart"></canvas></div>
+            <ul id="subjectLegend" class="mt-2 text-xs space-y-1"></ul>
+          </div>
+        </div>
+        <div id="analysisDetails" class="text-sm space-y-2 mt-4"></div>
+      </div>
     </div>
   </section>
 
   <!-- STUDENTS TAB -->
-  <section id="tab-students" class="tab-content hidden">
+  <section id="tab-students" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6">
       <h2 class="text-lg font-bold mb-3">
         <span data-eu="Ikasleen kudeaketa" data-fr="Gestion des élèves">Ikasleen kudeaketa</span>
@@ -431,7 +458,7 @@
   </section>
 
   <!-- SUBJECTS TAB -->
-  <section id="tab-subjects" class="tab-content hidden">
+  <section id="tab-subjects" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6">
       <h2 class="text-lg font-bold mb-3">
         <span data-eu="Ikasgaien kudeaketa" data-fr="Gestion des matières">Ikasgaien kudeaketa</span>
@@ -442,61 +469,133 @@
           <span data-eu="+ Gehitu" data-fr="+ Ajouter">+ Gehitu</span>
         </button>
       </div>
+      <div class="mb-3">
+        <button onclick="applySubjectsExample()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">
+          <span data-eu="📋 Adibideko ikasgaiak kargatu" data-fr="📋 Charger les matières d'exemple">📋 Adibideko ikasgaiak kargatu</span>
+        </button>
+      </div>
       <ul id="subjectList" class="divide-y border rounded"></ul>
+    </div>
+  </section>
+
+  <!-- SCHEDULE TAB -->
+  <section id="tab-schedule" class="tab-content hidden" role="tabpanel">
+    <div class="bg-white rounded-lg shadow p-4 md:p-6">
+      <h2 class="text-lg font-bold mb-1">
+        <span data-eu="Ordutegiaren kudeaketa" data-fr="Gestion des horaires">Ordutegiaren kudeaketa</span>
+      </h2>
+      <p class="text-sm text-gray-500 mb-4">
+        <span data-eu="Zure zentroko ordutegia ezarri. Tarteak ordenan gehitzen dira."
+              data-fr="Configurez l'horaire de votre établissement. Les créneaux s'ajoutent dans l'ordre.">
+        </span>
+      </p>
+
+      <div id="slotsEmpty" class="hidden mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-center">
+        <p class="text-sm text-indigo-900 mb-3">
+          <span data-eu="Oraindik ez duzu ordutegirik ezarri. Hasi adibide batekin (ordutegia + ikasgaiak) edo sortu hutsetik."
+                data-fr="Vous n'avez pas encore configuré d'horaire. Commencez par un exemple (horaire + matières) ou partez de zéro.">
+          </span>
+        </p>
+        <div class="flex gap-2 justify-center flex-wrap">
+          <button onclick="applyScheduleExample()" class="px-4 py-2 bg-indigo-600 text-white rounded font-semibold">
+            <span data-eu="📋 Adibidea erabili" data-fr="📋 Utiliser l'exemple">📋 Adibidea erabili</span>
+          </button>
+          <button onclick="startEmptySchedule()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded font-semibold">
+            <span data-eu="Hutsik hasi" data-fr="Partir de zéro">Hutsik hasi</span>
+          </button>
+        </div>
+        <p class="text-xs text-indigo-700 mt-2">
+          <span data-eu="Adibidea: ordutegia eta ikasgaiak soilik. Ez du ikaslerik ezta gorabeherarik gehituko."
+                data-fr="Exemple : horaire et matières uniquement. Aucun élève ni incident ne sera ajouté.">
+          </span>
+        </p>
+      </div>
+
+      <div id="slotForm" class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1">
+            <span data-eu="Hasiera" data-fr="Début">Hasiera</span>
+          </label>
+          <input type="time" id="newSlotStart" class="w-full border rounded px-2 py-2">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">
+            <span data-eu="Amaiera" data-fr="Fin">Amaiera</span>
+          </label>
+          <input type="time" id="newSlotEnd" class="w-full border rounded px-2 py-2">
+        </div>
+        <div class="col-span-2 md:col-span-1">
+          <label class="block text-xs font-semibold mb-1">
+            <span data-eu="Blokea" data-fr="Bloc">Blokea</span>
+          </label>
+          <select id="newSlotBlock" class="w-full border rounded px-2 py-2">
+            <option value="class" data-eu="Klasea" data-fr="Classe">Klasea / Classe</option>
+            <option value="break" data-eu="Atsedenaldia" data-fr="Pause">Atsedenaldia / Pause</option>
+            <option value="peri"  data-eu="Periskolarra" data-fr="Périscolaire">Periskolarra / Périscolaire</option>
+          </select>
+        </div>
+        <div class="col-span-2 md:col-span-1 md:self-end">
+          <button id="addSlotBtn" class="w-full px-3 py-2 bg-indigo-600 text-white rounded font-semibold">
+            <span data-eu="+ Gehitu" data-fr="+ Ajouter">+ Gehitu</span>
+          </button>
+        </div>
+      </div>
+
+      <ul id="slotList" class="divide-y border rounded mb-4"></ul>
+
+      <div id="slotActions" class="hidden flex gap-2 flex-wrap text-sm">
+        <button onclick="resetScheduleOnly()" class="px-3 py-2 bg-gray-100 rounded">
+          <span data-eu="Adibidea berrezarri" data-fr="Réinitialiser à l'exemple">Adibidea berrezarri</span>
+        </button>
+        <button onclick="startEmptySchedule()" class="px-3 py-2 bg-red-100 text-red-700 rounded">
+          <span data-eu="Ordutegia hustu" data-fr="Vider l'horaire">Ordutegia hustu</span>
+        </button>
+      </div>
     </div>
   </section>
 
 </div>
 
-<!-- ========================================== -->
-<!-- VISTA DE EXPORTACIÓN (Se reconstruye dinámicamente) -->
-<!-- ========================================== -->
 <div id="printView"></div>
 
 <script>
-const APP_VERSION = '4.3.1';
+/* ============================================================
+   VERSIONADO Y MIGRACIÓN (sin borrado destructivo)
+   ============================================================ */
+const APP_VERSION = '5.3.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
-if (savedVersion !== APP_VERSION) {
-    localStorage.clear();
-    localStorage.setItem(STORAGE_VERSION_KEY, APP_VERSION);
-    console.log('Datos antiguos eliminados. Instalación limpia.');
+
+function migrateIncidentsToBlock() {
+  let changed = false;
+  incidents.forEach(i => {
+    if (i.block) return;
+    const eu = (i.slotEu || '').toLowerCase();
+    const fr = (i.slotFr || '').toLowerCase();
+    if (eu.includes('klase') || fr.includes('classe'))       i.block = 'class';
+    else if (eu.includes('atseden') || fr.includes('pause')) i.block = 'break';
+    else                                                      i.block = 'peri';
+    delete i.slotEu;
+    delete i.slotFr;
+    changed = true;
+  });
+  if (changed) saveIncidents();
 }
 
-const doughnutLabelsPlugin = {
-  id: 'doughnutLabels',
-  afterDatasetsDraw(chart, args, options) {
-    if (chart.config.type !== 'doughnut') return;
-    const { ctx } = chart;
-    const meta = chart.getDatasetMeta(0);
-    if (!meta || !meta.data) return;
-    const total = chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
-    if (!total) return;
-    
-    ctx.save();
-    meta.data.forEach((arc, i) => {
-      const value = chart.data.datasets[0].data[i];
-      const pct = ((value / total) * 100).toFixed(1);
-      if ((value / total) < 0.05) return;
-      const pos = arc.tooltipPosition();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 3;
-      ctx.fillText(`${pct}%`, pos.x, pos.y);
-    });
-    ctx.restore();
+function runMigrations(fromVersion, toVersion) {
+  if (!fromVersion || fromVersion.localeCompare('5.0.0', undefined, {numeric:true}) < 0) {
+    migrateIncidentsToBlock();
   }
-};
-Chart.register(doughnutLabelsPlugin);
+  localStorage.setItem(STORAGE_VERSION_KEY, toVersion);
+}
 
+/* ============================================================
+   i18n
+   ============================================================ */
 const I18N = {
   eu: {
     confirmDelete: "Ziur zaude gorabehera hau ezabatu nahi duzula?",
-    confirmClearAll: "Ziur zaude datu-base osoa garbitu nahi duzula? Ekintza hau ezin da desegin.",
     confirmDeleteStudent: "Ikasle hau ezabatu nahi duzu? (Bere gorabeherak mantenduko dira)",
     confirmDeleteSubject: "Ikasgai hau ezabatu nahi duzu?",
     noIncidents: "Ez dago gorabeherarik iragazki hauekin.",
@@ -504,6 +603,8 @@ const I18N = {
     noSubjects: "Ez dago ikasgairik. Gehitu bat 'Ikasgaiak' fitxan.",
     deleteBtn: "Ezabatu",
     editBtn: "Editatu",
+    saveBtn: "Gorde",
+    cancelBtn: "Utzi",
     student: "Ikaslea",
     subject: "Ikasgaia",
     total: "Guztira",
@@ -521,20 +622,38 @@ const I18N = {
     peakSlot: "Ordu-tarte kritikoena",
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
-    selectStudentForCharts: "Ikasle bat hautatu behar da grafikoak ikusteko.",
+    selectStudentForCharts: "Hautatu ikasle bat grafikoak ikusteko.",
     restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honekin?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
     restoreError: "Errorea fitxategia irakurtzean.",
-    noDataInPdf: "Ez da daturik aurkitu PDFan. Ziurtatu PDF hau aplikazio honekin sortu dela.",
     invalidFile: "Fitxategiak ez du balio.",
     unsupportedFile: "Fitxategi mota ez da onartzen.",
-    blockClass: "Klasea / Classe",
-    blockBreak: "Atsedenaldia / Pause",
-    blockPeri: "Periskolarra / Périscolaire"
+    incidentsSingular: "gorabehera",
+    incidentsPlural: "gorabehera",
+    blockClass: "Klasea",
+    blockBreak: "Atsedenaldia",
+    blockPeri: "Periskolarra",
+    scheduleTitle: "Ordutegia",
+    noScheduleOption: '— Ez dago ordutegirik. Konfiguratu "Ordutegia" fitxan —',
+    scheduleExampleConfirm: "Adibideko ordutegia ezarri? Uneko ordutegia ordezkatuko da.",
+    scheduleEmptyConfirm: "Ordutegia hustu eta hutsetik hasi?",
+    slotDeleteConfirm: "Tarte hau ezabatu?",
+    slotOverlapConfirm: "Tarte hau beste batekin gainjartzen da. Gehitu hala ere?",
+    slotTimesRequired: "Sartu hasiera eta amaiera orduak.",
+    slotOrderInvalid: "Amaiera hasiera baino beranduagoa izan behar da.",
+    scheduleNoSlots: "Ez dago ordutegi tartzerik.",
+    clearAllTitle: "Datu-base osoa garbitu",
+    clearAllHint: "Ekintza hau EZIN DA DESEGIN. Idatzi EZABATU azpian baieztatzeko.",
+    clearAllKeyword: "EZABATU",
+    clearAllDone: "Datu-basea garbitu da.",
+    titleDefault: "NereApp - Eguneroko gorabeherak",
+    exampleConfirm: "Adibidea kargatu?\n\n• Ordutegia eta ikasgaiak beteko dira.\n• Ez da ikaslerik ezta gorabeherarik gehituko.\n• Uneko ordutegia eta ikasgaiak ordezkatuko dira.",
+    resetScheduleConfirm: "Adibideko ordutegia ezarri? Uneko ordutegia ordezkatuko da. Ikasgaiak eta datu pertsonalak ez dira ukituko.",
+    subjectsExampleBtn: "📋 Adibideko ikasgaiak kargatu",
+    subjectsExampleConfirm: "Adibideko ikasgaiak kargatu? Uneko zerrenda ordezkatuko da (ikasleak eta gorabeherak ez dira ukituko)."
   },
   fr: {
     confirmDelete: "Voulez-vous vraiment supprimer cet incident ?",
-    confirmClearAll: "Voulez-vous vraiment vider toute la base de données ? Cette action est irréversible.",
     confirmDeleteStudent: "Supprimer cet élève ? (Ses incidents seront conservés)",
     confirmDeleteSubject: "Supprimer cette matière ?",
     noIncidents: "Aucun incident avec ces filtres.",
@@ -542,6 +661,8 @@ const I18N = {
     noSubjects: "Aucune matière. Ajoutez-en dans l'onglet 'Matières'.",
     deleteBtn: "Supprimer",
     editBtn: "Modifier",
+    saveBtn: "Enregistrer",
+    cancelBtn: "Annuler",
     student: "Élève",
     subject: "Matière",
     total: "Total",
@@ -563,12 +684,31 @@ const I18N = {
     restoreConfirm: "Voulez-vous vraiment remplacer les données actuelles par celles de ce fichier ?",
     restoreSuccess: "Données restaurées avec succès.",
     restoreError: "Erreur lors de la lecture du fichier.",
-    noDataInPdf: "Aucune donnée trouvée dans le PDF. Assurez-vous que ce PDF a été généré avec cette application.",
     invalidFile: "Fichier invalide.",
     unsupportedFile: "Type de fichier non pris en charge.",
+    incidentsSingular: "incident",
+    incidentsPlural: "incidents",
     blockClass: "Classe",
     blockBreak: "Pause",
-    blockPeri: "Périscolaire"
+    blockPeri: "Périscolaire",
+    scheduleTitle: "Horaires",
+    noScheduleOption: '— Aucun horaire. Configurez dans l\'onglet "Horaires" —',
+    scheduleExampleConfirm: "Appliquer l'horaire d'exemple ? L'horaire actuel sera remplacé.",
+    scheduleEmptyConfirm: "Vider l'horaire et repartir de zéro ?",
+    slotDeleteConfirm: "Supprimer ce créneau ?",
+    slotOverlapConfirm: "Ce créneau chevauche un autre. Ajouter quand même ?",
+    slotTimesRequired: "Entrez les heures de début et de fin.",
+    slotOrderInvalid: "La fin doit être postérieure au début.",
+    scheduleNoSlots: "Aucun créneau horaire.",
+    clearAllTitle: "Vider toute la base",
+    clearAllHint: "Cette action est IRRÉVERSIBLE. Tapez EFFACER ci-dessous pour confirmer.",
+    clearAllKeyword: "EFFACER",
+    clearAllDone: "Base de données vidée.",
+    titleDefault: "NereApp - Incidents quotidiens",
+    exampleConfirm: "Charger l'exemple ?\n\n• L'horaire et les matières seront remplis.\n• Aucun élève ni incident ne sera ajouté.\n• L'horaire et les matières actuels seront remplacés.",
+    resetScheduleConfirm: "Appliquer l'horaire d'exemple ? L'horaire actuel sera remplacé. Les matières et données personnelles ne seront pas touchées.",
+    subjectsExampleBtn: "📋 Charger les matières d'exemple",
+    subjectsExampleConfirm: "Charger les matières d'exemple ? La liste actuelle sera remplacée (élèves et incidents non touchés)."
   }
 };
 
@@ -579,6 +719,8 @@ const KEY_SUBJECTS = 'aesh_subjects_v1';
 const KEY_INCIDENTS = 'aesh_incidents_v1';
 const KEY_OPTIONS = 'aesh_options_v1';
 const KEY_TITLE = 'aesh_title_v1';
+const KEY_SLOTS = 'aesh_slots_v1';
+const KEY_ACTIVE_TAB = 'aesh_active_tab';
 
 const defaultOptions = {
     eu: {
@@ -598,18 +740,70 @@ const SUBJECT_COLORS = [
   '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
 ];
 
+/* ============================================================
+   HORARIO DE EJEMPLO (estructura del centro, sin datos personales)
+   ============================================================ */
+const SCHEDULE_EXAMPLE = [
+  { start:'08:20', end:'09:00', block:'peri'  },
+  { start:'09:00', end:'10:20', block:'class' },
+  { start:'10:20', end:'10:40', block:'break' },
+  { start:'10:40', end:'12:00', block:'class' },
+  { start:'12:00', end:'13:30', block:'peri'  },
+  { start:'13:30', end:'14:50', block:'class' },
+  { start:'14:50', end:'15:10', block:'break' },
+  { start:'15:10', end:'16:30', block:'class' },
+  { start:'16:30', end:'18:00', block:'peri'  }
+];
+
+/* ============================================================
+   MATERIAS DE EJEMPLO (estructura del centro, sin datos personales)
+   ============================================================ */
+const SUBJECTS_EXAMPLE = {
+  eu: [
+    'Matematikak', 'Euskara', 'Frantsesa', 'Kirola', 'Zientziak'
+  ],
+  fr: [
+    'Mathématiques', 'Basque', 'Français', 'Sport', 'Sciences'
+  ]
+};
+
+const BLOCK_LABELS = {
+  eu: { class:'Klasea', break:'Atsedenaldia', peri:'Periskolarra' },
+  fr: { class:'Classe',  break:'Pause',        peri:'Périscolaire' }
+};
+
+function blockLabel(block) {
+  return BLOCK_LABELS[lang][block] || block;
+}
+
+/* ============================================================
+   ESTADO GLOBAL
+   ============================================================ */
 let students = JSON.parse(localStorage.getItem(KEY_STUDENTS) || '[]');
 let subjects = JSON.parse(localStorage.getItem(KEY_SUBJECTS) || '[]');
 let incidents = JSON.parse(localStorage.getItem(KEY_INCIDENTS) || '[]');
 let customOptions = JSON.parse(localStorage.getItem(KEY_OPTIONS) || JSON.stringify(defaultOptions));
+let slots = JSON.parse(localStorage.getItem(KEY_SLOTS) || 'null');
 
 let editingIncidentId = null;
 let currentModalType = null;
+let editingSlotIndex = null; // Variable para controlar qué tramo estamos editando
 
+/* ============================================================
+   PERSISTENCIA
+   ============================================================ */
 function saveStudents() { localStorage.setItem(KEY_STUDENTS, JSON.stringify(students)); }
 function saveSubjects() { localStorage.setItem(KEY_SUBJECTS, JSON.stringify(subjects)); }
 function saveIncidents() { localStorage.setItem(KEY_INCIDENTS, JSON.stringify(incidents)); }
 function saveOptions() { localStorage.setItem(KEY_OPTIONS, JSON.stringify(customOptions)); }
+
+function saveSlots() {
+  localStorage.setItem(KEY_SLOTS, JSON.stringify(slots));
+  renderSlotsSelect();
+  renderSlotList();
+  renderHistory();
+  renderCharts();
+}
 
 function getSubjectColor(subject) {
   if (!subject) return '#e5e7eb';
@@ -619,32 +813,86 @@ function getSubjectColor(subject) {
 
 function t(key) { return I18N[lang][key]; }
 
+function incidentsLabel(n) {
+  return n === 1 ? t('incidentsSingular') : t('incidentsPlural');
+}
+
+/* ============================================================
+   HELPERS DE SLOTS
+   ============================================================ */
+function slotsToValue(slot) { return `${slot.start}-${slot.end}|${slot.block}`; }
+function valueToSlot(value) {
+  if (!value) return null;
+  const [range, block] = value.split('|');
+  const [start, end] = range.split('-');
+  return { start, end, block };
+}
+
+/* ============================================================
+   PLUGIN CHART DOUGHNUT
+   ============================================================ */
+const doughnutLabelsPlugin = {
+  id: 'doughnutLabels',
+  afterDatasetsDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data) return;
+    const total = chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+    if (!total) return;
+    ctx.save();
+    meta.data.forEach((arc, i) => {
+      const value = chart.data.datasets[0].data[i];
+      const pct = ((value / total) * 100).toFixed(1);
+      if ((value / total) < 0.05) return;
+      const pos = arc.tooltipPosition();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 3;
+      ctx.fillText(`${pct}%`, pos.x, pos.y);
+    });
+    ctx.restore();
+  }
+};
+Chart.register(doughnutLabelsPlugin);
+
+/* ============================================================
+   APLICAR IDIOMA
+   ============================================================ */
 function applyLang() {
   document.documentElement.lang = lang;
+
   document.querySelectorAll('[data-eu]').forEach(el => {
     el.textContent = lang === 'eu' ? el.dataset.eu : el.dataset.fr;
   });
+
   document.getElementById('langBtn').textContent = lang === 'eu' ? 'FR' : 'EU';
+  document.title = lang === 'eu' ? 'NereApp - Gorabeherak' : 'NereApp - Incidents';
+
   buildCheckboxes();
   renderStudentsSelect();
   renderSubjectsSelect();
   renderStudentList();
   renderSubjectList();
+  renderSlotsSelect();
+  renderSlotList();
   renderHistory();
   renderCharts();
-  
-  const titleInput = document.getElementById('mainTitle');
-  if(!titleInput.value || titleInput.value === "NereApp - Eguneroko gorabeherak" || titleInput.value === "NereApp - Incidents quotidiens"){
-      titleInput.value = lang === 'eu' ? "NereApp - Eguneroko gorabeherak" : "NereApp - Incidents quotidiens";
-  }
 
-  document.querySelectorAll('button[onclick*="openCustomModal"] span').forEach(span => {
-    if (span.dataset.eu) {
-      span.textContent = lang === 'eu' ? span.dataset.eu : span.dataset.fr;
-    }
-  });
+  const titleInput = document.getElementById('mainTitle');
+  const euDefault = I18N.eu.titleDefault;
+  const frDefault = I18N.fr.titleDefault;
+  if (!titleInput.value || titleInput.value === euDefault || titleInput.value === frDefault) {
+    titleInput.value = t('titleDefault');
+  }
 }
 
+/* ============================================================
+   MODAL DE OPCIÓN PERSONALIZADA
+   ============================================================ */
 function openCustomModal(type) {
     currentModalType = type;
     const modal = document.getElementById('customOptionModal');
@@ -679,26 +927,29 @@ document.getElementById('modalInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); saveModalOption(); }
 });
 
+/* ============================================================
+   CHECKBOXES DINÁMICOS
+   ============================================================ */
 function buildCheckboxes() {
   const groups = [
     { id: 'triggersGroup', name: 'trigger', key: 'triggers' },
     { id: 'behaviorsGroup', name: 'behavior', key: 'behaviors' },
     { id: 'interventionsGroup', name: 'intervention', key: 'interventions' }
   ];
-  
+
   groups.forEach(g => {
     const container = document.getElementById(g.id);
     const checked = new Set();
     container.querySelectorAll('input:checked').forEach(i => checked.add(i.value));
     container.innerHTML = '';
-    
+
     const items = customOptions[lang][g.key];
-    
+
     items.forEach((label, i) => {
       const id = `${g.name}_${i}`;
       const w = document.createElement('div');
       w.className = 'editable-item flex items-center gap-2 text-sm cursor-pointer';
-      
+
       const cbContainer = document.createElement('div');
       cbContainer.className = 'flex-1 flex items-center gap-2';
       const cb = document.createElement('input');
@@ -712,20 +963,20 @@ function buildCheckboxes() {
       sp.textContent = label;
       cbContainer.appendChild(cb);
       cbContainer.appendChild(sp);
-      
+
       const delBtn = document.createElement('span');
       delBtn.className = 'delete-icon no-print';
       delBtn.innerHTML = '✕';
       delBtn.title = t('deleteBtn');
       delBtn.onclick = (e) => {
         e.preventDefault();
-        if(confirm(t('confirmDelete') + " (" + label + ")")) {
+        if (confirm(t('confirmDelete') + " (" + label + ")")) {
             customOptions[lang][g.key].splice(i, 1);
             saveOptions();
             buildCheckboxes();
         }
       };
-      
+
       w.appendChild(cbContainer);
       w.appendChild(delBtn);
       container.appendChild(w);
@@ -733,6 +984,9 @@ function buildCheckboxes() {
   });
 }
 
+/* ============================================================
+   SELECTS DE ALUMNO Y MATERIA
+   ============================================================ */
 function renderStudentsSelect() {
   const sel = document.getElementById('incidentStudent');
   const prev = sel.value;
@@ -782,6 +1036,242 @@ function renderSubjectsSelect() {
     if (subjects.includes(prev)) sel.value = prev;
 }
 
+/* ============================================================
+   SELECT Y LISTA DE SLOTS
+   ============================================================ */
+function renderSlotsSelect() {
+  const sel = document.getElementById('incidentSlot');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">--</option>';
+
+  if (!slots || slots.length === 0) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.disabled = true;
+    o.textContent = t('noScheduleOption');
+    sel.appendChild(o);
+    return;
+  }
+
+  slots.forEach(s => {
+    const o = document.createElement('option');
+    o.value = slotsToValue(s);
+    o.textContent = `${s.start} - ${s.end} — ${blockLabel(s.block)}`;
+    sel.appendChild(o);
+  });
+
+  if (prev && slots.some(s => slotsToValue(s) === prev)) sel.value = prev;
+}
+
+function renderSlotList() {
+  const ul = document.getElementById('slotList');
+  const empty = document.getElementById('slotsEmpty');
+  const actions = document.getElementById('slotActions');
+  const form = document.getElementById('slotForm');
+  if (!ul) return;
+
+  if (!slots || slots.length === 0) {
+    ul.innerHTML = '';
+    empty.classList.remove('hidden');
+    actions.classList.add('hidden');
+    form.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  actions.classList.remove('hidden');
+  form.classList.remove('hidden');
+  ul.innerHTML = '';
+
+  const colorMap = { class:'#4f46e5', break:'#ca8a04', peri:'#ea580c' };
+
+  slots.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.className = 'flex items-center gap-2 p-3 hover:bg-gray-50';
+
+    const dot = document.createElement('span');
+    dot.className = 'w-3 h-3 rounded-full shrink-0';
+    dot.style.background = colorMap[s.block];
+
+    if (editingSlotIndex === i) {
+      // MODO EDICIÓN
+      const startInput = document.createElement('input');
+      startInput.type = 'time';
+      startInput.value = s.start;
+      startInput.className = 'border rounded px-1 py-1 text-sm w-20';
+      startInput.id = `editSlotStart_${i}`;
+
+      const endInput = document.createElement('input');
+      endInput.type = 'time';
+      endInput.value = s.end;
+      endInput.className = 'border rounded px-1 py-1 text-sm w-20';
+      endInput.id = `editSlotEnd_${i}`;
+
+      const blockSelect = document.createElement('select');
+      blockSelect.className = 'border rounded px-1 py-1 text-sm flex-1';
+      blockSelect.id = `editSlotBlock_${i}`;
+      ['class', 'break', 'peri'].forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.textContent = blockLabel(b);
+        if (b === s.block) opt.selected = true;
+        blockSelect.appendChild(opt);
+      });
+
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.textContent = '✓';
+      saveBtn.title = t('saveBtn');
+      saveBtn.className = 'px-2 text-green-600 hover:text-green-800 font-bold text-lg';
+      saveBtn.onclick = () => {
+        const newStart = startInput.value;
+        const newEnd = endInput.value;
+        const newBlock = blockSelect.value;
+        if (!newStart || !newEnd) { alert(t('slotTimesRequired')); return; }
+        if (newStart >= newEnd) { alert(t('slotOrderInvalid')); return; }
+        
+        slots[i] = { start: newStart, end: newEnd, block: newBlock };
+        slots.sort((a,b) => a.start.localeCompare(b.start));
+        editingSlotIndex = null;
+        saveSlots();
+      };
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.textContent = '✕';
+      cancelBtn.title = t('cancelBtn');
+      cancelBtn.className = 'px-2 text-gray-500 hover:text-gray-700 font-bold text-lg';
+      cancelBtn.onclick = () => {
+        editingSlotIndex = null;
+        renderSlotList(); // Restaurar vista normal
+      };
+
+      li.append(startInput, document.createTextNode('-'), endInput, blockSelect, saveBtn, cancelBtn);
+
+    } else {
+      // MODO LECTURA
+      const label = document.createElement('span');
+      label.className = 'flex-1 text-sm';
+      label.textContent = `${s.start} - ${s.end} — ${blockLabel(s.block)}`;
+
+      const up = document.createElement('button');
+      up.type = 'button';
+      up.textContent = '↑';
+      up.className = 'px-2 text-gray-500 hover:text-indigo-700 disabled:opacity-30';
+      up.disabled = i === 0;
+      up.onclick = () => moveSlot(i, -1);
+
+      const down = document.createElement('button');
+      down.type = 'button';
+      down.textContent = '↓';
+      down.className = 'px-2 text-gray-500 hover:text-indigo-700 disabled:opacity-30';
+      down.disabled = i === slots.length - 1;
+      down.onclick = () => moveSlot(i, +1);
+
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.textContent = '✏️';
+      edit.className = 'px-2 text-indigo-600 hover:text-indigo-800';
+      edit.title = t('editBtn');
+      edit.onclick = () => {
+        editingSlotIndex = i;
+        renderSlotList();
+        // Focus automático en el primer input
+        setTimeout(() => {
+          const inp = document.getElementById(`editSlotStart_${i}`);
+          if(inp) inp.focus();
+        }, 50);
+      };
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.textContent = '✕';
+      del.className = 'px-2 text-red-600 hover:text-red-800 font-bold';
+      del.title = t('deleteBtn');
+      del.onclick = () => {
+        const msg = `${t('slotDeleteConfirm')} (${s.start}-${s.end})`;
+        if (!confirm(msg)) return;
+        slots.splice(i, 1);
+        saveSlots();
+      };
+
+      li.append(dot, label, up, down, edit, del);
+    }
+    
+    ul.appendChild(li);
+  });
+}
+
+function moveSlot(index, delta) {
+  const j = index + delta;
+  if (j < 0 || j >= slots.length) return;
+  [slots[index], slots[j]] = [slots[j], slots[index]];
+  saveSlots();
+}
+
+/* Carga SOLO horarios + materias (nunca alumnos ni incidencias) */
+function applyScheduleExample() {
+  if (!confirm(t('exampleConfirm'))) return;
+
+  slots = JSON.parse(JSON.stringify(SCHEDULE_EXAMPLE));
+  subjects = [...SUBJECTS_EXAMPLE[lang]];
+  subjects.sort((a, b) => a.localeCompare(b));
+
+  editingSlotIndex = null; // Resetear edición por si acaso
+  saveSubjects();
+  saveSlots();
+  renderSubjectsSelect();
+  renderSubjectList();
+}
+
+/* Solo horario (para el botón secundario, no toca materias ni datos) */
+function resetScheduleOnly() {
+  if (!confirm(t('resetScheduleConfirm'))) return;
+  slots = JSON.parse(JSON.stringify(SCHEDULE_EXAMPLE));
+  editingSlotIndex = null; // Resetear edición por si acaso
+  saveSlots();
+}
+
+/* Solo materias de ejemplo (botón en pestaña Ikasgaiak) */
+function applySubjectsExample() {
+  if (!confirm(t('subjectsExampleConfirm'))) return;
+  subjects = [...SUBJECTS_EXAMPLE[lang]];
+  subjects.sort((a, b) => a.localeCompare(b));
+  saveSubjects();
+  renderSubjectsSelect();
+  renderSubjectList();
+}
+
+function startEmptySchedule() {
+  if (slots && slots.length > 0 && !confirm(t('scheduleEmptyConfirm'))) return;
+  slots = [];
+  editingSlotIndex = null; // Resetear edición por si acaso
+  saveSlots();
+}
+
+document.getElementById('addSlotBtn').onclick = () => {
+  const start = document.getElementById('newSlotStart').value;
+  const end   = document.getElementById('newSlotEnd').value;
+  const block = document.getElementById('newSlotBlock').value;
+
+  if (!start || !end) { alert(t('slotTimesRequired')); return; }
+  if (start >= end) { alert(t('slotOrderInvalid')); return; }
+  if (slots.some(s => !(end <= s.start || start >= s.end))) {
+    if (!confirm(t('slotOverlapConfirm'))) return;
+  }
+
+  slots.push({ start, end, block });
+  slots.sort((a,b) => a.start.localeCompare(b.start));
+  editingSlotIndex = null; // Resetear edición al añadir uno nuevo
+  saveSlots();
+
+  document.getElementById('newSlotStart').value = '';
+  document.getElementById('newSlotEnd').value = '';
+};
+
+/* ============================================================
+   LISTAS DE ALUMNOS / MATERIAS
+   ============================================================ */
 function renderStudentList() {
   const ul = document.getElementById('studentList');
   ul.innerHTML = '';
@@ -796,6 +1286,7 @@ function renderStudentList() {
     sp.textContent = s;
     sp.className = 'font-medium';
     const b = document.createElement('button');
+    b.type = 'button';
     b.textContent = '✕';
     b.className = 'text-red-600 hover:text-red-800 font-bold px-2';
     b.title = t('deleteBtn');
@@ -826,22 +1317,23 @@ function renderSubjectList() {
     const li = document.createElement('li');
     li.className = 'flex justify-between items-center p-3 hover:bg-gray-50';
     const color = SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
-    
+
     const leftDiv = document.createElement('div');
     leftDiv.className = 'flex items-center gap-2';
-    
+
     const colorDot = document.createElement('span');
     colorDot.style.backgroundColor = color;
     colorDot.className = 'w-3 h-3 rounded-full inline-block';
-    
+
     const sp = document.createElement('span');
     sp.textContent = s;
     sp.className = 'font-medium';
-    
+
     leftDiv.appendChild(colorDot);
     leftDiv.appendChild(sp);
-    
+
     const b = document.createElement('button');
+    b.type = 'button';
     b.textContent = '✕';
     b.className = 'text-red-600 hover:text-red-800 font-bold px-2';
     b.title = t('deleteBtn');
@@ -893,38 +1385,48 @@ document.getElementById('newSubject').addEventListener('keypress', e => {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addSubjectBtn').click(); }
 });
 
+/* ============================================================
+   FORMULARIO DE INCIDENCIA
+   ============================================================ */
 document.getElementById('incidentForm').onsubmit = (e) => {
   e.preventDefault();
   const date = document.getElementById('incidentDate').value;
   const student = document.getElementById('incidentStudent').value;
-  const slot = document.getElementById('incidentSlot').value;
+  const slotValue = document.getElementById('incidentSlot').value;
   const subject = document.getElementById('incidentSubject').value;
-  
-  if (!date || !student || !slot) return;
-  
-  const [range, slotEu, slotFr] = slot.split('|');
+
+  if (!date || !student || !slotValue) return;
+
+  const slot = valueToSlot(slotValue);
+  if (!slot) return;
+
   const triggers = Array.from(document.querySelectorAll('input[name="trigger"]:checked')).map(c=>c.value);
   const behaviors = Array.from(document.querySelectorAll('input[name="behavior"]:checked')).map(c=>c.value);
   const interventions = Array.from(document.querySelectorAll('input[name="intervention"]:checked')).map(c=>c.value);
   const notes = document.getElementById('incidentNotes').value.trim();
 
+  const payload = {
+    date, student, subject,
+    slotRange: `${slot.start}-${slot.end}`,
+    block: slot.block,
+    triggers, behaviors, interventions, notes
+  };
+
   if (editingIncidentId) {
       const idx = incidents.findIndex(i => i.id === editingIncidentId);
-      if (idx > -1) {
-          incidents[idx] = { ...incidents[idx], date, student, slotRange: range, slotEu, slotFr, subject, triggers, behaviors, interventions, notes };
-      }
+      if (idx > -1) incidents[idx] = { ...incidents[idx], ...payload };
   } else {
       incidents.push({
         id: Date.now() + Math.random().toString(36).slice(2,7),
-        date, student, slotRange: range, slotEu, slotFr, subject, triggers, behaviors, interventions, notes
+        ...payload
       });
   }
-  
+
   saveIncidents();
   resetForm();
   renderHistory();
   renderCharts();
-  document.querySelector('[data-tab="history"]').click();
+  setActiveTab('history');
 };
 
 function resetForm() {
@@ -932,7 +1434,7 @@ function resetForm() {
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     document.getElementById('incidentDate').value = now.toISOString().slice(0,16);
-    
+
     editingIncidentId = null;
     document.getElementById('cancelEditBtn').classList.add('hidden');
     const submitBtn = document.querySelector('button[type="submit"]');
@@ -945,18 +1447,16 @@ function resetForm() {
 function editIncident(id) {
     const inc = incidents.find(i => String(i.id) === String(id));
     if (!inc) return;
-    
-    // Forzar el cambio a la pestaña "Erregistroa" antes de rellenar
-    document.querySelector('[data-tab="form"]').click();
 
+    setActiveTab('form');
     editingIncidentId = inc.id;
-    
+
     try {
         document.getElementById('incidentDate').value = inc.date;
         document.getElementById('incidentStudent').value = inc.student;
         document.getElementById('incidentSubject').value = inc.subject || '';
-        
-        const slotVal = `${inc.slotRange}|${inc.slotEu}|${inc.slotFr}`;
+
+        const slotVal = `${inc.slotRange}|${inc.block}`;
         document.getElementById('incidentSlot').value = slotVal;
 
         document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
@@ -987,6 +1487,9 @@ function editIncident(id) {
     }
 }
 
+/* ============================================================
+   HISTÓRICO Y ESTADÍSTICAS
+   ============================================================ */
 let myChart = null;
 let mySlotChart = null;
 let myBlockChart = null;
@@ -1008,7 +1511,6 @@ function getFilteredIncidents() {
 function renderHistory() {
   const list = document.getElementById('historyList');
   const filtered = getFilteredIncidents();
-  const L = lang;
   list.innerHTML = '';
 
   if (filtered.length === 0) {
@@ -1018,24 +1520,23 @@ function renderHistory() {
       const card = document.createElement('div');
       card.className = 'bg-white rounded-lg shadow p-4';
       const dateStr = inc.date.replace('T', ' ');
-      const slotLabel = `${inc.slotRange} — ${L==='eu'?inc.slotEu:inc.slotFr}`;
-      
+
       let subjectBadge = '';
       if (inc.subject) {
         const color = getSubjectColor(inc.subject);
         subjectBadge = `<span class="subject-badge" style="background-color:${color}">${inc.subject}</span>`;
       }
-      
+
       const row = (label, arr) => arr.length ? `<div class="text-sm mt-1"><span class="font-semibold text-gray-700">${label}:</span> ${arr.map(x=>`<span class="inline-block bg-indigo-100 text-indigo-800 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${x}</span>`).join('')}</div>` : '';
-      
+
       card.innerHTML = `
         <div class="flex justify-between items-start gap-2">
           <div class="flex-1">
             <div class="font-bold text-indigo-700">${inc.student} <span class="text-gray-500 font-normal text-sm">· ${dateStr}</span></div>
-            <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${slotLabel}</div>
-            ${row(L==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
-            ${row(L==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
-            ${row(L==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
+            <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${inc.slotRange} — ${blockLabel(inc.block)}</div>
+            ${row(lang==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
+            ${row(lang==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
+            ${row(lang==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
             ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${inc.notes}</div>` : ''}
           </div>
           <div class="flex flex-col gap-1 no-print">
@@ -1047,57 +1548,16 @@ function renderHistory() {
       list.appendChild(card);
     });
   }
-
-  // ESTA ERA LA FUNCIÓN QUE FALTABA
-  renderStats(filtered);
-}
-
-// ✅ FUNCIÓN RESTAURADA
-function renderStats(filtered) {
-  const byStudent = {};
-  filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
-  const sStudents = document.getElementById('statsStudents');
-  if (sStudents) {
-    sStudents.innerHTML = '';
-    const sKeys = Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a]);
-    if (sKeys.length === 0) sStudents.innerHTML = `<li class="text-gray-400">—</li>`;
-    sKeys.forEach(k => {
-      const li = document.createElement('li');
-      li.className = 'flex justify-between';
-      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byStudent[k]}</span>`;
-      sStudents.appendChild(li);
-    });
-    const totalLi = document.createElement('li');
-    totalLi.className = 'flex justify-between border-t pt-1 mt-1 font-bold';
-    totalLi.innerHTML = `<span>${t('total')}</span><span>${filtered.length}</span>`;
-    sStudents.appendChild(totalLi);
-  }
-
-  const byBeh = {};
-  filtered.forEach(i => i.behaviors.forEach(b => { byBeh[b]=(byBeh[b]||0)+1; }));
-  const sBeh = document.getElementById('statsBehaviors');
-  if (sBeh) {
-    sBeh.innerHTML = '';
-    const bKeys = Object.keys(byBeh).sort((a,b)=>byBeh[b]-byBeh[a]);
-    if (bKeys.length === 0) sBeh.innerHTML = `<li class="text-gray-400">—</li>`;
-    bKeys.forEach(k => {
-      const li = document.createElement('li');
-      li.className = 'flex justify-between';
-      li.innerHTML = `<span>${k}</span><span class="font-bold text-indigo-700">${byBeh[k]}</span>`;
-      sBeh.appendChild(li);
-    });
-  }
 }
 
 document.getElementById('historyList').addEventListener('click', (e) => {
     const editBtn = e.target.closest('.edit-btn');
     const delBtn = e.target.closest('.del-btn');
-    
+
     if (editBtn) {
         e.preventDefault();
         e.stopPropagation();
-        const id = editBtn.getAttribute('data-id');
-        editIncident(id);
+        editIncident(editBtn.getAttribute('data-id'));
     } else if (delBtn) {
         e.preventDefault();
         e.stopPropagation();
@@ -1111,38 +1571,49 @@ document.getElementById('historyList').addEventListener('click', (e) => {
     }
 });
 
+/* ============================================================
+   GRÁFICOS
+   ============================================================ */
 function renderCharts() {
   const chartFilter = document.getElementById('chartStudentFilter');
   const selectedStudent = chartFilter.value;
-  
+
+  const emptyState = document.getElementById('chartsEmptyState');
+  const content = document.getElementById('chartsContent');
+
   if (!selectedStudent) {
-    if(myChart) { myChart.destroy(); myChart = null; }
-    if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
-    if(myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
-    if(mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
-    document.getElementById('analysisDetails').innerHTML = `<p class="text-gray-500">${t('selectStudentForCharts')}</p>`;
+    if (myChart) { myChart.destroy(); myChart = null; }
+    if (mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+    if (myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
+    if (mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
+    emptyState.classList.remove('hidden');
+    content.classList.add('hidden');
     return;
   }
 
   const filtered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
-  
+
   if (filtered.length === 0) {
-    if(myChart) { myChart.destroy(); myChart = null; }
-    if(mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
-    if(myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
-    if(mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
-    document.getElementById('analysisDetails').innerHTML = `<p class="text-gray-500">${t('noIncidents')}</p>`;
+    if (myChart) { myChart.destroy(); myChart = null; }
+    if (mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
+    if (myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
+    if (mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
+    emptyState.classList.remove('hidden');
+    content.classList.add('hidden');
     return;
   }
+
+  emptyState.classList.add('hidden');
+  content.classList.remove('hidden');
 
   const countsByDate = {};
   [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
   const labels = Object.keys(countsByDate);
   const data = labels.map(l => countsByDate[l]);
-  
+
   const ctx = document.getElementById('evolutionChart').getContext('2d');
   if (myChart) myChart.destroy();
-  myChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Incidents', data: data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+  myChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Incidents', data, borderColor: '#4f46e5', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
 
   const slotCount = {};
   filtered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange] || 0) + 1; });
@@ -1153,11 +1624,7 @@ function renderCharts() {
   mySlotChart = new Chart(slotCtx, { type: 'bar', data: { labels: slotLabels, datasets: [{ label: 'Incidents', data: slotData, backgroundColor: '#0891b2' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
 
   const blockCounts = { class: 0, break: 0, peri: 0 };
-  filtered.forEach(i => {
-    if (i.slotEu === 'Klasea') blockCounts.class++;
-    else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
-    else blockCounts.peri++;
-  });
+  filtered.forEach(i => { blockCounts[i.block] = (blockCounts[i.block] || 0) + 1; });
   const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
   const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
   const blockColors = ['#4f46e5', '#ca8a04', '#ea580c'];
@@ -1166,7 +1633,7 @@ function renderCharts() {
   myBlockChart = new Chart(blockCtx, { type: 'doughnut', data: { labels: blockLabels, datasets: [{ data: blockData, backgroundColor: blockColors, borderColor: '#ffffff', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
 
   const subjectCount = {};
-  filtered.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject] || 0) + 1; });
+  filtered.forEach(i => { if (i.block === 'class' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject] || 0) + 1; });
   const subjLabels = Object.keys(subjectCount);
   const subjData = subjLabels.map(l => subjectCount[l]);
   const subjColors = subjLabels.map(s => getSubjectColor(s));
@@ -1197,6 +1664,35 @@ function renderCharts() {
     subjectLegend.appendChild(li);
   });
 
+  document.getElementById('kpiTotal').textContent = filtered.length;
+
+  if (slotLabels.length > 0) {
+    const maxIdx = slotData.indexOf(Math.max(...slotData));
+    document.getElementById('kpiPeak').textContent = slotLabels[maxIdx];
+  } else {
+    document.getElementById('kpiPeak').textContent = '—';
+  }
+
+  let trendShort = '—';
+  let trendColor = 'text-gray-600';
+  if (data.length >= 2) {
+    const firstHalf = data.slice(0, Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+    const secondHalf = data.slice(Math.ceil(data.length/2)).reduce((a,b)=>a+b,0);
+    if (secondHalf < firstHalf)      { trendShort = '↘'; trendColor = 'text-green-600'; }
+    else if (secondHalf > firstHalf) { trendShort = '↗'; trendColor = 'text-red-600'; }
+    else                              { trendShort = '→'; trendColor = 'text-gray-600'; }
+  }
+  const kpiTrendEl = document.getElementById('kpiTrend');
+  kpiTrendEl.textContent = trendShort;
+  kpiTrendEl.className = `text-3xl font-bold ${trendColor}`;
+
+  let topBlockName = '—';
+  if (totalBlock > 0) {
+    const maxIdx = blockData.indexOf(Math.max(...blockData));
+    topBlockName = blockLabels[maxIdx];
+  }
+  document.getElementById('kpiTopBlock').textContent = topBlockName;
+
   let evolutionText = t('stableEvolution');
   let evolutionColor = 'text-gray-600';
   if (data.length >= 2) {
@@ -1209,7 +1705,7 @@ function renderCharts() {
   let peakSlot = '';
   if (slotLabels.length > 0) {
     const maxIdx = slotData.indexOf(Math.max(...slotData));
-    peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} incidents)`;
+    peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} ${incidentsLabel(slotData[maxIdx])})`;
   }
 
   const triggerCount = {};
@@ -1231,16 +1727,18 @@ function renderCharts() {
   document.getElementById('analysisDetails').innerHTML = analysisHtml;
 }
 
+/* ============================================================
+   GENERACIÓN DE PDF
+   ============================================================ */
 function resetPrintCharts() {
     ['printChart1','printChart2','printChart3','printChart4'].forEach(k => {
         if (window[k]) {
-            try { window[k].destroy(); } catch(e) { /* noop */ }
+            try { window[k].destroy(); } catch(e) {}
             window[k] = null;
         }
     });
 }
 
-// ==== GENERACIÓN DEL HTML PARA EL PDF ====
 function buildChartsHTML() {
     return `
         <div id="printChartsContainer" class="mb-8">
@@ -1248,22 +1746,22 @@ function buildChartsHTML() {
                 <h1 id="printTitle" class="text-2xl font-bold">NereApp</h1>
                 <p id="printMeta" class="text-sm text-gray-600 mt-1"></p>
             </div>
-            <h2 class="text-lg font-bold border-b mb-2">Eboluzioa eta Analisia / Évolution et Analyse</h2>
+            <h2 class="text-lg font-bold border-b mb-2">${lang==='eu'?'Eboluzioa eta Analisia':'Évolution et Analyse'}</h2>
             <div class="chart-grid">
                 <div>
-                    <div class="chart-title" id="printChartTitle1">Gorabeherak denboran zehar</div>
+                    <div class="chart-title" id="printChartTitle1">${lang==='eu'?'Gorabeherak denboran zehar':'Incidents dans le temps'}</div>
                     <div class="chart-box"><canvas id="printChart1"></canvas></div>
                 </div>
                 <div>
-                    <div class="chart-title" id="printChartTitle2">Gorabeherak orduaren arabera</div>
+                    <div class="chart-title" id="printChartTitle2">${lang==='eu'?'Gorabeherak orduaren arabera':'Incidents par créneau'}</div>
                     <div class="chart-box"><canvas id="printChart2"></canvas></div>
                 </div>
                 <div>
-                    <div class="chart-title" id="printChartTitle3">Blokeen araberako banaketa</div>
+                    <div class="chart-title" id="printChartTitle3">${lang==='eu'?'Blokeen araberako banaketa':'Répartition par blocs'}</div>
                     <div class="chart-box"><canvas id="printChart3"></canvas></div>
                 </div>
                 <div>
-                    <div class="chart-title" id="printChartTitle4">Gorabeherak ikasgaiaren arabera (Klasean)</div>
+                    <div class="chart-title" id="printChartTitle4">${lang==='eu'?'Gorabeherak ikasgaiaren arabera (Klasean)':'Incidents par matière (En classe)'}</div>
                     <div class="chart-box"><canvas id="printChart4"></canvas></div>
                 </div>
             </div>
@@ -1274,7 +1772,7 @@ function buildChartsHTML() {
 function buildAnalysisHTML(analysisHtml) {
     return `
         <div id="printAnalysisContainer" style="page-break-before: always;">
-            <h2 class="text-lg font-bold border-b mb-4">Analisia / Analyse</h2>
+            <h2 class="text-lg font-bold border-b mb-4">${lang==='eu'?'Analisia':'Analyse'}</h2>
             <div id="printAnalysisDetails" class="text-sm space-y-2">${analysisHtml}</div>
         </div>
     `;
@@ -1283,10 +1781,10 @@ function buildAnalysisHTML(analysisHtml) {
 function buildTableHTML(filtered, fStudent, withPageBreak) {
     const byStudent = {};
     filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
-    
+
     let statsHtml = `<div id="printStatsInline">`;
     if (fStudent) {
-        statsHtml += `<div style="margin-bottom: 5px;"><b>${fStudent}</b>: ${filtered.length} incidents</div>`;
+        statsHtml += `<div style="margin-bottom: 5px;"><b>${fStudent}</b>: ${filtered.length} ${incidentsLabel(filtered.length)}</div>`;
     } else {
         statsHtml += Object.keys(byStudent).sort((a,b)=>byStudent[b]-byStudent[a])
             .map(k => `<div>${k}: <b>${byStudent[k]}</b></div>`).join('');
@@ -1306,27 +1804,21 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
             subjColor = getSubjectColor(i.subject);
             usedSubjects.add(i.subject);
         }
-        const triggers = i.triggers.join(', ');
-        const behaviors = i.behaviors.join(', ');
-        const interventions = i.interventions.join(', ');
-        const notes = i.notes || '';
-
         rowsHtml += `<div class="prow">
             <div class="pcell pc-data">${dateStr}</div>
             <div class="pcell pc-ordua">${slotStr}</div>
             <div class="pcell pc-ik" style="background-color:${subjColor}; color:white; font-weight:bold; text-align:center;">${subjShort}</div>
-            <div class="pcell pc-erag">${triggers}</div>
-            <div class="pcell pc-jok">${behaviors}</div>
-            <div class="pcell pc-esku">${interventions}</div>
-            <div class="pcell pc-ohar">${notes}</div>
+            <div class="pcell pc-erag">${i.triggers.join(', ')}</div>
+            <div class="pcell pc-jok">${i.behaviors.join(', ')}</div>
+            <div class="pcell pc-esku">${i.interventions.join(', ')}</div>
+            <div class="pcell pc-ohar">${i.notes || ''}</div>
         </div>`;
     });
 
     let legendHtml = `<div id="subjectLegendInline">`;
     if (usedSubjects.size > 0) {
         Array.from(usedSubjects).sort().forEach(subj => {
-            const color = getSubjectColor(subj);
-            legendHtml += `<span class="legend-item"><span class="legend-color" style="background:${color}"></span>${subj}</span>`;
+            legendHtml += `<span class="legend-item"><span class="legend-color" style="background:${getSubjectColor(subj)}"></span>${subj}</span>`;
         });
     }
     legendHtml += `</div>`;
@@ -1336,15 +1828,15 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
     return `
         <div id="printTableContainer" ${pageBreakStyle}>
             ${statsHtml}
-            <h2 class="text-lg font-bold border-b mb-2">Historikoa / Historique</h2>
+            <h2 class="text-lg font-bold border-b mb-2">${lang==='eu'?'Historikoa':'Historique'}</h2>
             <div class="prow header">
-                <div class="pcell pc-data">Data</div>
-                <div class="pcell pc-ordua">Ordua</div>
-                <div class="pcell pc-ik">Ik.</div>
-                <div class="pcell pc-erag">Eragilea</div>
-                <div class="pcell pc-jok">Jokabidea</div>
-                <div class="pcell pc-esku">Esku-hartzea</div>
-                <div class="pcell pc-ohar">Oharrak</div>
+                <div class="pcell pc-data">${lang==='eu'?'Data':'Date'}</div>
+                <div class="pcell pc-ordua">${lang==='eu'?'Ordua':'Heure'}</div>
+                <div class="pcell pc-ik">${lang==='eu'?'Ik.':'Mat.'}</div>
+                <div class="pcell pc-erag">${lang==='eu'?'Eragilea':'Déclencheur'}</div>
+                <div class="pcell pc-jok">${lang==='eu'?'Jokabidea':'Comportement'}</div>
+                <div class="pcell pc-esku">${lang==='eu'?'Esku-hartzea':'Intervention'}</div>
+                <div class="pcell pc-ohar">${lang==='eu'?'Oharrak':'Notes'}</div>
             </div>
             ${rowsHtml}
             ${legendHtml}
@@ -1357,11 +1849,11 @@ function getCurrentAnalysisHTML() {
     if (!sel) return '';
     const filtered = incidents.filter(i => i.student === sel).sort((a,b)=> b.date.localeCompare(a.date));
     if (filtered.length === 0) return '';
-    
+
     const countsByDate = {};
     [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
     const data = Object.values(countsByDate);
-    
+
     let evolutionText = t('stableEvolution');
     let evolutionClass = 'text-gray-600';
     if (data.length >= 2) {
@@ -1370,7 +1862,7 @@ function getCurrentAnalysisHTML() {
         if (secondHalf < firstHalf) { evolutionText = t('positiveEvolution'); evolutionClass = 'text-green-600 font-bold'; }
         else if (secondHalf > firstHalf) { evolutionText = t('negativeEvolution'); evolutionClass = 'text-red-600 font-bold'; }
     }
-    
+
     const slotCount = {};
     filtered.forEach(i => { slotCount[i.slotRange] = (slotCount[i.slotRange] || 0) + 1; });
     const slotLabels = Object.keys(slotCount).sort();
@@ -1378,9 +1870,9 @@ function getCurrentAnalysisHTML() {
     let peakSlot = '';
     if (slotLabels.length > 0) {
         const maxIdx = slotData.indexOf(Math.max(...slotData));
-        peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} incidents)`;
+        peakSlot = `${slotLabels[maxIdx]} (${slotData[maxIdx]} ${incidentsLabel(slotData[maxIdx])})`;
     }
-    
+
     const triggerCount = {};
     const behaviorCount = {};
     filtered.forEach(i => {
@@ -1400,7 +1892,7 @@ function getCurrentAnalysisHTML() {
 
 function generatePDF(mode) {
     document.getElementById('pdfModal').classList.add('hidden');
-    
+
     const validModes = ['full', 'charts', 'all'];
     if (!validModes.includes(mode)) return;
 
@@ -1411,9 +1903,9 @@ function generatePDF(mode) {
     const fStudent = document.getElementById('filterStudent').value;
     const fFrom = document.getElementById('filterFrom').value;
     const fTo = document.getElementById('filterTo').value;
-    
+
     const selectedStudent = document.getElementById('chartStudentFilter').value || fStudent;
-    
+
     if (includeCharts && !selectedStudent) {
         alert(t('selectStudentForCharts'));
         return;
@@ -1437,19 +1929,9 @@ function generatePDF(mode) {
     const printView = document.getElementById('printView');
     let html = '';
 
-    if (includeCharts) {
-        html += buildChartsHTML();
-    }
-
-    if (includeCharts) {
-        const analysisHtml = getCurrentAnalysisHTML();
-        html += buildAnalysisHTML(analysisHtml);
-    }
-
-    if (includeHistory) {
-        const withPageBreak = includeCharts;
-        html += buildTableHTML(filtered, fStudent, withPageBreak);
-    }
+    if (includeCharts) html += buildChartsHTML();
+    if (includeCharts) html += buildAnalysisHTML(getCurrentAnalysisHTML());
+    if (includeHistory) html += buildTableHTML(filtered, fStudent, includeCharts);
 
     printView.innerHTML = html;
 
@@ -1464,9 +1946,7 @@ function generatePDF(mode) {
     }
 
     if (includeCharts) {
-        const chartData = incidents
-            .filter(i => i.student === selectedStudent)
-            .sort((a,b)=> b.date.localeCompare(a.date));
+        const chartData = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
         updatePrintCharts(chartData);
     }
 
@@ -1478,9 +1958,7 @@ function generatePDF(mode) {
             html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-
         printView.style.display = 'block';
-        
         html2pdf().set(opt).from(printView).save().then(() => {
             printView.style.display = 'none';
             printView.innerHTML = '';
@@ -1490,10 +1968,7 @@ function generatePDF(mode) {
 }
 
 function updatePrintCharts(studentData) {
-    if (!studentData || studentData.length === 0) {
-        resetPrintCharts();
-        return;
-    }
+    if (!studentData || studentData.length === 0) { resetPrintCharts(); return; }
 
     const countsByDate = {};
     [...studentData].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)]||0)+1; });
@@ -1506,16 +1981,12 @@ function updatePrintCharts(studentData) {
     const slotData = slotLabels.map(l=>slotCount[l]);
 
     const blockCounts = { class: 0, break: 0, peri: 0 };
-    studentData.forEach(i => {
-        if (i.slotEu === 'Klasea') blockCounts.class++;
-        else if (i.slotEu === 'Atsedenaldia') blockCounts.break++;
-        else blockCounts.peri++;
-    });
+    studentData.forEach(i => { blockCounts[i.block] = (blockCounts[i.block]||0)+1; });
     const blockLabels = [t('blockClass'), t('blockBreak'), t('blockPeri')];
     const blockData = [blockCounts.class, blockCounts.break, blockCounts.peri];
 
     const subjectCount = {};
-    studentData.forEach(i => { if (i.slotEu === 'Klasea' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
+    studentData.forEach(i => { if (i.block === 'class' && i.subject) subjectCount[i.subject] = (subjectCount[i.subject]||0)+1; });
     const subjLabels = Object.keys(subjectCount);
     const subjData = subjLabels.map(l=>subjectCount[l]);
     const subjColors = subjLabels.map(s=>getSubjectColor(s));
@@ -1530,7 +2001,7 @@ function updatePrintCharts(studentData) {
 
     window.printChart1 = new Chart(c1.getContext('2d'), {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Gorabeherak', data, borderColor: '#4f46e5', tension: 0.3 }] },
+        data: { labels, datasets: [{ label: 'Incidents', data, borderColor: '#4f46e5', tension: 0.3 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } } }
     });
     window.printChart2 = new Chart(c2.getContext('2d'), {
@@ -1550,101 +2021,113 @@ function updatePrintCharts(studentData) {
     });
 }
 
-document.getElementById('pdfBtn').onclick = () => {
-    document.getElementById('pdfModal').classList.remove('hidden');
-    document.getElementById('pdfModal').classList.add('flex');
-};
+/* ============================================================
+   TABS
+   ============================================================ */
+function setActiveTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const active = b.dataset.tab === name;
+    b.classList.toggle('border-b-2', active);
+    b.classList.toggle('border-indigo-600', active);
+    b.classList.toggle('text-indigo-700', active);
+    b.classList.toggle('text-gray-600', !active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.remove('hidden');
+  localStorage.setItem(KEY_ACTIVE_TAB, name);
+  if (name === 'history') renderHistory();
+  if (name === 'charts') renderCharts();
+  if (name === 'schedule') {
+    editingSlotIndex = null; // Cancelar cualquier edición en curso al cambiar de pestaña
+    renderSlotList();
+  }
+}
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.tab-btn').forEach(b => {
-      b.classList.remove('border-b-2','border-indigo-600','text-indigo-700');
-      b.classList.add('text-gray-600');
-    });
-    btn.classList.remove('text-gray-600');
-    btn.classList.add('border-b-2','border-indigo-600','text-indigo-700');
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-    document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
-    if (btn.dataset.tab === 'history') renderHistory();
-    if (btn.dataset.tab === 'charts') renderCharts();
-  };
+  btn.onclick = () => setActiveTab(btn.dataset.tab);
 });
 
 document.getElementById('chartStudentFilter').addEventListener('change', renderCharts);
-
-const titleInput = document.getElementById('mainTitle');
-const savedTitle = localStorage.getItem(KEY_TITLE);
-if(savedTitle) {
-    titleInput.value = savedTitle;
-}
-titleInput.addEventListener('input', (e) => {
-    localStorage.setItem(KEY_TITLE, e.target.value);
+document.getElementById('clearChartStudent').addEventListener('click', () => {
+  document.getElementById('chartStudentFilter').value = '';
+  renderCharts();
 });
 
+/* ============================================================
+   TÍTULO EDITABLE
+   ============================================================ */
+const titleInput = document.getElementById('mainTitle');
+const savedTitle = localStorage.getItem(KEY_TITLE);
+if (savedTitle) titleInput.value = savedTitle;
+titleInput.addEventListener('input', (e) => {
+  localStorage.setItem(KEY_TITLE, e.target.value);
+});
+
+/* ============================================================
+   IDIOMA
+   ============================================================ */
 document.getElementById('langBtn').onclick = () => {
   lang = lang === 'eu' ? 'fr' : 'eu';
   localStorage.setItem('aesh_lang', lang);
   applyLang();
 };
 
+/* ============================================================
+   BACKUP / RESTORE
+   ============================================================ */
 document.getElementById('exportBackupBtn').addEventListener('click', () => {
   const backupData = {
-    version: APP_VERSION,
-    students: students,
-    subjects: subjects,
-    incidents: incidents,
-    customOptions: customOptions,
+    schemaVersion: 2,
+    appVersion: APP_VERSION,
+    students,
+    subjects,
+    incidents,
+    customOptions,
+    slots,
     title: document.getElementById('mainTitle').value
   };
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `aesh_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `nereapp_backup_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 });
+
+function validateBackup(data) {
+  if (!data || typeof data !== 'object') return false;
+  if (!Array.isArray(data.incidents)) return false;
+  if (data.students && !Array.isArray(data.students)) return false;
+  if (data.subjects && !Array.isArray(data.subjects)) return false;
+  return data.incidents.every(i =>
+    i && typeof i.id !== 'undefined' &&
+    typeof i.date === 'string' &&
+    typeof i.student === 'string'
+  );
+}
 
 document.getElementById('importBackupInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  if (!confirm(t('restoreConfirm'))) {
-    e.target.value = '';
-    return;
-  }
+  if (!confirm(t('restoreConfirm'))) { e.target.value = ''; return; }
 
   try {
-    let backupData = null;
+    const text = await file.text();
+    const backupData = JSON.parse(text);
 
-    if (file.name.endsWith('.json')) {
-      const text = await file.text();
-      backupData = JSON.parse(text);
-    } else if (file.name.endsWith('.pdf')) {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfText = new TextDecoder('utf-8').decode(arrayBuffer);
-      const match = pdfText.match(/<script type="application\/json" id="pdfDataScript">([\s\S]*?)<\/script>/);
-      if (!match) {
-        const jsonMatch = pdfText.match(/\{"version":"[^"]+","students":[\s\S]*\}/);
-        if (jsonMatch) {
-          backupData = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error(t('noDataInPdf'));
-        }
-      } else {
-        backupData = JSON.parse(match[1]);
-      }
-    } else {
-      throw new Error(t('unsupportedFile'));
-    }
-
-    if (!backupData || !backupData.incidents) {
-      throw new Error(t('invalidFile'));
-    }
+    if (!validateBackup(backupData)) throw new Error(t('invalidFile'));
 
     students = backupData.students || [];
     subjects = backupData.subjects || [];
     incidents = backupData.incidents || [];
     customOptions = backupData.customOptions || defaultOptions;
+    if ('slots' in backupData) {
+      slots = backupData.slots;
+      localStorage.setItem(KEY_SLOTS, JSON.stringify(slots));
+    }
     if (backupData.title) {
       document.getElementById('mainTitle').value = backupData.title;
       localStorage.setItem(KEY_TITLE, backupData.title);
@@ -1658,6 +2141,7 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
     applyLang();
     renderHistory();
     renderCharts();
+    setActiveTab('form');
 
     alert(t('restoreSuccess'));
   } catch (err) {
@@ -1668,23 +2152,129 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
   }
 });
 
+/* ============================================================
+   BORRAR TODO (doble confirmación)
+   ============================================================ */
+function closeClearAllModal() {
+  const m = document.getElementById('clearAllModal');
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+  document.getElementById('clearAllConfirmInput').value = '';
+  document.getElementById('clearAllConfirmBtn').disabled = true;
+}
+
+document.getElementById('clearAll').onclick = () => {
+  const m = document.getElementById('clearAllModal');
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  const hint = document.getElementById('clearAllHint');
+  if (hint) {
+    const span = hint.querySelector('span');
+    if (span) span.textContent = t('clearAllHint');
+  }
+  const input = document.getElementById('clearAllConfirmInput');
+  input.placeholder = t('clearAllKeyword');
+  input.value = '';
+  document.getElementById('clearAllConfirmBtn').disabled = true;
+  setTimeout(() => input.focus(), 100);
+};
+
+document.getElementById('clearAllConfirmInput').addEventListener('input', (e) => {
+  const ok = e.target.value.trim().toUpperCase() === t('clearAllKeyword');
+  document.getElementById('clearAllConfirmBtn').disabled = !ok;
+});
+
+document.getElementById('clearAllConfirmBtn').onclick = () => {
+  incidents = [];
+  saveIncidents();
+  closeClearAllModal();
+  renderHistory();
+  renderCharts();
+  alert(t('clearAllDone'));
+};
+
+/* ============================================================
+   FILTROS Y CSV
+   ============================================================ */
+document.getElementById('clearFilters').onclick = () => {
+  document.getElementById('filterStudent').value = '';
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value = '';
+  renderHistory();
+};
+document.getElementById('filterStudent').onchange = renderHistory;
+document.getElementById('filterFrom').onchange = renderHistory;
+document.getElementById('filterTo').onchange = renderHistory;
+
+document.getElementById('exportCsv').onclick = () => {
+  const filtered = getFilteredIncidents();
+  const headers = ['date','student','slotRange','block','subject','triggers','behaviors','interventions','notes'];
+  const rows = filtered.map(i => headers.map(h => {
+    let v = i[h];
+    if (Array.isArray(v)) v = v.join(' | ');
+    if (v === undefined || v === null) v = '';
+    v = String(v).replace(/"/g, '""');
+    return `"${v}"`;
+  }).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `nereapp_incidents_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* ============================================================
+   PDF BUTTON
+   ============================================================ */
+document.getElementById('pdfBtn').onclick = () => {
+  document.getElementById('pdfModal').classList.remove('hidden');
+  document.getElementById('pdfModal').classList.add('flex');
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
 function init() {
+  runMigrations(savedVersion, APP_VERSION);
+
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('incidentDate').value = now.toISOString().slice(0,16);
+
+  if (!slots) {
+    setActiveTab('schedule');
+  } else {
+    const savedTab = localStorage.getItem(KEY_ACTIVE_TAB) || 'form';
+    setActiveTab(savedTab);
+  }
+
   applyLang();
 }
 init();
 
+/* ============================================================
+   SERVICE WORKER
+   ============================================================ */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registrado con éxito:', registration.scope);
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              if (confirm(lang === 'eu'
+                ? 'Bertsio berri bat dago erabilgarri. Orain birkargatu?'
+                : 'Une nouvelle version est disponible. Recharger maintenant ?')) {
+                window.location.reload();
+              }
+            }
+          });
+        });
       })
-      .catch(error => {
-        console.log('Fallo al registrar el ServiceWorker:', error);
-      });
+      .catch(err => console.log('SW registration failed:', err));
   });
 }
 </script>
