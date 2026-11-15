@@ -123,6 +123,22 @@
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800">
 
+<!-- Banner de instalación -->
+<div id="installBanner" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md bg-white border border-indigo-200 shadow-2xl rounded-xl p-4 z-50 no-print flex flex-col gap-3">
+  <div class="flex items-start gap-3">
+    <div class="text-3xl">📱</div>
+    <div class="flex-1">
+      <h3 class="font-bold text-gray-900" data-eu="Instalatu NereApp" data-fr="Installer NereApp">Instalatu NereApp</h3>
+      <p id="installBannerText" class="text-sm text-gray-600 mt-1"></p>
+    </div>
+    <button onclick="closeInstallBanner()" class="text-gray-400 hover:text-gray-700 text-xl leading-none" title="✕">&times;</button>
+  </div>
+  <div class="flex gap-2 justify-end">
+    <button id="installBtnAction" class="hidden px-4 py-2 bg-indigo-600 text-white rounded font-semibold text-sm" data-eu="Instalatu" data-fr="Installer">Instalatu</button>
+    <button onclick="closeInstallBanner()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded font-semibold text-sm" data-eu="Orain ez" data-fr="Plus tard">Orain ez</button>
+  </div>
+</div>
+
 <!-- Modales -->
 <div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
@@ -562,7 +578,7 @@
 /* ============================================================
    VERSIONADO Y MIGRACIÓN (sin borrado destructivo)
    ============================================================ */
-const APP_VERSION = '5.3.0';
+const APP_VERSION = '5.4.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
@@ -650,7 +666,11 @@ const I18N = {
     exampleConfirm: "Adibidea kargatu?\n\n• Ordutegia eta ikasgaiak beteko dira.\n• Ez da ikaslerik ezta gorabeherarik gehituko.\n• Uneko ordutegia eta ikasgaiak ordezkatuko dira.",
     resetScheduleConfirm: "Adibideko ordutegia ezarri? Uneko ordutegia ordezkatuko da. Ikasgaiak eta datu pertsonalak ez dira ukituko.",
     subjectsExampleBtn: "📋 Adibideko ikasgaiak kargatu",
-    subjectsExampleConfirm: "Adibideko ikasgaiak kargatu? Uneko zerrenda ordezkatuko da (ikasleak eta gorabeherak ez dira ukituko)."
+    subjectsExampleConfirm: "Adibideko ikasgaiak kargatu? Uneko zerrenda ordezkatuko da (ikasleak eta gorabeherak ez dira ukituko).",
+    installBannerTextNative: "Instalatu aplikazioa zure gailuan azkarrago aritzeko eta pantaila osoko esperientzia izateko.",
+    installBannerTextManual: "Gehitu NereApp zure hasierako pantailara: sakatu beheko 'Partekatu' botoia (⬆️) eta aukeratu 'Gehitu hasierako pantailan'.",
+    installNotNow: "Orain ez",
+    installNow: "Instalatu"
   },
   fr: {
     confirmDelete: "Voulez-vous vraiment supprimer cet incident ?",
@@ -708,7 +728,11 @@ const I18N = {
     exampleConfirm: "Charger l'exemple ?\n\n• L'horaire et les matières seront remplis.\n• Aucun élève ni incident ne sera ajouté.\n• L'horaire et les matières actuels seront remplacés.",
     resetScheduleConfirm: "Appliquer l'horaire d'exemple ? L'horaire actuel sera remplacé. Les matières et données personnelles ne seront pas touchées.",
     subjectsExampleBtn: "📋 Charger les matières d'exemple",
-    subjectsExampleConfirm: "Charger les matières d'exemple ? La liste actuelle sera remplacée (élèves et incidents non touchés)."
+    subjectsExampleConfirm: "Charger les matières d'exemple ? La liste actuelle sera remplacée (élèves et incidents non touchés).",
+    installBannerTextNative: "Installez l'application sur votre appareil pour un accès plus rapide et une expérience plein écran.",
+    installBannerTextManual: "Ajoutez NereApp à votre écran d'accueil : appuyez sur le bouton 'Partager' (⬆️) en bas et choisissez 'Sur l'écran d'accueil'.",
+    installNotNow: "Plus tard",
+    installNow: "Installer"
   }
 };
 
@@ -721,6 +745,7 @@ const KEY_OPTIONS = 'aesh_options_v1';
 const KEY_TITLE = 'aesh_title_v1';
 const KEY_SLOTS = 'aesh_slots_v1';
 const KEY_ACTIVE_TAB = 'aesh_active_tab';
+const KEY_INSTALL_BANNER_SHOWN = 'aesh_install_banner_shown';
 
 const defaultOptions = {
     eu: {
@@ -866,6 +891,7 @@ function applyLang() {
   document.documentElement.lang = lang;
 
   document.querySelectorAll('[data-eu]').forEach(el => {
+    if (el.id === 'installBannerText') return; // Se maneja en la lógica de instalación
     el.textContent = lang === 'eu' ? el.dataset.eu : el.dataset.fr;
   });
 
@@ -881,6 +907,7 @@ function applyLang() {
   renderSlotList();
   renderHistory();
   renderCharts();
+  updateInstallBannerText(); // Actualizar idioma del banner si está visible
 
   const titleInput = document.getElementById('mainTitle');
   const euDefault = I18N.eu.titleDefault;
@@ -2234,6 +2261,82 @@ document.getElementById('pdfBtn').onclick = () => {
 };
 
 /* ============================================================
+   LÓGICA DE INSTALACIÓN (PWA)
+   ============================================================ */
+let deferredPrompt;
+
+function closeInstallBanner() {
+  document.getElementById('installBanner').classList.add('hidden');
+  // Guardar que ya se ha mostrado para no ser pesados en cada recarga
+  localStorage.setItem(KEY_INSTALL_BANNER_SHOWN, 'true');
+}
+
+function updateInstallBannerText() {
+  const textEl = document.getElementById('installBannerText');
+  const actionBtn = document.getElementById('installBtnAction');
+  
+  if (deferredPrompt) {
+    textEl.textContent = t('installBannerTextNative');
+    actionBtn.classList.remove('hidden');
+    actionBtn.textContent = t('installNow');
+  } else {
+    textEl.textContent = t('installBannerTextManual');
+    actionBtn.classList.add('hidden');
+  }
+}
+
+// Detectar si el navegador soporta la instalación nativa (Android/Chrome/Edge)
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevenir que Chrome muestre el banner automático por defecto
+  e.preventDefault();
+  // Guardar el evento para dispararlo cuando el usuario pulse el botón
+  deferredPrompt = e;
+  
+  // Mostrar el banner si no se ha mostrado ya
+  if (!localStorage.getItem(KEY_INSTALL_BANNER_SHOWN)) {
+    updateInstallBannerText();
+    document.getElementById('installBanner').classList.remove('hidden');
+  }
+});
+
+// Detectar si el navegador NO soporta la instalación nativa (iOS/Safari)
+// Esto lo hacemos comprobando si el usuario está en iOS y no está ya instalado
+function checkManualInstall() {
+  const isIos = () => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    return /iphone|ipad|ipod/.test(userAgent);
+  };
+  const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+  // Si es iOS, no está instalado y no hemos mostrado el banner antes
+  if (isIos() && !isInStandaloneMode() && !localStorage.getItem(KEY_INSTALL_BANNER_SHOWN)) {
+    // Un pequeño delay para que cargue la página
+    setTimeout(() => {
+      updateInstallBannerText();
+      document.getElementById('installBanner').classList.remove('hidden');
+    }, 2000);
+  }
+}
+
+// Acción del botón "Instalar" del banner
+document.getElementById('installBtnAction').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    deferredPrompt = null;
+    closeInstallBanner();
+  }
+});
+
+// Si la app se instala con éxito, ocultar banner
+window.addEventListener('appinstalled', () => {
+  closeInstallBanner();
+  deferredPrompt = null;
+  console.log('PWA instalada con éxito');
+});
+
+/* ============================================================
    INIT
    ============================================================ */
 function init() {
@@ -2251,6 +2354,7 @@ function init() {
   }
 
   applyLang();
+  checkManualInstall(); // Comprobar si debemos mostrar las instrucciones para iOS
 }
 init();
 
