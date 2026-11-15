@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aesh-cache-v56';
+const CACHE_NAME = 'aesh-cache-v57';
 const ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
 ];
 
+/* ---------- INSTALL: precachear + activar en cuanto esté listo ---------- */
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
@@ -25,6 +26,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
+/* ---------- ACTIVATE: borrar cachés antiguas + tomar control ---------- */
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
@@ -35,6 +37,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+/* ---------- FETCH ---------- */
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
