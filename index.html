@@ -23,6 +23,67 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .subject-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: white; }
 
+  .attachment-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: #fef3c7; color: #92400e;
+    border: 1px solid #f59e0b;
+    border-radius: 10px; padding: 1px 7px;
+    font-size: 0.7rem; font-weight: 700;
+    margin-left: 6px;
+  }
+  .attachment-badge.pdf { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+  .attachment-badge.link { background:#dbeafe; color:#1e40af; border-color:#3b82f6; }
+
+  .file-drop-zone {
+    border: 2px dashed #c7d2fe;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    background: #eef2ff;
+    transition: all .2s;
+    cursor: pointer;
+  }
+  .file-drop-zone.dragover { border-color:#4f46e5; background:#e0e7ff; }
+  .file-drop-zone.error { border-color:#ef4444; background:#fee2e2; }
+
+  .size-warning { color: #dc2626; font-weight: bold; }
+  .size-ok { color: #059669; font-weight: bold; }
+
+  .file-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px;
+    background: #fff; margin-bottom: 6px;
+  }
+  .file-item .file-icon { font-size: 1.5rem; }
+  .file-item .file-info { flex: 1; min-width: 0; }
+  .file-item .file-name { font-weight: 600; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item .file-meta { font-size: .72rem; color: #6b7280; }
+  .file-item .file-actions { display: flex; gap: 4px; }
+
+  .student-file-group {
+    background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 10px; margin-bottom: 8px;
+  }
+  .student-file-group h4 { font-weight: 700; color: #4f46e5; font-size: .9rem; margin-bottom: 6px; }
+
+  .tabs-section-title { font-size: .75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+
+  .pdf-attachment-page {
+    page-break-before: always;
+    padding: 10mm;
+  }
+  .pdf-attachment-page h2 {
+    font-size: 16px; font-weight: bold; border-bottom: 2px solid #4f46e5;
+    margin-bottom: 10px; padding-bottom: 4px;
+  }
+  .pdf-attachment-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .pdf-attachment-table th, .pdf-attachment-table td {
+    border: 1px solid #d1d5db; padding: 4px 6px; text-align: left;
+    word-break: break-word;
+  }
+  .pdf-attachment-table th { background: #e5e7eb; font-weight: bold; }
+  .pdf-attachment-table .icon-cell { text-align: center; font-size: 14px; }
+
   #printView {
     display: none;
     background: white;
@@ -152,8 +213,17 @@
 </div>
 
 <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
-  <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
     <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
+
+    <div class="mb-4 p-3 bg-gray-50 rounded border">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" id="pdfIncludeAttachments" class="w-4 h-4">
+        <span class="text-sm font-semibold" data-eu="📎 Fitxategi erantsiak gehitu" data-fr="📎 Inclure les fichiers joints">📎 Fitxategi erantsiak gehitu</span>
+      </label>
+      <p class="text-xs text-gray-500 mt-1 ml-6" data-eu="Zerrenda bat gehituko da esteka eta datuekin." data-fr="Une liste sera ajoutée avec liens et données.">Zerrenda bat gehituko da esteka eta datuekin.</p>
+    </div>
+
     <div class="space-y-3">
       <button onclick="generatePDF('full')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
         <div class="font-bold text-indigo-800">1. Historikoa soilik</div>
@@ -174,7 +244,6 @@
   </div>
 </div>
 
-<!-- Modal de doble confirmación para borrar todo -->
 <div id="clearAllModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
     <h3 class="font-bold text-lg mb-2 text-red-700">
@@ -197,19 +266,46 @@
   </div>
 </div>
 
+<div id="largeFileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+    <h3 class="font-bold text-lg mb-2 text-orange-700">⚠️ Archivo demasiado grande / Fichier trop volumineux</h3>
+    <p class="text-sm text-gray-700 mb-3" id="largeFileModalText"></p>
+    <div class="space-y-3">
+      <button onclick="chooseFileMode('local')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
+        <div class="font-bold text-indigo-800">📎 <span data-eu="Gorde lokal gisa (2 MB gehienez)" data-fr="Enregistrer localement (max 2 Mo)">Gorde lokal gisa (2 MB gehienez)</span></div>
+        <div class="text-xs text-gray-600" data-eu="Fitxategia txikitua izango da. Kalitatea galduko du." data-fr="Le fichier sera compressé. La qualité sera réduite.">Fitxategia txikitua izango da. Kalitatea galduko du.</div>
+      </button>
+      <button onclick="chooseFileMode('link')" class="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200">
+        <div class="font-bold text-blue-800">🔗 <span data-eu="Esteka erabili (Drive, Dropbox...)" data-fr="Utiliser un lien (Drive, Dropbox...)">Esteka erabili (Drive, Dropbox...)</span></div>
+        <div class="text-xs text-gray-600" data-eu="Igo fitxategia zure hodeira eta itsatsi esteka hemen." data-fr="Téléchargez sur votre cloud et collez le lien ici.">Igo fitxategia zure hodeira eta itsatsi esteka hemen.</div>
+      </button>
+    </div>
+    <div class="mt-4 text-right">
+      <button onclick="closeLargeFileModal()" class="text-sm text-gray-500 hover:text-gray-700" data-eu="Utzi" data-fr="Annuler">Utzi</button>
+    </div>
+  </div>
+</div>
+
+<div id="linkModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+    <h3 class="font-bold text-lg mb-2">🔗 <span data-eu="Esteka gehitu" data-fr="Ajouter un lien">Esteka gehitu</span></h3>
+    <p class="text-xs text-gray-600 mb-3" data-eu="Igo fitxategia zure Google Drive / Dropbox-era eta itsatsi partekatzeko esteka hemen." data-fr="Téléchargez sur Google Drive / Dropbox et collez le lien de partage ici.">Igo fitxategia zure Google Drive / Dropbox-era eta itsatsi partekatzeko esteka hemen.</p>
+    <label class="block text-xs font-semibold mb-1" data-eu="Izenburua / Izena" data-fr="Titre / Nom">Izenburua / Izena</label>
+    <input type="text" id="linkNameInput" class="w-full border rounded px-3 py-2 mb-3 text-sm" placeholder="Ej: Informe psicopedagógico">
+    <label class="block text-xs font-semibold mb-1" data-eu="Esteka (https://...)" data-fr="Lien (https://...)">Esteka (https://...)</label>
+    <input type="url" id="linkUrlInput" class="w-full border rounded px-3 py-2 mb-4 text-sm" placeholder="https://drive.google.com/...">
+    <div class="flex justify-end gap-2">
+      <button onclick="closeLinkModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold" data-eu="Utzi" data-fr="Annuler">Utzi</button>
+      <button onclick="saveLinkAttachment()" class="px-4 py-2 bg-indigo-600 rounded text-white font-semibold" data-eu="Gorde" data-fr="Enregistrer">Gorde</button>
+    </div>
+  </div>
+</div>
+
 <div class="max-w-6xl mx-auto p-4 no-print">
 
-  <!-- Header -->
   <header class="flex flex-wrap justify-between items-center mb-6 gap-3">
     <input type="text" id="mainTitle" class="text-2xl font-bold text-indigo-700 bg-transparent border-b-2 border-indigo-200 focus:outline-none focus:border-indigo-600 w-full md:w-2/3" value="NereApp - Eguneroko gorabeherak">
     <div class="flex gap-2 flex-wrap">
-      <button id="exportBackupBtn" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold" title="Exportar copia de seguridad (JSON)">
-        ⬇️ Backup
-      </button>
-      <label for="importBackupInput" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold cursor-pointer" title="Importar copia de seguridad (JSON)">
-        ⬆️ Restore
-      </label>
-      <input type="file" id="importBackupInput" accept=".json" class="hidden">
       <button id="langBtn" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-semibold">FR</button>
       <button id="pdfBtn" class="px-3 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm font-semibold">
         <span data-eu="💾 Gorde PDF" data-fr="💾 Enregistrer PDF">💾 Gorde PDF</span>
@@ -217,7 +313,6 @@
     </div>
   </header>
 
-  <!-- Tabs -->
   <nav class="flex gap-1 mb-4 border-b overflow-x-auto no-scrollbar" role="tablist">
     <button data-tab="form" class="tab-btn px-3 py-2 font-semibold border-b-2 border-indigo-600 text-indigo-700 whitespace-nowrap" role="tab" aria-selected="true">
       <span data-eu="Erregistroa" data-fr="Saisie">Erregistroa</span>
@@ -237,9 +332,11 @@
     <button data-tab="schedule" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
       <span data-eu="Ordutegia" data-fr="Horaires">Ordutegia</span>
     </button>
+    <button data-tab="uploads" class="tab-btn px-3 py-2 font-semibold text-gray-600 whitespace-nowrap" role="tab" aria-selected="false">
+      <span data-eu="Kargatzeak" data-fr="Chargements">Kargatzeak</span>
+    </button>
   </nav>
 
-  <!-- FORM TAB -->
   <section id="tab-form" class="tab-content" role="tabpanel">
     <form id="incidentForm" class="bg-white rounded-lg shadow p-4 md:p-6 space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -326,7 +423,6 @@
     </form>
   </section>
 
-  <!-- HISTORY TAB -->
   <section id="tab-history" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
       <div class="flex justify-between items-center mb-3">
@@ -371,7 +467,6 @@
     <div id="historyList" class="space-y-2"></div>
   </section>
 
-  <!-- CHARTS TAB -->
   <section id="tab-charts" class="tab-content hidden" role="tabpanel">
     <div class="sticky top-0 z-10 bg-gray-100 pb-2 -mx-4 px-4 md:mx-0 md:px-0 mb-2">
       <div class="bg-white rounded-lg shadow p-3 flex items-center gap-3">
@@ -457,7 +552,6 @@
     </div>
   </section>
 
-  <!-- STUDENTS TAB -->
   <section id="tab-students" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6">
       <h2 class="text-lg font-bold mb-3">
@@ -473,7 +567,6 @@
     </div>
   </section>
 
-  <!-- SUBJECTS TAB -->
   <section id="tab-subjects" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6">
       <h2 class="text-lg font-bold mb-3">
@@ -494,7 +587,6 @@
     </div>
   </section>
 
-  <!-- SCHEDULE TAB -->
   <section id="tab-schedule" class="tab-content hidden" role="tabpanel">
     <div class="bg-white rounded-lg shadow p-4 md:p-6">
       <h2 class="text-lg font-bold mb-1">
@@ -570,17 +662,92 @@
     </div>
   </section>
 
+  <section id="tab-uploads" class="tab-content hidden" role="tabpanel">
+
+    <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
+      <h2 class="text-lg font-bold mb-1">
+        <span data-eu="💾 Babeskopia eta Berreskuratzea" data-fr="💾 Sauvegarde et Restauration">💾 Babeskopia eta Berreskuratzea</span>
+      </h2>
+      <p class="text-sm text-gray-500 mb-4" data-eu="Datu guztiak (ikasleak, gorabeherak, fitxategiak, estekak) fitxategi bakarrean gorde eta beste gailu batera eraman." data-fr="Sauvegardez toutes les données (élèves, incidents, fichiers, liens) dans un seul fichier et transférez-les vers un autre appareil.">
+        Datu guztiak fitxategi bakarrean gorde eta beste gailu batera eraman.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <button id="exportBackupBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold">
+          ⬇️ <span data-eu="Babeskopia deskargatu" data-fr="Télécharger la sauvegarde">Babeskopia deskargatu</span>
+        </button>
+        <label for="importBackupInput" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold cursor-pointer">
+          ⬆️ <span data-eu="Babeskopia kargatu" data-fr="Charger une sauvegarde">Babeskopia kargatu</span>
+        </label>
+        <input type="file" id="importBackupInput" accept=".json" class="hidden">
+      </div>
+      <p class="text-xs text-gray-500 mt-3">
+        <span data-eu="⚙️ Berreskuratzean, datuak ez dira gainidazten: ID bereko gorabeherak bateratu egiten dira eta izen bereko ikasleak bikoiztu beharrean elkartu egiten dira." data-fr="⚙️ Lors de la restauration, les données ne sont pas écrasées : les incidents avec le même ID sont fusionnés et les élèves de même nom sont regroupés au lieu d'être dupliqués.">
+        ⚙️ Berreskuratzean, datuak ez dira gainidazten: ID bereko gorabeherak bateratu egiten dira eta izen bereko ikasleak bikoiztu beharrean elkartu egiten dira.
+        </span>
+      </p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-4">
+      <h2 class="text-lg font-bold mb-1">
+        <span data-eu="📎 Fitxategi erantsiak" data-fr="📎 Fichiers joints">📎 Fitxategi erantsiak</span>
+      </h2>
+      <p class="text-sm text-gray-500 mb-4" data-eu="Ikasle bakoitzeko dokumentuak (PDF, irudiak) gehitu. 2 MB baino gehiagoko fitxategiek esteka erabil dezakete (Google Drive, Dropbox...)." data-fr="Ajoutez des documents (PDF, images) par élève. Les fichiers de plus de 2 Mo peuvent utiliser un lien (Google Drive, Dropbox...).">
+        Ikasle bakoitzeko dokumentuak gehitu. 2 MB baino gehiagoko fitxategiek esteka erabil dezakete.
+      </p>
+
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-1">
+          <span data-eu="Aukeratu ikaslea" data-fr="Choisir un élève">Aukeratu ikaslea</span>
+        </label>
+        <select id="attachmentStudentSelect" class="w-full border rounded px-3 py-2">
+          <option value="">--</option>
+        </select>
+      </div>
+
+      <div id="attachmentUploadArea" class="hidden">
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button onclick="openFilePicker('local')" class="px-4 py-2 bg-indigo-600 text-white rounded font-semibold text-sm">
+            📎 <span data-eu="Fitxategia igo (max 2 MB)" data-fr="Téléverser un fichier (max 2 Mo)">Fitxategia igo (max 2 MB)</span>
+          </button>
+          <button onclick="openLinkModal()" class="px-4 py-2 bg-blue-600 text-white rounded font-semibold text-sm">
+            🔗 <span data-eu="Esteka gehitu" data-fr="Ajouter un lien">Esteka gehitu</span>
+          </button>
+          <input type="file" id="attachmentFileInput" accept=".pdf,image/*" class="hidden">
+        </div>
+
+        <div id="attachmentDropZone" class="file-drop-zone mb-3">
+          <div class="text-3xl mb-1">📄</div>
+          <p class="text-sm text-indigo-900 font-semibold">
+            <span data-eu="Arrastatu fitxategia edo klikatu aukeratzeko" data-fr="Glissez un fichier ou cliquez pour choisir">Arrastatu fitxategia edo klikatu aukeratzeko</span>
+          </p>
+          <p class="text-xs text-indigo-700 mt-1">
+            <span data-eu="Gehienez 2 MB (PDF, PNG, JPG). Handiagoa bada, esteka erabili." data-fr="Max 2 Mo (PDF, PNG, JPG). Plus grand → utilisez un lien.">Gehienez 2 MB (PDF, PNG, JPG). Handiagoa bada, esteka erabili.</span>
+          </p>
+        </div>
+
+        <div id="attachmentListForStudent"></div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t">
+        <h3 class="tabs-section-title">
+          <span data-eu="Laburpena: ikasle guztien fitxategiak" data-fr="Résumé : fichiers de tous les élèves">Laburpena: ikasle guztien fitxategiak</span>
+        </h3>
+        <div id="allAttachmentsSummary"></div>
+      </div>
+    </div>
+
+  </section>
+
 </div>
 
 <div id="printView"></div>
 
 <script>
 /* ============================================================
-   VERSIONADO Y MIGRACIÓN (sin borrado destructivo)
+   VERSIONADO Y MIGRACIÓN
    ============================================================ */
-const APP_VERSION = '5.4.0';
+const APP_VERSION = '5.5.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
-
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
 
 function migrateIncidentsToBlock() {
@@ -639,7 +806,7 @@ const I18N = {
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
     selectStudentForCharts: "Hautatu ikasle bat grafikoak ikusteko.",
-    restoreConfirm: "Ziur zaude uneko datuak ordezkatu nahi dituzula fitxategi honekin?",
+    restoreConfirm: "Ziur zaude fitxategi honetako datuak unekoekin bateratu nahi dituzula?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
     restoreError: "Errorea fitxategia irakurtzean.",
     invalidFile: "Fitxategiak ez du balio.",
@@ -670,7 +837,35 @@ const I18N = {
     installBannerTextNative: "Instalatu aplikazioa zure gailuan azkarrago aritzeko eta pantaila osoko esperientzia izateko.",
     installBannerTextManual: "Gehitu NereApp zure hasierako pantailara: sakatu beheko 'Partekatu' botoia (⬆️) eta aukeratu 'Gehitu hasierako pantailan'.",
     installNotNow: "Orain ez",
-    installNow: "Instalatu"
+    installNow: "Instalatu",
+    uploadsTitle: "Kargatzeak",
+    attachmentsTitle: "Fitxategi erantsiak",
+    noAttachments: "Ez dago fitxategi erantsirik.",
+    noAttachmentsForStudent: "Ikasle honek ez du fitxategirik.",
+    attachmentAdded: "Fitxategia gehituta.",
+    attachmentDeleted: "Fitxategia ezabatuta.",
+    confirmDeleteAttachment: "Fitxategi hau ezabatu nahi duzu?",
+    fileTooLarge: "Fitxategia handiegia da (gehienez 2 MB). Erabili esteka bat.",
+    fileTooLargeTitle: "Fitxategia handiegia",
+    fileTooLargeBody: "Fitxategia 2 MB baino handiagoa da. Aukeratu: tokian gorde edo esteka bat erabili.",
+    invalidLinkUrl: "Estekak https:// edo http:// hasi behar du.",
+    linkNameRequired: "Izenburua beharrezkoa da.",
+    linkAdded: "Esteka gehituta.",
+    openLink: "Esteka ireki",
+    downloadFile: "Deskargatu",
+    fileNameLabel: "Izenburua",
+    noStudentSelected: "Aukeratu ikasle bat lehenengo.",
+    attachmentSectionPdfTitle: "Fitxategi erantsien zerrenda",
+    pdfIncludeAttachments: "Fitxategi erantsiak gehitu PDFan",
+    pdfAttachmentsIncluded: "Fitxategi erantsiak sartuko dira PDFan (zerrenda eta estekak).",
+    pdfAttachmentsList: "Fitxategi erantsiak (PDFan)",
+    linkLabel: "Esteka",
+    localLabel: "Lokala",
+    sizeLabel: "Tamaina",
+    typeLabel: "Mota",
+    dateLabel: "Data",
+    backupMerged: "Babeskopia bateratu egin da: {newInc} gorabehera berri, {newStu} ikasle berri, {newFiles} fitxategi berri.",
+    backupNoChanges: "Babeskopiak ez du datu berririk. Datuak berdin jarraitzen dute."
   },
   fr: {
     confirmDelete: "Voulez-vous vraiment supprimer cet incident ?",
@@ -701,7 +896,7 @@ const I18N = {
     modalTitle: "Ajouter une option",
     modalPlaceholder: "Écrivez ici...",
     selectStudentForCharts: "Sélectionnez un élève pour voir les graphiques.",
-    restoreConfirm: "Voulez-vous vraiment remplacer les données actuelles par celles de ce fichier ?",
+    restoreConfirm: "Voulez-vous vraiment fusionner les données de ce fichier avec les données actuelles ?",
     restoreSuccess: "Données restaurées avec succès.",
     restoreError: "Erreur lors de la lecture du fichier.",
     invalidFile: "Fichier invalide.",
@@ -732,7 +927,35 @@ const I18N = {
     installBannerTextNative: "Installez l'application sur votre appareil pour un accès plus rapide et une expérience plein écran.",
     installBannerTextManual: "Ajoutez NereApp à votre écran d'accueil : appuyez sur le bouton 'Partager' (⬆️) en bas et choisissez 'Sur l'écran d'accueil'.",
     installNotNow: "Plus tard",
-    installNow: "Installer"
+    installNow: "Installer",
+    uploadsTitle: "Chargements",
+    attachmentsTitle: "Fichiers joints",
+    noAttachments: "Aucun fichier joint.",
+    noAttachmentsForStudent: "Cet élève n'a aucun fichier.",
+    attachmentAdded: "Fichier ajouté.",
+    attachmentDeleted: "Fichier supprimé.",
+    confirmDeleteAttachment: "Supprimer ce fichier ?",
+    fileTooLarge: "Fichier trop volumineux (max 2 Mo). Utilisez un lien.",
+    fileTooLargeTitle: "Fichier trop volumineux",
+    fileTooLargeBody: "Le fichier dépasse 2 Mo. Choisissez : enregistrer localement ou utiliser un lien.",
+    invalidLinkUrl: "Le lien doit commencer par https:// ou http://.",
+    linkNameRequired: "Le titre est obligatoire.",
+    linkAdded: "Lien ajouté.",
+    openLink: "Ouvrir le lien",
+    downloadFile: "Télécharger",
+    fileNameLabel: "Titre",
+    noStudentSelected: "Sélectionnez d'abord un élève.",
+    attachmentSectionPdfTitle: "Liste des fichiers joints",
+    pdfIncludeAttachments: "Inclure les fichiers joints dans le PDF",
+    pdfAttachmentsIncluded: "Les fichiers joints seront inclus (liste et liens).",
+    pdfAttachmentsList: "Fichiers joints (PDF)",
+    linkLabel: "Lien",
+    localLabel: "Local",
+    sizeLabel: "Taille",
+    typeLabel: "Type",
+    dateLabel: "Date",
+    backupMerged: "Sauvegarde fusionnée : {newInc} nouveaux incidents, {newStu} nouveaux élèves, {newFiles} nouveaux fichiers.",
+    backupNoChanges: "La sauvegarde ne contient aucune donnée nouvelle. Rien n'a changé."
   }
 };
 
@@ -746,6 +969,8 @@ const KEY_TITLE = 'aesh_title_v1';
 const KEY_SLOTS = 'aesh_slots_v1';
 const KEY_ACTIVE_TAB = 'aesh_active_tab';
 const KEY_INSTALL_BANNER_SHOWN = 'aesh_install_banner_shown';
+const KEY_ATTACHMENTS = 'aesh_attachments_v1';
+const ATTACHMENT_MAX_BYTES = 2 * 1024 * 1024;
 
 const defaultOptions = {
     eu: {
@@ -765,9 +990,6 @@ const SUBJECT_COLORS = [
   '#dc2626', '#9333ea', '#db2777', '#0d9488', '#64748b'
 ];
 
-/* ============================================================
-   HORARIO DE EJEMPLO (estructura del centro, sin datos personales)
-   ============================================================ */
 const SCHEDULE_EXAMPLE = [
   { start:'08:20', end:'09:00', block:'peri'  },
   { start:'09:00', end:'10:20', block:'class' },
@@ -780,16 +1002,9 @@ const SCHEDULE_EXAMPLE = [
   { start:'16:30', end:'18:00', block:'peri'  }
 ];
 
-/* ============================================================
-   MATERIAS DE EJEMPLO (estructura del centro, sin datos personales)
-   ============================================================ */
 const SUBJECTS_EXAMPLE = {
-  eu: [
-    'Matematikak', 'Euskara', 'Frantsesa', 'Kirola', 'Zientziak'
-  ],
-  fr: [
-    'Mathématiques', 'Basque', 'Français', 'Sport', 'Sciences'
-  ]
+  eu: ['Matematikak', 'Euskara', 'Frantsesa', 'Kirola', 'Zientziak'],
+  fr: ['Mathématiques', 'Basque', 'Français', 'Sport', 'Sciences']
 };
 
 const BLOCK_LABELS = {
@@ -809,10 +1024,12 @@ let subjects = JSON.parse(localStorage.getItem(KEY_SUBJECTS) || '[]');
 let incidents = JSON.parse(localStorage.getItem(KEY_INCIDENTS) || '[]');
 let customOptions = JSON.parse(localStorage.getItem(KEY_OPTIONS) || JSON.stringify(defaultOptions));
 let slots = JSON.parse(localStorage.getItem(KEY_SLOTS) || 'null');
+let attachments = JSON.parse(localStorage.getItem(KEY_ATTACHMENTS) || '{}');
 
 let editingIncidentId = null;
 let currentModalType = null;
-let editingSlotIndex = null; // Variable para controlar qué tramo estamos editando
+let editingSlotIndex = null;
+let pendingAttachmentFile = null;
 
 /* ============================================================
    PERSISTENCIA
@@ -821,6 +1038,20 @@ function saveStudents() { localStorage.setItem(KEY_STUDENTS, JSON.stringify(stud
 function saveSubjects() { localStorage.setItem(KEY_SUBJECTS, JSON.stringify(subjects)); }
 function saveIncidents() { localStorage.setItem(KEY_INCIDENTS, JSON.stringify(incidents)); }
 function saveOptions() { localStorage.setItem(KEY_OPTIONS, JSON.stringify(customOptions)); }
+
+function saveAttachments() {
+  try {
+    localStorage.setItem(KEY_ATTACHMENTS, JSON.stringify(attachments));
+    return true;
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      alert(lang === 'eu' ? 'Biltegia beteta dago. Fitxategi batzuk ezabatu edo esteka erabili.' : 'Stockage plein. Supprimez des fichiers ou utilisez un lien.');
+    } else {
+      console.error(e);
+    }
+    return false;
+  }
+}
 
 function saveSlots() {
   localStorage.setItem(KEY_SLOTS, JSON.stringify(slots));
@@ -843,7 +1074,7 @@ function incidentsLabel(n) {
 }
 
 /* ============================================================
-   HELPERS DE SLOTS
+   HELPERS
    ============================================================ */
 function slotsToValue(slot) { return `${slot.start}-${slot.end}|${slot.block}`; }
 function valueToSlot(value) {
@@ -851,6 +1082,21 @@ function valueToSlot(value) {
   const [range, block] = value.split('|');
   const [start, end] = range.split('-');
   return { start, end, block };
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function getAttachmentsForStudent(student) {
+  return attachments[student] || [];
 }
 
 /* ============================================================
@@ -891,7 +1137,7 @@ function applyLang() {
   document.documentElement.lang = lang;
 
   document.querySelectorAll('[data-eu]').forEach(el => {
-    if (el.id === 'installBannerText') return; // Se maneja en la lógica de instalación
+    if (el.id === 'installBannerText') return;
     el.textContent = lang === 'eu' ? el.dataset.eu : el.dataset.fr;
   });
 
@@ -907,7 +1153,9 @@ function applyLang() {
   renderSlotList();
   renderHistory();
   renderCharts();
-  updateInstallBannerText(); // Actualizar idioma del banner si está visible
+  renderAttachmentStudentSelect();
+  renderAllAttachmentsSummary();
+  updateInstallBannerText();
 
   const titleInput = document.getElementById('mainTitle');
   const euDefault = I18N.eu.titleDefault;
@@ -918,7 +1166,7 @@ function applyLang() {
 }
 
 /* ============================================================
-   MODAL DE OPCIÓN PERSONALIZADA
+   MODAL OPCIÓN PERSONALIZADA
    ============================================================ */
 function openCustomModal(type) {
     currentModalType = type;
@@ -1012,7 +1260,7 @@ function buildCheckboxes() {
 }
 
 /* ============================================================
-   SELECTS DE ALUMNO Y MATERIA
+   SELECTS
    ============================================================ */
 function renderStudentsSelect() {
   const sel = document.getElementById('incidentStudent');
@@ -1064,7 +1312,7 @@ function renderSubjectsSelect() {
 }
 
 /* ============================================================
-   SELECT Y LISTA DE SLOTS
+   SLOTS
    ============================================================ */
 function renderSlotsSelect() {
   const sel = document.getElementById('incidentSlot');
@@ -1121,7 +1369,6 @@ function renderSlotList() {
     dot.style.background = colorMap[s.block];
 
     if (editingSlotIndex === i) {
-      // MODO EDICIÓN
       const startInput = document.createElement('input');
       startInput.type = 'time';
       startInput.value = s.start;
@@ -1156,7 +1403,6 @@ function renderSlotList() {
         const newBlock = blockSelect.value;
         if (!newStart || !newEnd) { alert(t('slotTimesRequired')); return; }
         if (newStart >= newEnd) { alert(t('slotOrderInvalid')); return; }
-        
         slots[i] = { start: newStart, end: newEnd, block: newBlock };
         slots.sort((a,b) => a.start.localeCompare(b.start));
         editingSlotIndex = null;
@@ -1170,13 +1416,11 @@ function renderSlotList() {
       cancelBtn.className = 'px-2 text-gray-500 hover:text-gray-700 font-bold text-lg';
       cancelBtn.onclick = () => {
         editingSlotIndex = null;
-        renderSlotList(); // Restaurar vista normal
+        renderSlotList();
       };
 
       li.append(startInput, document.createTextNode('-'), endInput, blockSelect, saveBtn, cancelBtn);
-
     } else {
-      // MODO LECTURA
       const label = document.createElement('span');
       label.className = 'flex-1 text-sm';
       label.textContent = `${s.start} - ${s.end} — ${blockLabel(s.block)}`;
@@ -1203,7 +1447,6 @@ function renderSlotList() {
       edit.onclick = () => {
         editingSlotIndex = i;
         renderSlotList();
-        // Focus automático en el primer input
         setTimeout(() => {
           const inp = document.getElementById(`editSlotStart_${i}`);
           if(inp) inp.focus();
@@ -1224,7 +1467,6 @@ function renderSlotList() {
 
       li.append(dot, label, up, down, edit, del);
     }
-    
     ul.appendChild(li);
   });
 }
@@ -1236,30 +1478,25 @@ function moveSlot(index, delta) {
   saveSlots();
 }
 
-/* Carga SOLO horarios + materias (nunca alumnos ni incidencias) */
 function applyScheduleExample() {
   if (!confirm(t('exampleConfirm'))) return;
-
   slots = JSON.parse(JSON.stringify(SCHEDULE_EXAMPLE));
   subjects = [...SUBJECTS_EXAMPLE[lang]];
   subjects.sort((a, b) => a.localeCompare(b));
-
-  editingSlotIndex = null; // Resetear edición por si acaso
+  editingSlotIndex = null;
   saveSubjects();
   saveSlots();
   renderSubjectsSelect();
   renderSubjectList();
 }
 
-/* Solo horario (para el botón secundario, no toca materias ni datos) */
 function resetScheduleOnly() {
   if (!confirm(t('resetScheduleConfirm'))) return;
   slots = JSON.parse(JSON.stringify(SCHEDULE_EXAMPLE));
-  editingSlotIndex = null; // Resetear edición por si acaso
+  editingSlotIndex = null;
   saveSlots();
 }
 
-/* Solo materias de ejemplo (botón en pestaña Ikasgaiak) */
 function applySubjectsExample() {
   if (!confirm(t('subjectsExampleConfirm'))) return;
   subjects = [...SUBJECTS_EXAMPLE[lang]];
@@ -1272,7 +1509,7 @@ function applySubjectsExample() {
 function startEmptySchedule() {
   if (slots && slots.length > 0 && !confirm(t('scheduleEmptyConfirm'))) return;
   slots = [];
-  editingSlotIndex = null; // Resetear edición por si acaso
+  editingSlotIndex = null;
   saveSlots();
 }
 
@@ -1289,7 +1526,7 @@ document.getElementById('addSlotBtn').onclick = () => {
 
   slots.push({ start, end, block });
   slots.sort((a,b) => a.start.localeCompare(b.start));
-  editingSlotIndex = null; // Resetear edición al añadir uno nuevo
+  editingSlotIndex = null;
   saveSlots();
 
   document.getElementById('newSlotStart').value = '';
@@ -1297,7 +1534,7 @@ document.getElementById('addSlotBtn').onclick = () => {
 };
 
 /* ============================================================
-   LISTAS DE ALUMNOS / MATERIAS
+   LISTAS ALUMNOS / MATERIAS
    ============================================================ */
 function renderStudentList() {
   const ul = document.getElementById('studentList');
@@ -1310,8 +1547,15 @@ function renderStudentList() {
     const li = document.createElement('li');
     li.className = 'flex justify-between items-center p-3 hover:bg-gray-50';
     const sp = document.createElement('span');
-    sp.textContent = s;
     sp.className = 'font-medium';
+    sp.textContent = s;
+    const nFiles = getAttachmentsForStudent(s).length;
+    if (nFiles > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'attachment-badge';
+      badge.innerHTML = `📎 ${nFiles}`;
+      sp.appendChild(badge);
+    }
     const b = document.createElement('button');
     b.type = 'button';
     b.textContent = '✕';
@@ -1325,6 +1569,8 @@ function renderStudentList() {
         renderStudentList();
         renderHistory();
         renderCharts();
+        renderAttachmentStudentSelect();
+        renderAllAttachmentsSummary();
       }
     };
     li.appendChild(sp);
@@ -1391,6 +1637,7 @@ document.getElementById('addStudentBtn').onclick = () => {
   inp.value = '';
   renderStudentsSelect();
   renderStudentList();
+  renderAttachmentStudentSelect();
 };
 document.getElementById('newStudent').addEventListener('keypress', e => {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addStudentBtn').click(); }
@@ -1413,7 +1660,7 @@ document.getElementById('newSubject').addEventListener('keypress', e => {
 });
 
 /* ============================================================
-   FORMULARIO DE INCIDENCIA
+   FORMULARIO INCIDENCIA
    ============================================================ */
 document.getElementById('incidentForm').onsubmit = (e) => {
   e.preventDefault();
@@ -1515,12 +1762,9 @@ function editIncident(id) {
 }
 
 /* ============================================================
-   HISTÓRICO Y ESTADÍSTICAS
+   HISTÓRICO
    ============================================================ */
-let myChart = null;
-let mySlotChart = null;
-let myBlockChart = null;
-let mySubjectChart = null;
+let myChart = null, mySlotChart = null, myBlockChart = null, mySubjectChart = null;
 
 function getFilteredIncidents() {
   const fStudent = document.getElementById('filterStudent').value;
@@ -1542,39 +1786,49 @@ function renderHistory() {
 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="bg-white rounded-lg shadow p-4 text-center text-gray-500">${t('noIncidents')}</div>`;
-  } else {
-    filtered.forEach(inc => {
-      const card = document.createElement('div');
-      card.className = 'bg-white rounded-lg shadow p-4';
-      const dateStr = inc.date.replace('T', ' ');
-
-      let subjectBadge = '';
-      if (inc.subject) {
-        const color = getSubjectColor(inc.subject);
-        subjectBadge = `<span class="subject-badge" style="background-color:${color}">${inc.subject}</span>`;
-      }
-
-      const row = (label, arr) => arr.length ? `<div class="text-sm mt-1"><span class="font-semibold text-gray-700">${label}:</span> ${arr.map(x=>`<span class="inline-block bg-indigo-100 text-indigo-800 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${x}</span>`).join('')}</div>` : '';
-
-      card.innerHTML = `
-        <div class="flex justify-between items-start gap-2">
-          <div class="flex-1">
-            <div class="font-bold text-indigo-700">${inc.student} <span class="text-gray-500 font-normal text-sm">· ${dateStr}</span></div>
-            <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${inc.slotRange} — ${blockLabel(inc.block)}</div>
-            ${row(lang==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
-            ${row(lang==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
-            ${row(lang==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
-            ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${inc.notes}</div>` : ''}
-          </div>
-          <div class="flex flex-col gap-1 no-print">
-            <button type="button" class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" data-id="${inc.id}" title="${t('editBtn')}">✏️</button>
-            <button type="button" class="del-btn text-red-600 hover:text-red-800 font-bold px-2" data-id="${inc.id}" title="${t('deleteBtn')}">✕</button>
-          </div>
-        </div>
-      `;
-      list.appendChild(card);
-    });
+    return;
   }
+
+  filtered.forEach(inc => {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-lg shadow p-4';
+    const dateStr = inc.date.replace('T', ' ');
+
+    let subjectBadge = '';
+    if (inc.subject) {
+      const color = getSubjectColor(inc.subject);
+      subjectBadge = `<span class="subject-badge" style="background-color:${color}">${inc.subject}</span>`;
+    }
+
+    const files = getAttachmentsForStudent(inc.student);
+    let attBadgeHtml = '';
+    if (files.length > 0) {
+      const hasLocal = files.some(f => !f.url);
+      const hasLink = files.some(f => f.url);
+      const badgeClass = (hasLink && !hasLocal) ? 'link' : 'pdf';
+      attBadgeHtml = `<span class="attachment-badge ${badgeClass}" title="${inc.student}: ${files.length} ${lang==='eu'?'fitxategi':'fichiers'}">📎 ${files.length}</span>`;
+    }
+
+    const row = (label, arr) => arr.length ? `<div class="text-sm mt-1"><span class="font-semibold text-gray-700">${label}:</span> ${arr.map(x=>`<span class="inline-block bg-indigo-100 text-indigo-800 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${x}</span>`).join('')}</div>` : '';
+
+    card.innerHTML = `
+      <div class="flex justify-between items-start gap-2">
+        <div class="flex-1">
+          <div class="font-bold text-indigo-700">${inc.student}${attBadgeHtml} <span class="text-gray-500 font-normal text-sm">· ${dateStr}</span></div>
+          <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${inc.slotRange} — ${blockLabel(inc.block)}</div>
+          ${row(lang==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
+          ${row(lang==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
+          ${row(lang==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
+          ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${inc.notes}</div>` : ''}
+        </div>
+        <div class="flex flex-col gap-1 no-print">
+          <button type="button" class="edit-btn text-indigo-600 hover:text-indigo-800 font-bold px-2" data-id="${inc.id}" title="${t('editBtn')}">✏️</button>
+          <button type="button" class="del-btn text-red-600 hover:text-red-800 font-bold px-2" data-id="${inc.id}" title="${t('deleteBtn')}">✕</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
 }
 
 document.getElementById('historyList').addEventListener('click', (e) => {
@@ -1609,10 +1863,8 @@ function renderCharts() {
   const content = document.getElementById('chartsContent');
 
   if (!selectedStudent) {
-    if (myChart) { myChart.destroy(); myChart = null; }
-    if (mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
-    if (myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
-    if (mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
+    [myChart, mySlotChart, myBlockChart, mySubjectChart].forEach(c => { if (c) c.destroy(); });
+    myChart = mySlotChart = myBlockChart = mySubjectChart = null;
     emptyState.classList.remove('hidden');
     content.classList.add('hidden');
     return;
@@ -1621,10 +1873,8 @@ function renderCharts() {
   const filtered = incidents.filter(i => i.student === selectedStudent).sort((a,b)=> b.date.localeCompare(a.date));
 
   if (filtered.length === 0) {
-    if (myChart) { myChart.destroy(); myChart = null; }
-    if (mySlotChart) { mySlotChart.destroy(); mySlotChart = null; }
-    if (myBlockChart) { myBlockChart.destroy(); myBlockChart = null; }
-    if (mySubjectChart) { mySubjectChart.destroy(); mySubjectChart = null; }
+    [myChart, mySlotChart, myBlockChart, mySubjectChart].forEach(c => { if (c) c.destroy(); });
+    myChart = mySlotChart = myBlockChart = mySubjectChart = null;
     emptyState.classList.remove('hidden');
     content.classList.add('hidden');
     return;
@@ -1755,7 +2005,7 @@ function renderCharts() {
 }
 
 /* ============================================================
-   GENERACIÓN DE PDF
+   PDF
    ============================================================ */
 function resetPrintCharts() {
     ['printChart1','printChart2','printChart3','printChart4'].forEach(k => {
@@ -1805,7 +2055,7 @@ function buildAnalysisHTML(analysisHtml) {
     `;
 }
 
-function buildTableHTML(filtered, fStudent, withPageBreak) {
+function buildTableHTML(filtered, fStudent, withPageBreak, includeAttachments) {
     const byStudent = {};
     filtered.forEach(i => { byStudent[i.student] = (byStudent[i.student]||0)+1; });
 
@@ -1831,10 +2081,20 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
             subjColor = getSubjectColor(i.subject);
             usedSubjects.add(i.subject);
         }
+        let attCell = '';
+        if (includeAttachments) {
+            const files = getAttachmentsForStudent(i.student);
+            if (files.length > 0) {
+                attCell = `<div class="pcell pc-ik" style="background:#fef3c7;color:#92400e;font-weight:bold;text-align:center;font-size:8px;">📎${files.length}</div>`;
+            } else {
+                attCell = `<div class="pcell pc-ik" style="text-align:center;color:#9ca3af;">—</div>`;
+            }
+        }
         rowsHtml += `<div class="prow">
             <div class="pcell pc-data">${dateStr}</div>
             <div class="pcell pc-ordua">${slotStr}</div>
             <div class="pcell pc-ik" style="background-color:${subjColor}; color:white; font-weight:bold; text-align:center;">${subjShort}</div>
+            ${attCell}
             <div class="pcell pc-erag">${i.triggers.join(', ')}</div>
             <div class="pcell pc-jok">${i.behaviors.join(', ')}</div>
             <div class="pcell pc-esku">${i.interventions.join(', ')}</div>
@@ -1851,6 +2111,7 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
     legendHtml += `</div>`;
 
     const pageBreakStyle = withPageBreak ? 'style="page-break-before: always;"' : '';
+    const attHeader = includeAttachments ? `<div class="pcell pc-ik" style="background:#fef3c7;">📎</div>` : '';
 
     return `
         <div id="printTableContainer" ${pageBreakStyle}>
@@ -1860,6 +2121,7 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
                 <div class="pcell pc-data">${lang==='eu'?'Data':'Date'}</div>
                 <div class="pcell pc-ordua">${lang==='eu'?'Ordua':'Heure'}</div>
                 <div class="pcell pc-ik">${lang==='eu'?'Ik.':'Mat.'}</div>
+                ${attHeader}
                 <div class="pcell pc-erag">${lang==='eu'?'Eragilea':'Déclencheur'}</div>
                 <div class="pcell pc-jok">${lang==='eu'?'Jokabidea':'Comportement'}</div>
                 <div class="pcell pc-esku">${lang==='eu'?'Esku-hartzea':'Intervention'}</div>
@@ -1869,6 +2131,51 @@ function buildTableHTML(filtered, fStudent, withPageBreak) {
             ${legendHtml}
         </div>
     `;
+}
+
+function buildAttachmentsHTML() {
+  const studentsWithFiles = students.filter(s => getAttachmentsForStudent(s).length > 0);
+  if (studentsWithFiles.length === 0) return '';
+
+  let rows = '';
+  studentsWithFiles.forEach(s => {
+    const files = getAttachmentsForStudent(s);
+    files.forEach(f => {
+      const isLink = !!f.url;
+      const size = isLink ? '—' : formatBytes(f.size);
+      const type = f.mime?.startsWith('image/') ? '🖼️' : '📄';
+      rows += `<tr>
+        <td>${escapeHtml(s)}</td>
+        <td class="icon-cell">${type}</td>
+        <td>${escapeHtml(f.name)}</td>
+        <td>${isLink ? '🔗 ' + t('linkLabel') : '📎 ' + t('localLabel')}</td>
+        <td>${size}</td>
+        <td style="font-size:8px;word-break:break-all;">${isLink ? escapeHtml(f.url) : '—'}</td>
+      </tr>`;
+    });
+  });
+
+  return `
+    <div class="pdf-attachment-page">
+      <h2>📎 ${t('attachmentSectionPdfTitle')}</h2>
+      <table class="pdf-attachment-table">
+        <thead>
+          <tr>
+            <th>${lang==='eu'?'Ikaslea':'Élève'}</th>
+            <th style="width:10mm;">${lang==='eu'?'Mota':'Type'}</th>
+            <th>${t('fileNameLabel')}</th>
+            <th>${lang==='eu'?'Biltegia':'Stockage'}</th>
+            <th>${lang==='eu'?'Tamaina':'Taille'}</th>
+            <th>${lang==='eu'?'Esteka':'Lien'}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="font-size:9px;color:#6b7280;margin-top:8px;">
+        ${lang==='eu'?'Fitxategi lokalak aplikazioan bertan gordeta daude; estekak kanpoko zerbitzuetan (Drive, Dropbox...).':'Les fichiers locaux sont stockés dans l\'application ; les liens pointent vers des services externes (Drive, Dropbox...).'}
+      </p>
+    </div>
+  `;
 }
 
 function getCurrentAnalysisHTML() {
@@ -1925,6 +2232,7 @@ function generatePDF(mode) {
 
     const includeHistory = (mode === 'full' || mode === 'all');
     const includeCharts  = (mode === 'charts' || mode === 'all');
+    const includeAttachments = document.getElementById('pdfIncludeAttachments').checked;
 
     const filtered = getFilteredIncidents();
     const fStudent = document.getElementById('filterStudent').value;
@@ -1951,6 +2259,7 @@ function generatePDF(mode) {
     if (mode === 'full') fileNameSuffix = '_HIST';
     else if (mode === 'charts') fileNameSuffix = '_GRAF';
     else if (mode === 'all') fileNameSuffix = '_ALL';
+    if (includeAttachments) fileNameSuffix += '_ADJ';
     const finalFileName = `${fileNameBase}${fileNameSuffix}.pdf`;
 
     const printView = document.getElementById('printView');
@@ -1958,7 +2267,8 @@ function generatePDF(mode) {
 
     if (includeCharts) html += buildChartsHTML();
     if (includeCharts) html += buildAnalysisHTML(getCurrentAnalysisHTML());
-    if (includeHistory) html += buildTableHTML(filtered, fStudent, includeCharts);
+    if (includeHistory) html += buildTableHTML(filtered, fStudent, includeCharts, includeAttachments);
+    if (includeHistory && includeAttachments) html += buildAttachmentsHTML();
 
     printView.innerHTML = html;
 
@@ -2066,10 +2376,8 @@ function setActiveTab(name) {
   localStorage.setItem(KEY_ACTIVE_TAB, name);
   if (name === 'history') renderHistory();
   if (name === 'charts') renderCharts();
-  if (name === 'schedule') {
-    editingSlotIndex = null; // Cancelar cualquier edición en curso al cambiar de pestaña
-    renderSlotList();
-  }
+  if (name === 'schedule') { editingSlotIndex = null; renderSlotList(); }
+  if (name === 'uploads') { renderAttachmentStudentSelect(); renderAllAttachmentsSummary(); }
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2102,17 +2410,333 @@ document.getElementById('langBtn').onclick = () => {
 };
 
 /* ============================================================
-   BACKUP / RESTORE
+   ADJUNTOS (ATTACHMENTS)
+   ============================================================ */
+function renderAttachmentStudentSelect() {
+  const sel = document.getElementById('attachmentStudentSelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = `<option value="">--</option>`;
+  students.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s;
+    o.textContent = s;
+    sel.appendChild(o);
+  });
+  if (students.includes(prev)) sel.value = prev;
+  updateAttachmentUploadArea();
+}
+
+function updateAttachmentUploadArea() {
+  const sel = document.getElementById('attachmentStudentSelect');
+  const area = document.getElementById('attachmentUploadArea');
+  if (!sel || !area) return;
+  if (sel.value) {
+    area.classList.remove('hidden');
+    renderAttachmentListForStudent(sel.value);
+  } else {
+    area.classList.add('hidden');
+  }
+}
+
+function renderAttachmentListForStudent(student) {
+  const container = document.getElementById('attachmentListForStudent');
+  if (!container) return;
+  const files = getAttachmentsForStudent(student);
+  if (files.length === 0) {
+    container.innerHTML = `<p class="text-sm text-gray-500 italic p-3">${t('noAttachmentsForStudent')}</p>`;
+    return;
+  }
+  container.innerHTML = '';
+  files.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    const icon = f.mime?.startsWith('image/') ? '🖼️' : '📄';
+    const isLink = !!f.url;
+    const sizeStr = isLink ? t('linkLabel') : formatBytes(f.size);
+    const badgeClass = isLink ? 'link' : 'pdf';
+    
+    // Lógica de botones según si es enlace o archivo local
+    let actionButtons = '';
+    if (isLink) {
+      actionButtons = `
+        <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener" class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold flex items-center gap-1" title="${t('openLink')}">👁️ ${t('openLink')}</a>
+      `;
+    } else {
+      actionButtons = `
+        <button onclick="previewLocalFile('${f.id}', '${escapeHtml(student).replace(/'/g,"\\'")}')" class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs font-semibold flex items-center gap-1" title="${lang==='eu'?'Ikusi':'Voir'}">👁️ ${lang==='eu'?'Ikusi':'Voir'}</button>
+        <a href="${f.dataUrl}" download="${escapeHtml(f.name)}" class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-semibold flex items-center gap-1" title="${t('downloadFile')}">⬇️</a>
+      `;
+    }
+
+    div.innerHTML = `
+      <span class="file-icon">${icon}</span>
+      <div class="file-info">
+        <div class="file-name">${escapeHtml(f.name)}</div>
+        <div class="file-meta">
+          <span class="attachment-badge ${badgeClass}">${isLink ? '🔗 ' + t('linkLabel') : '📎 ' + t('localLabel')}</span>
+          ${sizeStr} · ${new Date(f.addedAt).toLocaleDateString()}
+        </div>
+      </div>
+      <div class="file-actions flex gap-1">
+        ${actionButtons}
+        <button onclick="deleteAttachment('${escapeHtml(student).replace(/'/g,"\\'")}','${f.id}')" class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-bold" title="${t('deleteBtn')}">✕</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function previewLocalFile(attId, student) {
+  const files = getAttachmentsForStudent(student);
+  const file = files.find(f => f.id === attId);
+  if (!file || !file.dataUrl) return;
+
+  // Convertir DataURL (base64) a Blob para poder abrirlo en el navegador
+  try {
+    const parts = file.dataUrl.split(',');
+    const mime = parts[0].match(/:(.*?);/)[1];
+    const b64Data = parts[1];
+    const byteCharacters = atob(b64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mime });
+    
+    // Crear URL temporal y abrir en nueva pestaña
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+    
+    // Liberar memoria después de un rato
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  } catch (err) {
+    console.error("Error al abrir el archivo:", err);
+    alert(lang === 'eu' ? 'Errorea fitxategia irekitzean.' : 'Erreur lors de l\'ouverture du fichier.');
+  }
+}
+
+function renderAllAttachmentsSummary() {
+  const container = document.getElementById('allAttachmentsSummary');
+  if (!container) return;
+  const studentsWithFiles = students.filter(s => getAttachmentsForStudent(s).length > 0);
+  if (studentsWithFiles.length === 0) {
+    container.innerHTML = `<p class="text-sm text-gray-500 italic">${t('noAttachments')}</p>`;
+    return;
+  }
+  container.innerHTML = '';
+  studentsWithFiles.forEach(s => {
+    const files = getAttachmentsForStudent(s);
+    const group = document.createElement('div');
+    group.className = 'student-file-group';
+    group.innerHTML = `<h4>${escapeHtml(s)} <span class="text-gray-500 font-normal text-xs">(${files.length})</span></h4>`;
+    files.forEach(f => {
+      const icon = f.mime?.startsWith('image/') ? '🖼️' : '📄';
+      const isLink = !!f.url;
+      const item = document.createElement('div');
+      item.className = 'file-item';
+      item.innerHTML = `
+        <span class="file-icon">${icon}</span>
+        <div class="file-info">
+          <div class="file-name">${escapeHtml(f.name)}</div>
+          <div class="file-meta">
+            <span class="attachment-badge ${isLink ? 'link' : 'pdf'}">${isLink ? '🔗' : '📎'}</span>
+            ${isLink ? t('linkLabel') : formatBytes(f.size)}
+          </div>
+        </div>
+      `;
+      group.appendChild(item);
+    });
+    container.appendChild(group);
+  });
+}
+
+function openFilePicker(mode) {
+  const sel = document.getElementById('attachmentStudentSelect').value;
+  if (!sel) { alert(t('noStudentSelected')); return; }
+  const inp = document.getElementById('attachmentFileInput');
+  inp.value = '';
+  inp.onchange = () => handleAttachmentFile(inp.files[0], sel);
+  inp.click();
+}
+
+function handleAttachmentFile(file, student) {
+  if (!file) return;
+  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  const isImage = file.type.startsWith('image/');
+  if (!isPdf && !isImage) {
+    alert(lang === 'eu' ? 'PDF edo irudi bat aukeratu.' : 'Choisissez un PDF ou une image.');
+    return;
+  }
+  if (file.size > ATTACHMENT_MAX_BYTES) {
+    pendingAttachmentFile = { file, student };
+    document.getElementById('largeFileModalText').innerHTML = `
+      <b>${escapeHtml(file.name)}</b><br>
+      ${formatBytes(file.size)} &gt; ${formatBytes(ATTACHMENT_MAX_BYTES)}<br><br>
+      ${t('fileTooLargeBody')}
+    `;
+    const m = document.getElementById('largeFileModal');
+    m.classList.remove('hidden'); m.classList.add('flex');
+    return;
+  }
+  processLocalFile(file, student);
+}
+
+function closeLargeFileModal() {
+  const m = document.getElementById('largeFileModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+  pendingAttachmentFile = null;
+}
+
+function chooseFileMode(mode) {
+  const m = document.getElementById('largeFileModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+  if (mode === 'local' && pendingAttachmentFile) {
+    if (pendingAttachmentFile.file.size > ATTACHMENT_MAX_BYTES) {
+      alert(t('fileTooLarge'));
+      pendingAttachmentFile = null;
+      return;
+    }
+    processLocalFile(pendingAttachmentFile.file, pendingAttachmentFile.student);
+  } else if (mode === 'link' && pendingAttachmentFile) {
+    const linkModal = document.getElementById('linkModal');
+    document.getElementById('linkNameInput').value = pendingAttachmentFile.file.name;
+    document.getElementById('linkUrlInput').value = '';
+    linkModal.classList.remove('hidden'); linkModal.classList.add('flex');
+    linkModal.dataset.student = pendingAttachmentFile.student;
+  }
+  pendingAttachmentFile = null;
+}
+
+function processLocalFile(file, student) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    const att = {
+      id: 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      name: file.name,
+      mime: file.type,
+      size: file.size,
+      dataUrl,
+      url: null,
+      addedAt: new Date().toISOString()
+    };
+    if (!attachments[student]) attachments[student] = [];
+    attachments[student].push(att);
+    if (!saveAttachments()) {
+      attachments[student].pop();
+      return;
+    }
+    renderAttachmentListForStudent(student);
+    renderAllAttachmentsSummary();
+    renderAttachmentStudentSelect();
+    renderHistory();
+    alert(t('attachmentAdded'));
+  };
+  reader.onerror = () => alert(t('restoreError'));
+  reader.readAsDataURL(file);
+}
+
+function openLinkModal() {
+  const sel = document.getElementById('attachmentStudentSelect').value;
+  if (!sel) { alert(t('noStudentSelected')); return; }
+  const linkModal = document.getElementById('linkModal');
+  document.getElementById('linkNameInput').value = '';
+  document.getElementById('linkUrlInput').value = '';
+  linkModal.dataset.student = sel;
+  linkModal.classList.remove('hidden');
+  linkModal.classList.add('flex');
+  setTimeout(() => document.getElementById('linkNameInput').focus(), 100);
+}
+
+function closeLinkModal() {
+  const m = document.getElementById('linkModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+  delete m.dataset.student;
+}
+
+function saveLinkAttachment() {
+  const m = document.getElementById('linkModal');
+  const student = m.dataset.student;
+  const name = document.getElementById('linkNameInput').value.trim();
+  const url = document.getElementById('linkUrlInput').value.trim();
+  if (!student) return;
+  if (!name) { alert(t('linkNameRequired')); return; }
+  if (!/^https?:\/\//i.test(url)) { alert(t('invalidLinkUrl')); return; }
+
+  const att = {
+    id: 'lnk_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    name,
+    mime: 'application/pdf',
+    size: null,
+    dataUrl: null,
+    url,
+    addedAt: new Date().toISOString()
+  };
+  if (!attachments[student]) attachments[student] = [];
+  attachments[student].push(att);
+  if (!saveAttachments()) { attachments[student].pop(); return; }
+
+  closeLinkModal();
+  renderAttachmentListForStudent(student);
+  renderAllAttachmentsSummary();
+  renderHistory();
+  alert(t('linkAdded'));
+}
+
+function deleteAttachment(student, attId) {
+  if (!confirm(t('confirmDeleteAttachment'))) return;
+  const arr = attachments[student] || [];
+  const idx = arr.findIndex(a => a.id === attId);
+  if (idx > -1) {
+    arr.splice(idx, 1);
+    if (arr.length === 0) delete attachments[student];
+    saveAttachments();
+    renderAttachmentListForStudent(student);
+    renderAllAttachmentsSummary();
+    renderHistory();
+    alert(t('attachmentDeleted'));
+  }
+}
+
+function setupDropZone() {
+  const dz = document.getElementById('attachmentDropZone');
+  if (!dz) return;
+  const sel = () => document.getElementById('attachmentStudentSelect').value;
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover');
+  }));
+  dz.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    const student = sel();
+    if (!student) { alert(t('noStudentSelected')); return; }
+    handleAttachmentFile(files[0], student);
+  });
+  dz.addEventListener('click', () => {
+    const student = sel();
+    if (!student) { alert(t('noStudentSelected')); return; }
+    openFilePicker('local');
+  });
+}
+
+/* ============================================================
+   BACKUP / RESTORE (con merge)
    ============================================================ */
 document.getElementById('exportBackupBtn').addEventListener('click', () => {
   const backupData = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     appVersion: APP_VERSION,
     students,
     subjects,
     incidents,
     customOptions,
     slots,
+    attachments,
     title: document.getElementById('mainTitle').value
   };
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -2147,15 +2771,70 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
 
     if (!validateBackup(backupData)) throw new Error(t('invalidFile'));
 
-    students = backupData.students || [];
-    subjects = backupData.subjects || [];
-    incidents = backupData.incidents || [];
-    customOptions = backupData.customOptions || defaultOptions;
-    if ('slots' in backupData) {
-      slots = backupData.slots;
+    let newInc = 0, newStu = 0, newSub = 0, newFiles = 0;
+
+    // 1) Alumnos
+    const incomingStudents = Array.isArray(backupData.students) ? backupData.students : [];
+    incomingStudents.forEach(s => {
+      if (!students.includes(s)) { students.push(s); newStu++; }
+    });
+    students.sort((a,b)=>a.localeCompare(b));
+
+    // 2) Materias
+    const incomingSubjects = Array.isArray(backupData.subjects) ? backupData.subjects : [];
+    incomingSubjects.forEach(s => {
+      if (!subjects.includes(s)) { subjects.push(s); newSub++; }
+    });
+    subjects.sort((a,b)=>a.localeCompare(b));
+
+    // 3) Opciones
+    if (backupData.customOptions && backupData.customOptions.eu) {
+      ['eu','fr'].forEach(l => {
+        ['triggers','behaviors','interventions'].forEach(k => {
+          const incoming = backupData.customOptions[l]?.[k] || [];
+          incoming.forEach(item => {
+            if (!customOptions[l][k].includes(item)) customOptions[l][k].push(item);
+          });
+        });
+      });
+    }
+
+    // 4) Incidentes por id
+    const incomingInc = Array.isArray(backupData.incidents) ? backupData.incidents : [];
+    const existingIds = new Set(incidents.map(i => String(i.id)));
+    incomingInc.forEach(i => {
+      if (!existingIds.has(String(i.id))) { incidents.push(i); newInc++; }
+    });
+    incidents.sort((a,b)=> b.date.localeCompare(a.date));
+
+    // 5) Slots
+    if ('slots' in backupData && Array.isArray(backupData.slots)) {
+      if (!slots || slots.length === 0) {
+        slots = backupData.slots;
+      } else {
+        const existingKeys = new Set(slots.map(s => `${s.start}-${s.end}-${s.block}`));
+        backupData.slots.forEach(s => {
+          const k = `${s.start}-${s.end}-${s.block}`;
+          if (!existingKeys.has(k)) { slots.push(s); existingKeys.add(k); }
+        });
+        slots.sort((a,b) => a.start.localeCompare(b.start));
+      }
       localStorage.setItem(KEY_SLOTS, JSON.stringify(slots));
     }
-    if (backupData.title) {
+
+    // 6) Adjuntos
+    const incomingAtt = backupData.attachments || {};
+    Object.keys(incomingAtt).forEach(student => {
+      if (!attachments[student]) attachments[student] = [];
+      const existingKeys = new Set(attachments[student].map(a => `${a.name}|${a.addedAt}`));
+      incomingAtt[student].forEach(f => {
+        const k = `${f.name}|${f.addedAt}`;
+        if (!existingKeys.has(k)) { attachments[student].push(f); newFiles++; existingKeys.add(k); }
+      });
+    });
+
+    // 7) Título
+    if (backupData.title && !localStorage.getItem(KEY_TITLE)) {
       document.getElementById('mainTitle').value = backupData.title;
       localStorage.setItem(KEY_TITLE, backupData.title);
     }
@@ -2164,13 +2843,24 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
     saveSubjects();
     saveIncidents();
     saveOptions();
+    saveAttachments();
+    if (slots) saveSlots();
 
     applyLang();
     renderHistory();
     renderCharts();
-    setActiveTab('form');
+    renderAttachmentStudentSelect();
+    renderAllAttachmentsSummary();
+    setActiveTab('uploads');
 
-    alert(t('restoreSuccess'));
+    if (newInc + newStu + newSub + newFiles === 0) {
+      alert(t('backupNoChanges'));
+    } else {
+      alert(t('backupMerged')
+        .replace('{newInc}', newInc)
+        .replace('{newStu}', newStu)
+        .replace('{newFiles}', newFiles));
+    }
   } catch (err) {
     console.error(err);
     alert(err.message || t('restoreError'));
@@ -2180,7 +2870,7 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
 });
 
 /* ============================================================
-   BORRAR TODO (doble confirmación)
+   BORRAR TODO
    ============================================================ */
 function closeClearAllModal() {
   const m = document.getElementById('clearAllModal');
@@ -2261,20 +2951,19 @@ document.getElementById('pdfBtn').onclick = () => {
 };
 
 /* ============================================================
-   LÓGICA DE INSTALACIÓN (PWA)
+   INSTALACIÓN PWA
    ============================================================ */
 let deferredPrompt;
 
 function closeInstallBanner() {
   document.getElementById('installBanner').classList.add('hidden');
-  // Guardar que ya se ha mostrado para no ser pesados en cada recarga
   localStorage.setItem(KEY_INSTALL_BANNER_SHOWN, 'true');
 }
 
 function updateInstallBannerText() {
   const textEl = document.getElementById('installBannerText');
   const actionBtn = document.getElementById('installBtnAction');
-  
+  if (!textEl || !actionBtn) return;
   if (deferredPrompt) {
     textEl.textContent = t('installBannerTextNative');
     actionBtn.classList.remove('hidden');
@@ -2285,32 +2974,22 @@ function updateInstallBannerText() {
   }
 }
 
-// Detectar si el navegador soporta la instalación nativa (Android/Chrome/Edge)
 window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevenir que Chrome muestre el banner automático por defecto
   e.preventDefault();
-  // Guardar el evento para dispararlo cuando el usuario pulse el botón
   deferredPrompt = e;
-  
-  // Mostrar el banner si no se ha mostrado ya
   if (!localStorage.getItem(KEY_INSTALL_BANNER_SHOWN)) {
     updateInstallBannerText();
     document.getElementById('installBanner').classList.remove('hidden');
   }
 });
 
-// Detectar si el navegador NO soporta la instalación nativa (iOS/Safari)
-// Esto lo hacemos comprobando si el usuario está en iOS y no está ya instalado
 function checkManualInstall() {
   const isIos = () => {
     const userAgent = window.navigator.userAgent.toLowerCase();
     return /iphone|ipad|ipod/.test(userAgent);
   };
   const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
-
-  // Si es iOS, no está instalado y no hemos mostrado el banner antes
   if (isIos() && !isInStandaloneMode() && !localStorage.getItem(KEY_INSTALL_BANNER_SHOWN)) {
-    // Un pequeño delay para que cargue la página
     setTimeout(() => {
       updateInstallBannerText();
       document.getElementById('installBanner').classList.remove('hidden');
@@ -2318,22 +2997,18 @@ function checkManualInstall() {
   }
 }
 
-// Acción del botón "Instalar" del banner
 document.getElementById('installBtnAction').addEventListener('click', async () => {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
+    await deferredPrompt.userChoice;
     deferredPrompt = null;
     closeInstallBanner();
   }
 });
 
-// Si la app se instala con éxito, ocultar banner
 window.addEventListener('appinstalled', () => {
   closeInstallBanner();
   deferredPrompt = null;
-  console.log('PWA instalada con éxito');
 });
 
 /* ============================================================
@@ -2354,7 +3029,14 @@ function init() {
   }
 
   applyLang();
-  checkManualInstall(); // Comprobar si debemos mostrar las instrucciones para iOS
+  checkManualInstall();
+
+  renderAttachmentStudentSelect();
+  renderAllAttachmentsSummary();
+  setupDropZone();
+
+  const attSel = document.getElementById('attachmentStudentSelect');
+  if (attSel) attSel.onchange = updateAttachmentUploadArea;
 }
 init();
 
