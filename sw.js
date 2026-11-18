@@ -1,72 +1,94 @@
-const CACHE_NAME = 'aesh-cache-v59';
-const ASSETS = [
+/* Service Worker — NereApp v6.0.0 */
+const CACHE_NAME = 'aesh-cache-v60';
+const APP_VERSION = '6.0.0';
+
+const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
 ];
 
-/* ---------- INSTALL: precachear + activar en cuanto esté listo ---------- */
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) =>
-        Promise.all(
-          ASSETS.map((url) =>
-            cache.add(url).catch((err) => console.warn('Fallo al cachear:', url, err))
-          )
+/* INSTALL */
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.all(
+        PRECACHE_URLS.map((url) =>
+          cache.add(new Request(url, { cache: 'reload' })).catch(() => {
+            // Tolerar fallos de red en CDN durante install
+            return null;
+          })
         )
-      )
-      .then(() => self.skipWaiting())
+      );
+    }).then(() => self.skipWaiting())
   );
 });
 
-/* ---------- ACTIVATE: borrar cachés antiguas + tomar control ---------- */
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys()
-      .then((keys) =>
-        Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))
+/* ACTIVATE */
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       )
-      .then(() => self.clients.claim())
+    ).then(() => self.clients.claim())
   );
 });
 
-/* ---------- FETCH ---------- */
-self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+/* FETCH */
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
 
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request)
-        .then((networkRes) => {
-          const copy = networkRes.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(e.request, copy));
-          return networkRes;
+  // Solo GET
+  if (req.method !== 'GET') return;
+
+  // Ignorar peticiones a chrome-extension, etc.
+  const url = new URL(req.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  // HTML / navegación → network-first con fallback a cache
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    event.respondWith(
+      fetch(req)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+          return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
     );
     return;
   }
 
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const networkPromise = fetch(e.request)
-        .then((networkRes) => {
-          if (networkRes && networkRes.ok) {
-            const copy = networkRes.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(e.request, copy));
+  // Resto (assets, CDNs, manifest) → cache-first con actualización en background
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const fetchPromise = fetch(req)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === 'basic' || response.type === 'cors') {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
           }
-          return networkRes;
+          return response;
         })
         .catch(() => cached);
-
-      return cached || networkPromise;
+      return cached || fetchPromise;
     })
   );
+});
+
+/* MENSAJES (para forzar actualización desde la app) */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.source && event.source.postMessage({ type: 'VERSION', version: APP_VERSION, cache: CACHE_NAME });
+  }
 });
