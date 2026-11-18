@@ -10,6 +10,18 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#4f46e5">
 <title>NereApp</title>
+
+<!-- ✅ FIX ICONOS: links que faltaban -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icons/icon-128x128.png">
+<link rel="apple-touch-icon" sizes="114x114" href="icons/icon-96x96.png">
+<link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -141,7 +153,7 @@
   }
   .chart-box canvas { display: block !important; width: 100% !important; height: 100% !important; }
 
-  /* PDF print-only styles (kept) */
+  /* PDF print-only styles */
   .pdf-attachment-page { page-break-before: always; padding: 10mm; }
   .pdf-attachment-page h2 { font-size: 16px; font-weight: bold; border-bottom: 2px solid #4f46e5; margin-bottom: 10px; padding-bottom: 4px; }
   .pdf-attachment-table { width: 100%; border-collapse: collapse; font-size: 10px; }
@@ -765,7 +777,7 @@
 /* =================================================================
    VERSIONADO Y MIGRACIÓN
    ================================================================= */
-const APP_VERSION = '6.3.0'; // ✅ FIX: versión bump
+const APP_VERSION = '6.3.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
 
@@ -784,7 +796,6 @@ function migrateIncidentsToBlock() {
 }
 
 function migrateSubjectFromLegacy() {
-  // ✅ FIX 2: asegurar que las materias referenciadas por incidencias existan en subjects
   let changed = false;
   incidents.forEach(i => {
     if (i.subject && !subjects.includes(i.subject)) {
@@ -798,27 +809,11 @@ function migrateSubjectFromLegacy() {
   }
 }
 
-function migrateAttachmentsShape() {
-  // ✅ FIX 3: garantizar que todos los adjuntos tienen dataUrl string (compatibilidad restore)
-  let changed = false;
-  Object.keys(attachments).forEach(student => {
-    (attachments[student] || []).forEach(att => {
-      if (att.url) return; // link, ok
-      if (att.dataUrl && typeof att.dataUrl === 'string') return; // ok
-      if (att.blob) { changed = true; return; } // necesita normalización async, se hará en import
-      // si no hay nada, marcar como huérfano
-      if (!att.dataUrl && !att.url) { att.orphan = true; changed = true; }
-    });
-  });
-  if (changed) saveAttachments();
-}
-
 function runMigrations(fromVersion, toVersion) {
   if (!fromVersion || fromVersion.localeCompare('5.0.0', undefined, {numeric:true}) < 0) {
     migrateIncidentsToBlock();
   }
   migrateSubjectFromLegacy();
-  migrateAttachmentsShape();
   localStorage.setItem(STORAGE_VERSION_KEY, toVersion);
 }
 
@@ -916,7 +911,6 @@ const I18N = {
     backupMerged: "Babeskopia bateratu egin da: {newInc} gorabehera berri, {newStu} ikasle berri, {newFiles} fitxategi berri.",
     backupNoChanges: "Babeskopiak ez du datu berririk. Datuak berdin jarraitzen dute.",
     home: "Hasiera",
-    student: "Ikaslea",
     config: "Konfigurazioa",
     viewFile: "👁️ Ikusi",
     download: "⬇️ Deskargatu",
@@ -1033,7 +1027,6 @@ const I18N = {
     backupMerged: "Sauvegarde fusionnée : {newInc} nouveaux incidents, {newStu} nouveaux élèves, {newFiles} nouveaux fichiers.",
     backupNoChanges: "La sauvegarde ne contient aucune donnée nouvelle.",
     home: "Accueil",
-    student: "Élève",
     config: "Configuration",
     viewFile: "👁️ Voir",
     download: "⬇️ Télécharger",
@@ -1070,7 +1063,6 @@ const KEY_INCIDENTS = 'aesh_incidents_v1';
 const KEY_OPTIONS = 'aesh_options_v1';
 const KEY_TITLE = 'aesh_title_v1';
 const KEY_SLOTS = 'aesh_slots_v1';
-const KEY_ACTIVE_TAB = 'aesh_active_tab';
 const KEY_INSTALL_BANNER_SHOWN = 'aesh_install_banner_shown';
 const KEY_ATTACHMENTS = 'aesh_attachments_v1';
 const KEY_ACTIVE_STUDENT = 'aesh_active_student';
@@ -1201,7 +1193,7 @@ function formatBytes(bytes) {
 }
 function getAttachmentsForStudent(student) { return attachments[student] || []; }
 
-// ✅ FIX 3: helpers para dataURL ↔ Blob
+/* ✅ FIX 3: helpers dataURL ↔ Blob */
 function dataUrlToBlob(dataUrl) {
   const parts = dataUrl.split(',');
   const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'application/octet-stream';
@@ -1269,9 +1261,7 @@ function applyLang() {
   renderSlotsSelect();
   renderSlotList();
   renderHomeStudents();
-  if (activeStudent) {
-    renderStudentDetail();
-  }
+  if (activeStudent) renderStudentDetail();
   updateBreadcrumbs();
   updateInstallBannerText();
 
@@ -1568,9 +1558,7 @@ document.getElementById('addSlotBtn').onclick = () => {
 /* =================================================================
    LISTAS ALUMNOS / MATERIAS
    ================================================================= */
-function renderStudentList() {
-  renderHomeStudents();
-}
+function renderStudentList() { renderHomeStudents(); }
 
 function renderSubjectList() {
   const ul = document.getElementById('subjectList');
@@ -1796,7 +1784,6 @@ function updateBreadcrumbs() {
     if (currentSubtab === 'history') subtabLabel = lang === 'eu' ? 'Historia' : 'Historique';
     else if (currentSubtab === 'charts') subtabLabel = lang === 'eu' ? 'Grafikoak' : 'Graphiques';
     else if (currentSubtab === 'docs') subtabLabel = lang === 'eu' ? 'Dokumentuak' : 'Documents';
-
     el.innerHTML = `<button onclick="navigateTo('home')">🏠 ${homeLbl}</button><span class="sep">›</span><button onclick="navigateTo('student',{subtab:'history'})">${escapeHtml(activeStudent)}</button><span class="sep">›</span><span>${subtabLabel}</span>`;
     return;
   }
@@ -1822,9 +1809,7 @@ document.querySelectorAll('#studentSubtabs .subtab-btn').forEach(btn => {
 function switchSubtab(name, force) {
   currentSubtab = name;
   document.querySelectorAll('#studentSubtabs .subtab-btn').forEach(b => {
-    if (b.dataset.subtab) {
-      b.classList.toggle('active', b.dataset.subtab === name);
-    }
+    if (b.dataset.subtab) b.classList.toggle('active', b.dataset.subtab === name);
   });
   document.querySelectorAll('.subtab-content').forEach(c => c.classList.add('hidden'));
   const tgt = document.getElementById('subtab-' + name);
@@ -1934,23 +1919,15 @@ document.getElementById('incidentForm').onsubmit = (e) => {
     triggers, behaviors, interventions, notes
   };
 
-  // ✅ FIX 1: usar String() para comparar IDs
   if (editingIncidentId) {
     const idx = incidents.findIndex(i => String(i.id) === String(editingIncidentId));
     if (idx > -1) {
       incidents[idx] = { ...incidents[idx], ...payload };
     } else {
-      // fallback: si no se encontró, crear nuevo (no perder datos)
-      incidents.push({
-        id: Date.now() + Math.random().toString(36).slice(2,7),
-        ...payload
-      });
+      incidents.push({ id: Date.now() + Math.random().toString(36).slice(2,7), ...payload });
     }
   } else {
-    incidents.push({
-      id: Date.now() + Math.random().toString(36).slice(2,7),
-      ...payload
-    });
+    incidents.push({ id: Date.now() + Math.random().toString(36).slice(2,7), ...payload });
   }
 
   saveIncidents();
@@ -1994,7 +1971,7 @@ function editIncident(id) {
   if (!inc) return;
   setActiveStudent(inc.student);
   
-  openIncidentForm(inc.student); // ⚠️ resetForm() pone editingIncidentId=null
+  openIncidentForm(inc.student);
   
   // ✅ FIX 1: asignar editingIncidentId DESPUÉS de openIncidentForm
   editingIncidentId = inc.id;
@@ -2033,7 +2010,6 @@ function editIncident(id) {
   submitBtn.classList.add('bg-green-600');
   submitBtn.innerHTML = `<span data-eu="✓ Eguneratu gorabehera" data-fr="✓ Mettre à jour l'incident">✓ Eguneratu gorabehera</span>`;
   applyLang();
-  // ✅ FIX 1: re-asignar por si applyLang lo reseteó (no debería, pero por seguridad)
   editingIncidentId = inc.id;
 }
 
@@ -2493,7 +2469,6 @@ function getCurrentAnalysisHTML() {
   `;
 }
 
-// ✅ Generar gráficos en el printView (charts para PDF)
 function renderPrintCharts(filtered) {
   const countsByDate = {};
   [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
@@ -2563,14 +2538,9 @@ async function generatePDF(mode) {
   if (mode === 'charts' || mode === 'all') {
     printView.innerHTML = buildChartsHTML();
     renderPrintCharts(filtered);
-    // esperar a que chart.js renderice
     await new Promise(r => setTimeout(r, 300));
     const chartsHtml = printView.innerHTML;
-    if (mode === 'all') {
-      content += chartsHtml;
-    } else {
-      content += chartsHtml;
-    }
+    content += chartsHtml;
     content += buildAnalysisHTML(getCurrentAnalysisHTML());
   }
 
@@ -2613,7 +2583,6 @@ document.getElementById('attachmentFileInput').addEventListener('change', async 
   await handleAttachmentFile(file);
 });
 
-// Drag & drop
 const dropZone = document.getElementById('attachmentDropZone');
 if (dropZone) {
   dropZone.addEventListener('click', () => openFilePicker('local'));
@@ -2629,7 +2598,6 @@ if (dropZone) {
 
 async function handleAttachmentFile(file) {
   if (!activeStudent) { alert(t('noStudentSelected')); return; }
-  
   if (file.size > ATTACHMENT_MAX_BYTES) {
     pendingAttachmentFile = file;
     document.getElementById('largeFileModalText').textContent = t('fileTooLargeBody') + ` (${formatBytes(file.size)})`;
@@ -2637,17 +2605,12 @@ async function handleAttachmentFile(file) {
     document.getElementById('largeFileModal').classList.add('flex');
     return;
   }
-
   await addAttachmentFromFile(file);
 }
 
 function chooseFileMode(mode) {
   closeLargeFileModal();
-  if (mode === 'link') {
-    openLinkModal();
-    return;
-  }
-  // 'local' → comprimir si es imagen, o rechazar si PDF > 2MB
+  if (mode === 'link') { openLinkModal(); return; }
   const file = pendingAttachmentFile;
   pendingAttachmentFile = null;
   if (!file) return;
@@ -2655,7 +2618,6 @@ function chooseFileMode(mode) {
     alert(t('fileTooLarge'));
     return;
   }
-  // Si es imagen, comprimir
   if (file.type.startsWith('image/')) {
     compressImage(file, 1200, 0.7).then(blob => {
       addAttachmentFromFile(new File([blob], file.name, { type: 'image/jpeg' }), true);
@@ -2699,7 +2661,7 @@ function compressImage(file, maxDim, quality) {
   });
 }
 
-async function addAttachmentFromFile(file, compressed = false) {
+async function addAttachmentFromFile(file) {
   try {
     const dataUrl = await blobToDataUrl(file);
     const att = {
@@ -2707,7 +2669,7 @@ async function addAttachmentFromFile(file, compressed = false) {
       name: file.name,
       mime: file.type || 'application/octet-stream',
       size: file.size,
-      dataUrl,   // ✅ FIX 3: guardar siempre como dataUrl string
+      dataUrl,
       date: new Date().toISOString()
     };
     if (!attachments[activeStudent]) attachments[activeStudent] = [];
@@ -2805,7 +2767,7 @@ function renderAttachmentListForStudent(student) {
 }
 
 /* =================================================================
-   ✅ FIX 3 + 4: VISOR DE ARCHIVOS ROBUSTO Y A PANTALLA COMPLETA
+   VISOR DE ARCHIVOS (pantalla completa + robusto tras restore)
    ================================================================= */
 let currentViewerBlobUrl = null;
 
@@ -2820,29 +2782,22 @@ function openFileViewer(attId) {
   titleEl.textContent = file.name;
   body.innerHTML = '';
 
-  // Revocar URL anterior si la hay
   if (currentViewerBlobUrl) {
     try { URL.revokeObjectURL(currentViewerBlobUrl); } catch(e){}
     currentViewerBlobUrl = null;
   }
 
-  // Caso 1: enlace externo
   if (file.url) {
     window.open(file.url, '_blank', 'noopener');
     return;
   }
 
-  // Caso 2: dataUrl (string base64) — el caso normal, y el que viene del restore
-  // Caso 3: blob en memoria (legacy) — se convierte a blob URL
   let blob;
   try {
     if (file.dataUrl && typeof file.dataUrl === 'string') {
       blob = dataUrlToBlob(file.dataUrl);
     } else if (file.blob instanceof Blob) {
       blob = file.blob;
-    } else if (file.blobUrl && typeof file.blobUrl === 'string') {
-      // legacy: si guardamos un blob URL, no sirve tras restore; intentar fetch
-      currentViewerBlobUrl = file.blobUrl;
     } else {
       alert(t('fileUnavailable'));
       return;
@@ -2855,27 +2810,22 @@ function openFileViewer(attId) {
 
   const mime = file.mime || (blob ? blob.type : 'application/octet-stream');
 
-  // Imagen
   if (mime.startsWith('image/') && blob) {
     const url = URL.createObjectURL(blob);
     currentViewerBlobUrl = url;
     const img = document.createElement('img');
     img.src = url;
-    img.style.cssText = 'max-width:100%;max-height:100%;display:block;margin:auto;';
     body.style.background = '#111';
     body.appendChild(img);
   }
-  // PDF
   else if (mime === 'application/pdf' && blob) {
     const url = URL.createObjectURL(blob);
     currentViewerBlobUrl = url;
     const iframe = document.createElement('iframe');
     iframe.src = url;
-    iframe.style.cssText = 'width:100%;height:100%;border:none;background:#fff;';
     body.style.background = '#fff';
     body.appendChild(iframe);
   }
-  // Otro tipo: fallback descarga
   else {
     body.style.background = '#374151';
     const wrap = document.createElement('div');
@@ -2885,15 +2835,8 @@ function openFileViewer(attId) {
       const url = URL.createObjectURL(blob);
       currentViewerBlobUrl = url;
       const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
+      a.href = url; a.download = file.name;
       a.textContent = '⬇️ ' + t('downloadFile');
-      wrap.appendChild(a);
-    } else if (currentViewerBlobUrl) {
-      const a = document.createElement('a');
-      a.href = currentViewerBlobUrl;
-      a.target = '_blank';
-      a.textContent = t('openLink2');
       wrap.appendChild(a);
     }
     body.appendChild(wrap);
@@ -2919,7 +2862,6 @@ function closeFileViewer() {
    BACKUP / RESTORE
    ================================================================= */
 document.getElementById('exportBackupBtn').addEventListener('click', async () => {
-  // ✅ FIX 3: normalizar adjuntos a dataUrl antes de exportar (si algún legacy tiene blob)
   const attsCopy = {};
   for (const student of Object.keys(attachments)) {
     attsCopy[student] = [];
@@ -2936,11 +2878,7 @@ document.getElementById('exportBackupBtn').addEventListener('click', async () =>
   const backup = {
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
-    students,
-    subjects,
-    incidents,
-    customOptions,
-    slots,
+    students, subjects, incidents, customOptions, slots,
     attachments: attsCopy,
     title: document.getElementById('mainTitle').value,
     lang
@@ -2972,49 +2910,40 @@ document.getElementById('importBackupInput').addEventListener('change', async (e
 async function mergeBackup(data) {
   if (!data || typeof data !== 'object') { alert(t('invalidFile')); return; }
 
-  // ✅ FIX 3: normalizar adjuntos entrantes
   const normalizedAtts = {};
   const incomingAtts = data.attachments || {};
   for (const student of Object.keys(incomingAtts)) {
     normalizedAtts[student] = [];
     for (const att of (incomingAtts[student] || [])) {
       const a = { ...att };
-      // si viene con blob (raro), convertir
       if (a.blob && !a.dataUrl) {
         try { a.dataUrl = await blobToDataUrl(a.blob); } catch(e) { a.dataUrl = null; }
       }
       delete a.blob;
-      // garantizar id
       if (!a.id) a.id = Date.now() + Math.random().toString(36).slice(2,7);
-      // si no tiene dataUrl ni url, marcar huérfano pero no romper
       if (!a.dataUrl && !a.url) a.orphan = true;
       normalizedAtts[student].push(a);
     }
   }
 
-  // Contadores
   let newInc = 0, newStu = 0, newFiles = 0;
 
-  // Students
   (data.students || []).forEach(s => {
     if (!students.includes(s)) { students.push(s); newStu++; }
   });
   students.sort((a,b)=>a.localeCompare(b));
   saveStudents();
 
-  // Subjects
   (data.subjects || []).forEach(s => {
     if (!subjects.includes(s)) subjects.push(s);
   });
   subjects.sort((a,b)=>a.localeCompare(b));
   saveSubjects();
 
-  // Incidents
   const existingIds = new Set(incidents.map(i => String(i.id)));
   (data.incidents || []).forEach(inc => {
     if (!inc.id) inc.id = Date.now() + Math.random().toString(36).slice(2,7);
     if (!existingIds.has(String(inc.id))) {
-      // garantizar campos nuevos
       if (!inc.block) inc.block = 'class';
       incidents.push(inc);
       existingIds.add(String(inc.id));
@@ -3023,7 +2952,6 @@ async function mergeBackup(data) {
   });
   saveIncidents();
 
-  // Options
   if (data.customOptions) {
     if (data.customOptions.eu) {
       ['triggers','behaviors','interventions'].forEach(k => {
@@ -3042,7 +2970,6 @@ async function mergeBackup(data) {
     saveOptions();
   }
 
-  // Slots
   if (Array.isArray(data.slots) && data.slots.length > 0) {
     const existing = new Set((slots || []).map(s => slotsToValue(s)));
     data.slots.forEach(s => {
@@ -3056,7 +2983,6 @@ async function mergeBackup(data) {
     saveSlots();
   }
 
-  // Attachments
   Object.keys(normalizedAtts).forEach(student => {
     if (!attachments[student]) attachments[student] = [];
     const existingIds = new Set(attachments[student].map(a => String(a.id)));
@@ -3070,7 +2996,6 @@ async function mergeBackup(data) {
   });
   saveAttachments();
 
-  // Refrescar UI
   renderStudentsSelect();
   renderSubjectsSelect();
   renderSubjectList();
@@ -3107,11 +3032,7 @@ document.getElementById('clearAllConfirmInput').addEventListener('input', (e) =>
 document.getElementById('clearAllConfirmBtn').addEventListener('click', () => {
   const langKeyword = t('clearAllKeyword');
   if (document.getElementById('clearAllConfirmInput').value.trim() !== langKeyword) return;
-  students = [];
-  subjects = [];
-  incidents = [];
-  attachments = {};
-  slots = null;
+  students = []; subjects = []; incidents = []; attachments = {}; slots = null;
   customOptions = JSON.parse(JSON.stringify(defaultOptions));
   setActiveStudent(null);
   saveStudents(); saveSubjects(); saveIncidents(); saveAttachments(); saveOptions();
@@ -3272,40 +3193,32 @@ function wizardFinish() {
 }
 
 /* =================================================================
-   INIT
+   INIT + SERVICE WORKER
    ================================================================= */
 (function init() {
-  // Migraciones
   runMigrations(savedVersion, APP_VERSION);
-
-  // Idioma
   applyLang();
 
-  // Título
   const savedTitle = localStorage.getItem(KEY_TITLE);
   if (savedTitle) document.getElementById('mainTitle').value = savedTitle;
   document.getElementById('mainTitle').addEventListener('input', (e) => {
     localStorage.setItem(KEY_TITLE, e.target.value);
   });
 
-  // Botón idioma
   document.getElementById('langBtn').onclick = () => {
     lang = lang === 'eu' ? 'fr' : 'eu';
     localStorage.setItem('aesh_lang', lang);
     applyLang();
   };
 
-  // Wizard si es primer uso
   if (!localStorage.getItem('aesh_wizard_done') && students.length === 0) {
     setTimeout(openWizard, 500);
   }
 
-  // Install banner
   if (!window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
     setTimeout(() => showInstallBanner(!!deferredInstallPrompt), 2000);
   }
 
-  // Render inicial
   renderHomeStudents();
   renderStudentsSelect();
   renderSubjectsSelect();
@@ -3315,8 +3228,14 @@ function wizardFinish() {
   buildCheckboxes();
   updateBreadcrumbs();
 
-  // Navegar a home por defecto
   navigateTo('home', { fromPop: true });
+
+  // ✅ FIX ICONOS: registrar service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW no registrado:', err));
+    });
+  }
 })();
 </script>
 </body>
