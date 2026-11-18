@@ -1,6 +1,6 @@
 // 1. IMPORTANTE: Cambia el nombre de la versión de la caché cada vez que subas cambios
 // Esto obliga al navegador a borrar la caché vieja y descargar la nueva.
-const CACHE_NAME = 'nereapp-cache-v2'; 
+const CACHE_NAME = 'nereapp-cache-v3'; 
 
 // Archivos que se guardarán en caché para que la app funcione offline
 const ASSETS_TO_CACHE = [
