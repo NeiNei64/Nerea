@@ -1,5 +1,5 @@
 // Service Worker NereApp
-const CACHE_NAME = 'nereapp-v6.3.0';
+const CACHE_NAME = 'nereapp-v6.3.2';
 const ASSETS = [
   './',
   './index.html',
@@ -9,12 +9,23 @@ const ASSETS = [
   './icons/icon-maskable-192x192.png',
   './icons/icon-maskable-512x512.png',
   './icons/apple-touch-icon.png',
-  './icons/favicon.ico'
+  './icons/favicon.ico',
+  './icons/favicon-32x32.png',
+  './icons/favicon-16x16.png',
+  './icons/icon-72x72.png',
+  './icons/icon-96x96.png',
+  './icons/icon-128x128.png',
+  './icons/icon-144x144.png',
+  './icons/icon-152x152.png',
+  './icons/icon-384x384.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache =>
+      // Un archivo que falte ya no rompe toda la instalación
+      Promise.all(ASSETS.map(a => cache.add(a).catch(err => console.warn('No cacheado:', a, err))))
+    ).then(() => self.skipWaiting())
   );
 });
 
