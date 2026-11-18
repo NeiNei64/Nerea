@@ -1,17 +1,36 @@
 {
   "name": "NereApp - Gorabeherak / Incidents",
   "short_name": "NereApp",
-  "description": "Gorabeheren erregistroa / Suivi des incidents",
+  "description": "Erregistroa eta analisia ikasleen eguneroko gorabeherei buruz. Suivi et analyse des incidents scolaires quotidiens.",
   "lang": "eu",
   "dir": "ltr",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#f3f4f6",
   "theme_color": "#4f46e5",
+  "categories": ["education", "productivity"],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='36' fill='%234f46e5'/><text x='96' y='128' font-size='100' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='white'>N</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%234f46e5'/><text x='256' y='340' font-size='260' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='white'>N</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Gorabehera berria / Nouvel incident",
+      "short_name": "+ Gorabehera",
+      "url": "./index.html#form",
+      "description": "Erregistratu gorabehera berria / Enregistrer un nouvel incident"
+    }
   ]
 }
