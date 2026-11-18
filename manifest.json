@@ -2,7 +2,8 @@
   "name": "NereApp - Eguneroko gorabeherak",
   "short_name": "NereApp",
   "description": "AESH aplikazioa: ikasleen eguneroko gorabeherak erregistratzeko.",
-  "start_url": "./index.html",
+  "id": "./",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -70,17 +71,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "icons/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/favicon.ico",
-      "sizes": "any",
-      "type": "image/x-icon"
     }
   ]
 }
