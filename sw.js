@@ -1,84 +1,76 @@
-// 1. IMPORTANTE: Cambia el nombre de la versión de la caché cada vez que subas cambios
-// Esto obliga al navegador a borrar la caché vieja y descargar la nueva.
-const CACHE_NAME = 'nereapp-cache-v3'; 
+const CACHE_NAME = 'nereapp-cache-v3';
 
-// Archivos que se guardarán en caché para que la app funcione offline
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
   './manifest.json',
-  // Añade aquí el resto de tus iconos si quieres asegurarte de que se guarden
   './icons/favicon-32x32.png',
   './icons/favicon-16x16.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './icons/icon-192x192.png',
+  './icons/icon-512x512.png'
 ];
 
-// Evento de instalación: guarda los archivos en caché
+// Quita la marca "redirected" para que se pueda servir desde el SW
+async function cleanResponse(response) {
+  if (!response.redirected) return response;
+  const body = await response.blob();
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => {
-      return self.skipWaiting(); // Fuerza la activación del nuevo Service Worker
-    })
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Uno a uno: si un archivo falla, no se rompe toda la instalación
+      await Promise.all(ASSETS_TO_CACHE.map(async (url) => {
+        try {
+          const res = await fetch(url, { redirect: 'follow' });
+          if (res.ok) await cache.put(url, await cleanResponse(res));
+        } catch (e) { /* ignorar */ }
+      }));
+    }).then(() => self.skipWaiting())
   );
 });
 
-// Evento de activación: limpia las cachés antiguas
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      return self.clients.claim(); // Toma el control de las pestañas abiertas inmediatamente
-    })
+    caches.keys()
+      .then((names) => Promise.all(
+        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
-// Evento fetch: intercepta las peticiones
 self.addEventListener('fetch', (event) => {
-  // Solo interceptamos peticiones GET (no POST, etc.)
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
+  // Navegaciones: red primero, caché solo si no hay conexión
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).catch(async () => {
+        const cached = await caches.match('./');
+        return cached || new Response('Offline', { status: 503 });
+      })
+    );
+    return;
+  }
+
+  // Resto: caché primero, luego red
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse; // Si está en caché, lo devuelve
-      }
-
-      // Si no está en caché, lo busca en la red
-      return fetch(event.request).then((networkResponse) => {
-        
-        // ✅ SOLUCIÓN CLOUDFLARE: Si la respuesta es una redirección, la limpiamos antes de guardarla
-        let responseToCache = networkResponse;
-        if (networkResponse.redirected) {
-          responseToCache = new Response(networkResponse.body, {
-            status: networkResponse.status,
-            statusText: networkResponse.statusText,
-            headers: networkResponse.headers
-          });
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then(async (res) => {
+        if (res && res.ok) {
+          const clean = await cleanResponse(res.clone());
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(req, clean);
         }
-
-        // Guardamos la respuesta limpia en la caché
-        if (networkResponse.status === 200) {
-          const responseClone = responseToCache.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        
-        return networkResponse;
-      }).catch(() => {
-        // Si falla la red (offline), y es una petición de página, devolvemos el index.html
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
+        return res;
       });
     })
   );
