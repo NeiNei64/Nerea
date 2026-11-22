@@ -200,6 +200,9 @@
   .pc-esku  { width: 33mm; flex: 0 0 33mm; }
   .pc-ohar  { width: 40mm; flex: 0 0 40mm; }
 
+  .pdf-page { width: 180mm; background: #fff; box-sizing: border-box; font-family: sans-serif; color: #111; }
+  .pdf-page #printStatsInline { margin-bottom: 12px; padding: 8px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 10px; }
+
   #subjectLegendInline { margin-top: 10px; font-size: 9px; display: flex; flex-wrap: wrap; gap: 8px; }
   #subjectLegendInline .legend-item { display: inline-flex; align-items: center; gap: 4px; }
   #subjectLegendInline .legend-color { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
@@ -279,6 +282,40 @@
     </div>
     <div class="mt-4 text-right">
       <button onclick="document.getElementById('pdfModal').classList.add('hidden'); document.getElementById('pdfModal').classList.remove('flex');" class="text-sm text-gray-500 hover:text-gray-700">Utzi</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="classSuggestions"></datalist>
+
+<div id="classModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+    <h3 id="classModalTitle" class="font-bold text-lg mb-1"></h3>
+    <p id="classModalCourse" class="text-xs text-gray-500 mb-3"></p>
+    <input type="text" id="classModalInput" list="classSuggestions" maxlength="30" autocomplete="off"
+           class="w-full border rounded px-3 py-2 mb-4 min-h-[44px]">
+    <div class="flex justify-end gap-2">
+      <button onclick="closeClassModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold min-h-[44px]">
+        <span data-eu="Utzi" data-fr="Annuler">Utzi</span>
+      </button>
+      <button onclick="saveClassModal()" class="px-4 py-2 bg-indigo-600 rounded text-white font-semibold min-h-[44px]">
+        <span data-eu="Gorde" data-fr="Enregistrer">Gorde</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="pdfReadyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+    <h3 class="font-bold text-lg mb-1">✅ <span data-eu="PDFa prest dago" data-fr="PDF prêt">PDFa prest dago</span></h3>
+    <p id="pdfReadyName" class="text-xs text-gray-500 mb-4 break-all"></p>
+    <div class="space-y-2">
+      <button id="pdfShareBtn" class="w-full px-4 py-3 bg-indigo-600 text-white font-bold rounded-lg min-h-[48px]">📤 <span data-eu="Partekatu / Fitxategietan gorde" data-fr="Partager / Enregistrer dans Fichiers">Partekatu / Fitxategietan gorde</span></button>
+      <button id="pdfOpenBtn" class="w-full px-4 py-3 bg-emerald-600 text-white font-bold rounded-lg min-h-[48px]">👁️ <span data-eu="Ireki" data-fr="Ouvrir">Ireki</span></button>
+      <button id="pdfDownloadBtn" class="w-full px-4 py-3 bg-white border-2 border-gray-300 text-gray-800 font-bold rounded-lg min-h-[48px]">⬇️ <span data-eu="Deskargatu" data-fr="Télécharger">Deskargatu</span></button>
+    </div>
+    <div class="mt-4 text-right">
+      <button onclick="closePdfReady()" class="text-sm text-gray-500 hover:text-gray-700 min-h-[44px] px-2"><span data-eu="Itxi" data-fr="Fermer">Itxi</span></button>
     </div>
   </div>
 </div>
@@ -390,6 +427,10 @@
         <span class="text-2xl">✍️</span>
         <span class="text-lg" data-eu="Egunerokoaren erregistroa" data-fr="Registre quotidien">Egunerokoaren erregistroa</span>
       </button>
+
+      <div id="homeFilterBar" class="mb-3 hidden">
+        <div id="classChips" class="flex gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
 
       <div id="homeStudentList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       <div id="homeEmpty" class="hidden bg-white rounded-lg shadow p-8 text-center">
@@ -606,6 +647,13 @@
               </button>
             </legend>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="interventionsGroupForm"></div>
+            <div class="mt-3 pt-3 border-t">
+              <div class="text-sm font-semibold mb-2" data-eu="Funtzionatu al du?" data-fr="Cela a-t-il fonctionné ?">Funtzionatu al du?</div>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="workedYesBtn" class="worked-btn min-h-[48px] rounded-lg border-2 font-bold text-base">✅ <span data-eu="Bai" data-fr="Oui">Bai</span></button>
+                <button type="button" id="workedNoBtn" class="worked-btn min-h-[48px] rounded-lg border-2 font-bold text-base">❌ <span data-eu="Ez" data-fr="Non">Ez</span></button>
+              </div>
+            </div>
           </fieldset>
 
           <div>
@@ -777,7 +825,7 @@
 /* =================================================================
    VERSIONADO Y MIGRACIÓN
    ================================================================= */
-const APP_VERSION = '6.3.0';
+const APP_VERSION = '6.4.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
 
@@ -934,6 +982,19 @@ const I18N = {
     wizardFinish: "Amaitu",
     studentNamePlaceholder: "Ikaslearen izena",
     filterStudent: "Ikaslea",
+    workedYes: "Funtzionatu du",
+    workedNo: "Ez du funtzionatu",
+    classAll: "Guztiak",
+    classNone: "Klaserik gabe",
+    classModalTitle: "Ikaslearen klasea",
+    classPlaceholder: "adib. 3. maila A",
+    courseLabel: "Ikasturtea",
+    classHistoryLabel: "Klaseak",
+    noStudentsInClass: "Ez dago ikaslerik klase honetan.",
+    courseEmpty: "Idatzi ikasturtearen izena.",
+    courseSame: "Ikasturte hori aktibo dago jada. Idatzi beste izen bat (adib. {next}).",
+    courseConfirm: "Ikasturte berria: {course}\n\nKlase berriak ikasturte horri lotuko zaizkio. Aurreko ikasturteetako datuak (klaseak, gorabeherak, fitxategiak) ez dira galduko.\n\nJarraitu?",
+    prevPlaceholder: "Aurrekoa: {prev}",
     fileCorrupted: "Fitxategia hondatuta dago edo ezin da ireki.",
     fileUnavailable: "Fitxategia ez dago erabilgarri."
   },
@@ -1050,6 +1111,19 @@ const I18N = {
     wizardFinish: "Terminer",
     studentNamePlaceholder: "Nom de l'élève",
     filterStudent: "Élève",
+    workedYes: "A fonctionné",
+    workedNo: "N'a pas fonctionné",
+    classAll: "Tous",
+    classNone: "Sans classe",
+    classModalTitle: "Classe de l'élève",
+    classPlaceholder: "ex. CE2 A",
+    courseLabel: "Année scolaire",
+    classHistoryLabel: "Classes",
+    noStudentsInClass: "Aucun élève dans cette classe.",
+    courseEmpty: "Saisissez le nom de l'année scolaire.",
+    courseSame: "Cette année scolaire est déjà active. Saisissez un autre nom (ex. {next}).",
+    courseConfirm: "Nouvelle année scolaire : {course}\n\nLes nouvelles classes seront rattachées à cette année. Les données des années précédentes (classes, incidents, fichiers) sont conservées.\n\nContinuer ?",
+    prevPlaceholder: "Avant : {prev}",
     fileCorrupted: "Fichier corrompu ou illisible.",
     fileUnavailable: "Fichier indisponible."
   }
@@ -1316,7 +1390,10 @@ function buildCheckboxes() {
   ];
 
   groups.forEach(g => {
-    const items = customOptions[lang][g.key];
+    const baseItems = customOptions[lang][g.key];
+    const extra = (editOrphans[g.key] || []).filter(v => !baseItems.includes(v));
+    const items = [...baseItems, ...extra];
+    const baseLen = baseItems.length;
     const container = document.getElementById(g.idForm);
     if (!container) return;
     const checked = new Set();
@@ -1353,7 +1430,7 @@ function buildCheckboxes() {
           buildCheckboxes();
         }
       };
-      w.appendChild(delBtn);
+      if (i < baseLen) w.appendChild(delBtn);   // los valores extra no se borran de las listas
       container.appendChild(w);
     });
   });
@@ -1391,23 +1468,32 @@ function renderSubjectsSelect() {
 /* =================================================================
    SLOTS
    ================================================================= */
+let editSlotExtra = null;   // franja de la incidencia en edición, aunque ya no esté en el horario actual
 function renderSlotsSelect() {
   const sel = document.getElementById('incidentSlot');
   if (!sel) return;
   const prev = sel.value;
   sel.innerHTML = '<option value="">--</option>';
-  if (!slots || slots.length === 0) {
+  const list = slots || [];
+  if (list.length === 0 && !editSlotExtra) {
     const o = document.createElement('option');
     o.value = ''; o.disabled = true; o.textContent = t('noScheduleOption');
     sel.appendChild(o); return;
   }
-  slots.forEach(s => {
+  list.forEach(s => {
     const o = document.createElement('option');
     o.value = slotsToValue(s);
     o.textContent = `${s.start} - ${s.end} — ${blockLabel(s.block)}`;
     sel.appendChild(o);
   });
-  if (prev && slots.some(s => slotsToValue(s) === prev)) sel.value = prev;
+  if (editSlotExtra && !list.some(s => slotsToValue(s) === editSlotExtra)) {
+    const sl = valueToSlot(editSlotExtra);
+    const o = document.createElement('option');
+    o.value = editSlotExtra;
+    o.textContent = `${sl.start} - ${sl.end} — ${blockLabel(sl.block)}`;
+    sel.appendChild(o);
+  }
+  if (prev && Array.from(sel.options).some(o => o.value === prev)) sel.value = prev;
 }
 
 function renderSlotList() {
@@ -1603,7 +1689,11 @@ function addStudentFromHome() {
   students.push(v);
   students.sort((a,b)=>a.localeCompare(b));
   saveStudents();
-  renderStudentsSelect(); renderHomeStudents();
+  renderStudentsSelect();
+  homeCourse = currentCourse;
+  renderHomeStudents();
+  const prefill = (homeClassFilter !== '__all__' && homeClassFilter !== '__none__') ? homeClassFilter : '';
+  openClassModal(v, currentCourse, prefill);
 }
 
 document.getElementById('addSubjectBtn').onclick = () => {
@@ -1621,6 +1711,123 @@ document.getElementById('newSubject').addEventListener('keypress', e => {
 });
 
 /* =================================================================
+   CLASES Y CURSOS (histórico por ikasturte)
+   studentClasses = { "Nombre": { "2025-2026": "CE2", "2026-2027": "CM1" } }
+   Los incidentes NO se tocan: su curso se deduce de la fecha.
+   ================================================================= */
+const KEY_STUDENT_CLASSES = 'aesh_student_classes_v1';
+const KEY_CURRENT_COURSE = 'aesh_current_course_v1';
+let studentClasses = JSON.parse(localStorage.getItem(KEY_STUDENT_CLASSES) || '{}');
+
+function courseOfDate(dateStr) {
+  const y = parseInt(dateStr.slice(0,4), 10), m = parseInt(dateStr.slice(5,7), 10);
+  const start = m >= 9 ? y : y - 1;
+  return `${start}-${start + 1}`;
+}
+function todayCourse() {
+  const d = new Date();
+  const start = d.getMonth() >= 8 ? d.getFullYear() : d.getFullYear() - 1;
+  return `${start}-${start + 1}`;
+}
+const currentCourse = todayCourse();   // se calcula solo por la fecha (septiembre = curso nuevo)
+let homeCourse = currentCourse;
+let homeClassFilter = '__all__';
+
+function saveStudentClasses() { localStorage.setItem(KEY_STUDENT_CLASSES, JSON.stringify(studentClasses)); }
+
+function getStudentClass(name, course) {
+  const o = studentClasses[name];
+  if (!o) return '';
+  const keys = Object.keys(o).filter(k => k <= course).sort();
+  return keys.length ? (o[keys[keys.length - 1]] || '') : '';
+}
+function setStudentClass(name, course, cls) {
+  cls = (cls || '').trim();
+  if (!cls && !studentClasses[name]) return;
+  if (!studentClasses[name]) studentClasses[name] = {};
+  studentClasses[name][course] = cls;   // los cursos anteriores quedan intactos
+  saveStudentClasses();
+}
+const cmpNum = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+function getClassesForCourse(course) {
+  const set = new Set();
+  students.forEach(s => { const c = getStudentClass(s, course); if (c) set.add(c); });
+  return [...set].sort(cmpNum);
+}
+function getAllClassNames() {
+  const set = new Set();
+  Object.values(studentClasses).forEach(o => Object.values(o || {}).forEach(c => set.add(c)));
+  return [...set].sort(cmpNum);
+}
+function refreshClassSuggestions() {
+  document.getElementById('classSuggestions').innerHTML =
+    getAllClassNames().map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
+}
+function classHistoryText(name) {
+  const o = studentClasses[name] || {};
+  return Object.keys(o).sort().reverse().filter(c => o[c])
+    .map(c => `${escapeHtml(c)}: <b>${escapeHtml(o[c])}</b>`).join(' · ');
+}
+function matchesHomeFilter(name) {
+  if (homeClassFilter === '__all__') return true;
+  const cls = getStudentClass(name, homeCourse);
+  if (homeClassFilter === '__none__') return !cls;
+  return cls === homeClassFilter;
+}
+
+/* ---------- filtro (cursos + chips de clase) ---------- */
+function renderHomeFilter() {
+  homeCourse = currentCourse;
+  const classes = getClassesForCourse(homeCourse);
+  const noneCount = students.filter(s => !getStudentClass(s, homeCourse)).length;
+  if (homeClassFilter !== '__all__' && homeClassFilter !== '__none__' && !classes.includes(homeClassFilter)) homeClassFilter = '__all__';
+  if (homeClassFilter === '__none__' && noneCount === 0) homeClassFilter = '__all__';
+
+  const chip = (value, label, count) => {
+    const active = homeClassFilter === value;
+    return `<button type="button" data-filter="${escapeHtml(value)}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1 min-h-[40px] text-sm font-semibold border ${active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 hover:bg-gray-50'}">${escapeHtml(label)} <span class="${active ? 'text-indigo-200' : 'text-gray-400'} font-normal">${count}</span></button>`;
+  };
+  let html = chip('__all__', t('classAll'), students.length);
+  classes.forEach(c => { html += chip(c, c, students.filter(s => getStudentClass(s, homeCourse) === c).length); });
+  if (noneCount > 0 && classes.length > 0) html += chip('__none__', t('classNone'), noneCount);
+  document.getElementById('classChips').innerHTML = html;
+}
+document.getElementById('classChips').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-filter]');
+  if (!b) return;
+  homeClassFilter = b.dataset.filter;
+  renderHomeStudents();
+});
+
+/* ---------- modal: clase de un alumno ---------- */
+let classModalStudent = null, classModalCourse = null;
+function openClassModal(name, course, prefill) {
+  classModalStudent = name; classModalCourse = course;
+  document.getElementById('classModalTitle').textContent = `${t('classModalTitle')}: ${name}`;
+  document.getElementById('classModalCourse').textContent = '';
+  const inp = document.getElementById('classModalInput');
+  inp.placeholder = t('classPlaceholder');
+  inp.value = prefill !== undefined ? prefill : getStudentClass(name, course);
+  refreshClassSuggestions();
+  const m = document.getElementById('classModal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+  setTimeout(() => inp.focus(), 50);
+}
+function closeClassModal() {
+  const m = document.getElementById('classModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+}
+function saveClassModal() {
+  if (classModalStudent) setStudentClass(classModalStudent, classModalCourse, document.getElementById('classModalInput').value);
+  closeClassModal();
+  renderHomeStudents();
+  if (activeStudent && currentView === 'student') renderStudentDetail();
+}
+document.getElementById('classModalInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') { e.preventDefault(); saveClassModal(); }
+});
+
+/* =================================================================
    HOME: TARJETAS DE ALUMNOS
    ================================================================= */
 let editModeStudents = false;
@@ -1634,19 +1841,33 @@ document.getElementById('editStudentsBtn').onclick = () => {
 function renderHomeStudents() {
   const list = document.getElementById('homeStudentList');
   const empty = document.getElementById('homeEmpty');
+  const bar = document.getElementById('homeFilterBar');
   if (!list) return;
   if (students.length === 0) {
     list.innerHTML = '';
+    bar.classList.add('hidden');
     empty.classList.remove('hidden');
     return;
   }
+  bar.classList.remove('hidden');
   empty.classList.add('hidden');
+  renderHomeFilter();
   list.innerHTML = '';
 
-  students.forEach(s => {
+  const visible = students.filter(matchesHomeFilter);
+  if (visible.length === 0) {
+    list.innerHTML = `<div class="col-span-full bg-white rounded-lg shadow p-4 text-center text-gray-500">${t('noStudentsInClass')}</div>`;
+    return;
+  }
+
+  visible.forEach(s => {
     const inc = incidents.filter(i => i.student === s);
     const lastDate = inc.length ? inc.sort((a,b)=> b.date.localeCompare(a.date))[0].date : '';
     const filesCount = getAttachmentsForStudent(s).length;
+    const cls = getStudentClass(s, homeCourse);
+    const clsBadge = cls
+      ? `<span class="shrink-0 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded px-2 py-0.5">${escapeHtml(cls)}</span>`
+      : `<span class="shrink-0 bg-gray-100 text-gray-500 text-xs rounded px-2 py-0.5">${t('classNone')}</span>`;
     const card = document.createElement('div');
     card.className = 'student-card bg-white rounded-lg shadow p-4 relative';
     card.innerHTML = `
@@ -1655,21 +1876,30 @@ function renderHomeStudents() {
           ${escapeHtml(s.charAt(0).toUpperCase())}
         </div>
         <div class="flex-1 min-w-0">
-          <div class="font-bold text-gray-900 truncate">${escapeHtml(s)}</div>
+          <div class="flex items-center gap-2">
+            <div class="font-bold text-gray-900 truncate min-w-0">${escapeHtml(s)}</div>
+            ${clsBadge}
+          </div>
           <div class="text-xs text-gray-500 mt-0.5">${inc.length} ${incidentsLabel(inc.length)}${filesCount > 0 ? ` · 📎 ${filesCount}` : ''}</div>
           <div class="text-xs text-gray-400 mt-0.5">${lastDate ? `${t('lastIncident')}: ${lastDate}` : t('noIncidentsYet')}</div>
         </div>
-        ${editModeStudents ? `<button class="del-student-btn icon-btn text-red-600 hover:text-red-800 font-bold text-lg" data-name="${escapeHtml(s)}">✕</button>` : ''}
+        ${editModeStudents ? `<div class="flex shrink-0">
+          <button class="class-student-btn icon-btn text-lg" title="${escapeHtml(t('classModalTitle'))}">🏫</button>
+          <button class="del-student-btn icon-btn text-red-600 hover:text-red-800 font-bold text-lg" data-name="${escapeHtml(s)}">✕</button>
+        </div>` : ''}
       </div>
     `;
     if (!editModeStudents) {
       card.onclick = () => openStudentDetail(s);
     } else {
-      const del = card.querySelector('.del-student-btn');
-      del.onclick = (e) => {
+      card.querySelector('.class-student-btn').onclick = (e) => {
+        e.stopPropagation();
+        openClassModal(s, homeCourse);
+      };
+      card.querySelector('.del-student-btn').onclick = (e) => {
         e.stopPropagation();
         if (confirm(t('confirmDeleteStudent'))) {
-          students = students.filter(x => x !== s);
+          students = students.filter(x => x !== s);   // clases e incidentes se conservan
           saveStudents();
           if (activeStudent === s) setActiveStudent(null);
           renderStudentsSelect(); renderHomeStudents();
@@ -1834,6 +2064,8 @@ function renderStudentDetail() {
   const files = getAttachmentsForStudent(activeStudent).length;
   const last = inc.length ? inc.sort((a,b)=> b.date.localeCompare(a.date))[0].date.slice(0,10) : '';
   metaEl.innerHTML = `${inc.length} ${incidentsLabel(inc.length)} · 📎 ${files} · ${last ? t('lastIncident') + ': ' + last : t('noIncidentsYet')}`;
+  const clsHist = classHistoryText(activeStudent);
+  if (clsHist) metaEl.innerHTML += `<div class="mt-1">🏫 ${clsHist}</div>`;
 
   if (currentSubtab === 'history') renderHistory();
   else if (currentSubtab === 'charts') renderCharts();
@@ -1916,7 +2148,8 @@ document.getElementById('incidentForm').onsubmit = (e) => {
     date, student, subject,
     slotRange: `${slot.start}-${slot.end}`,
     block: slot.block,
-    triggers, behaviors, interventions, notes
+    triggers, behaviors, interventions, notes,
+    worked: incidentWorked
   };
 
   if (editingIncidentId) {
@@ -1942,8 +2175,30 @@ document.getElementById('incidentForm').onsubmit = (e) => {
   }
 };
 
+let editOrphans = { triggers: [], behaviors: [], interventions: [] };
+let incidentWorked = null;   // true = funtzionatu du, false = ez du funtzionatu, null = sin marcar
+function updateWorkedButtons() {
+  const yes = document.getElementById('workedYesBtn'), no = document.getElementById('workedNoBtn');
+  const on = { yes: ['bg-green-600','text-white','border-green-600'], no: ['bg-red-600','text-white','border-red-600'] };
+  const off = ['bg-white','text-gray-700','border-gray-300'];
+  [[yes,'yes',true],[no,'no',false]].forEach(([btn,k,val]) => {
+    btn.classList.remove(...on[k], ...off);
+    btn.classList.add(...(incidentWorked === val ? on[k] : off));
+    btn.setAttribute('aria-pressed', incidentWorked === val ? 'true' : 'false');
+  });
+}
+function setWorked(val) {
+  incidentWorked = (incidentWorked === val) ? null : val;   // pulsar de nuevo = desmarcar
+  updateWorkedButtons();
+}
+document.getElementById('workedYesBtn').onclick = () => setWorked(true);
+document.getElementById('workedNoBtn').onclick = () => setWorked(false);
+
 function resetForm() {
+  editSlotExtra = null;
+  editOrphans = { triggers: [], behaviors: [], interventions: [] };
   document.getElementById('incidentForm').reset();
+  incidentWorked = null; updateWorkedButtons();
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('incidentDate').value = now.toISOString().slice(0,16);
@@ -1976,7 +2231,9 @@ function editIncident(id) {
   // ✅ FIX 1: asignar editingIncidentId DESPUÉS de openIncidentForm
   editingIncidentId = inc.id;
   
-  document.getElementById('incidentDate').value = inc.date;
+  const dateInput = document.getElementById('incidentDate');
+  dateInput.value = inc.date;
+  if (!dateInput.value && inc.date) dateInput.value = inc.date.slice(0,10) + 'T00:00';   // fechas antiguas sin hora
   
   // ✅ FIX 2: asegurar que la materia existe en subjects antes de asignar
   if (inc.subject && !subjects.includes(inc.subject)) {
@@ -1989,9 +2246,16 @@ function editIncident(id) {
   document.getElementById('incidentSubject').value = inc.subject || '';
   
   const slotVal = `${inc.slotRange}|${inc.block}`;
+  editSlotExtra = slotVal;
+  renderSlotsSelect();
   document.getElementById('incidentSlot').value = slotVal;
 
   document.querySelectorAll('#incidentForm input[type=checkbox]').forEach(c => c.checked = false);
+  [['triggers','triggers'],['behaviors','behaviors'],['interventions','interventions']].forEach(([k]) => {
+    const known = customOptions[lang][k].map(x => x.trim());
+    editOrphans[k] = (inc[k] || []).filter(v => !known.includes(String(v).trim()));
+  });
+  buildCheckboxes();
   const markChecks = (name, vals) => {
     (vals || []).forEach(v => {
       const cb = Array.from(document.querySelectorAll(`#incidentForm input[name="${name}"]`))
@@ -2003,6 +2267,8 @@ function editIncident(id) {
   markChecks('behavior', inc.behaviors);
   markChecks('intervention', inc.interventions);
   document.getElementById('incidentNotes').value = inc.notes || '';
+  incidentWorked = (typeof inc.worked === 'boolean') ? inc.worked : null;
+  updateWorkedButtons();
 
   document.getElementById('cancelEditBtn').classList.remove('hidden');
   const submitBtn = document.querySelector('#incidentForm button[type="submit"]');
@@ -2057,15 +2323,18 @@ function renderHistory() {
       const badgeClass = (hasLink && !hasLocal) ? 'link' : 'pdf';
       attBadgeHtml = `<span class="attachment-badge ${badgeClass}">📎 ${files.length}</span>`;
     }
+    const incCls = getStudentClass(inc.student, courseOfDate(inc.date));
+    const incClassTxt = incCls ? ` · 🏫 ${escapeHtml(incCls)}` : '';
     const row = (label, arr) => arr && arr.length ? `<div class="text-sm mt-1"><span class="font-semibold text-gray-700">${label}:</span> ${arr.map(x=>`<span class="inline-block bg-indigo-100 text-indigo-800 rounded px-2 py-0.5 mr-1 mb-1 text-xs">${escapeHtml(x)}</span>`).join('')}</div>` : '';
     card.innerHTML = `
       <div class="flex justify-between items-start gap-2">
         <div class="flex-1 min-w-0">
-          <div class="font-bold text-indigo-700 text-sm">${escapeHtml(inc.student)}${attBadgeHtml} <span class="text-gray-500 font-normal text-xs">· ${dateStr}</span></div>
+          <div class="font-bold text-indigo-700 text-sm">${escapeHtml(inc.student)}${attBadgeHtml} <span class="text-gray-500 font-normal text-xs">· ${dateStr}${incClassTxt}</span></div>
           <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${inc.slotRange} — ${blockLabel(inc.block)}</div>
           ${row(lang==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
           ${row(lang==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
           ${row(lang==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
+          ${inc.worked === true ? `<div class="text-sm mt-1 font-semibold text-green-700">✅ ${t('workedYes')}</div>` : inc.worked === false ? `<div class="text-sm mt-1 font-semibold text-red-700">❌ ${t('workedNo')}</div>` : ''}
           ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${escapeHtml(inc.notes)}</div>` : ''}
         </div>
         <div class="flex flex-col gap-1 no-print">
@@ -2105,7 +2374,7 @@ document.getElementById('clearFilters').addEventListener('click', () => {
 document.getElementById('exportCsv').addEventListener('click', () => {
   const filtered = getFilteredIncidents();
   if (!filtered.length) return;
-  const header = ['date','student','slotRange','block','subject','triggers','behaviors','interventions','notes'];
+  const header = ['date','student','slotRange','block','subject','triggers','behaviors','interventions','worked','notes'];
   const rows = [header.join(';')];
   filtered.forEach(i => {
     rows.push([
@@ -2113,6 +2382,7 @@ document.getElementById('exportCsv').addEventListener('click', () => {
       (i.triggers||[]).join('|'),
       (i.behaviors||[]).join('|'),
       (i.interventions||[]).join('|'),
+      i.worked === true ? 'yes' : i.worked === false ? 'no' : '',
       (i.notes||'').replace(/[\r\n;]/g,' ')
     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(';'));
   });
@@ -2354,7 +2624,7 @@ function buildTableHTML(filtered, withPageBreak, includeAttachments) {
       ${attCell}
       <div class="pcell pc-erag">${(i.triggers||[]).map(escapeHtml).join(', ')}</div>
       <div class="pcell pc-jok">${(i.behaviors||[]).map(escapeHtml).join(', ')}</div>
-      <div class="pcell pc-esku">${(i.interventions||[]).map(escapeHtml).join(', ')}</div>
+      <div class="pcell pc-esku">${(i.interventions||[]).map(escapeHtml).join(', ')}${i.worked === true ? ' ✅' : i.worked === false ? ' ❌' : ''}</div>
       <div class="pcell pc-ohar">${escapeHtml(i.notes || '')}</div>
     </div>`;
   });
@@ -2511,6 +2781,120 @@ function renderPrintCharts(filtered) {
   });
 }
 
+/* =================================================================
+   PDF EN MÓVIL: se pagina a mano (un lienzo pequeño por página) y se
+   entrega con Compartir / Abrir / Descargar. El PC sigue igual.
+   ================================================================= */
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
+    || window.matchMedia('(pointer: coarse)').matches;
+}
+
+function paginatePrintView(root) {
+  const blocks = [];
+  const push = (el, kind) => {
+    const cs = getComputedStyle(el);
+    const h = el.getBoundingClientRect().height + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+    const newPage = el.id === 'printChartsContainer' || el.id === 'printAnalysisContainer' || el.classList.contains('pdf-attachment-page');
+    blocks.push({ el, kind, h, newPage });
+  };
+  Array.from(root.children).forEach(ch => {
+    if (ch.id === 'printTableContainer') {
+      Array.from(ch.children).forEach(k => push(k, k.classList.contains('header') ? 'header' : (k.classList.contains('prow') ? 'row' : 'other')));
+    } else {
+      push(ch, 'other');
+    }
+  });
+
+  const pageH = root.getBoundingClientRect().width * (287 / 200) * 0.95;   // alto útil de una hoja A4 con márgenes de 5 mm
+  const header = blocks.find(b => b.kind === 'header');
+  const pages = [];
+  let cur = null, curH = 0;
+  blocks.forEach(b => {
+    if (!cur || b.newPage || (curH + b.h > pageH && curH > 0)) {
+      cur = document.createElement('div');
+      cur.className = 'pdf-page';
+      pages.push(cur); curH = 0;
+      if (b.kind === 'row' && header) { cur.appendChild(header.el.cloneNode(true)); curH += header.h; }   // repite la cabecera de la tabla
+    }
+    cur.appendChild(b.el); curH += b.h;
+  });
+  root.innerHTML = '';
+  pages.forEach(pg => root.appendChild(pg));
+  return pages;
+}
+
+function addCanvasPages(pdf, canvas, margin, innerW, innerH) {
+  const pxPage = Math.floor(canvas.width * (innerH / innerW));
+  const n = Math.max(1, Math.ceil(canvas.height / pxPage));
+  for (let i = 0; i < n; i++) {
+    const sliceH = Math.min(pxPage, canvas.height - i * pxPage);
+    const c = document.createElement('canvas');
+    c.width = canvas.width; c.height = sliceH;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(canvas, 0, i * pxPage, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+    pdf.addPage();
+    pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, innerW, sliceH * innerW / canvas.width);
+    c.width = c.height = 0;
+  }
+}
+
+async function buildPdfBlobForMobile(printView) {
+  const pages = paginatePrintView(printView);
+  const margin = 5, innerW = 200, innerH = 287;
+  const opt = (scale) => ({
+    margin,
+    image: { type: 'jpeg', quality: 0.92 },
+    html2canvas: { scale, useCORS: true, logging: false, windowWidth: 900, scrollX: 0, scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  });
+  const render = async (scale) => {
+    const pdf = await html2pdf().set(opt(scale)).from(pages[0]).toPdf().get('pdf');
+    for (let i = 1; i < pages.length; i++) {
+      const canvas = await html2pdf().set(opt(scale)).from(pages[i]).toCanvas().get('canvas');
+      addCanvasPages(pdf, canvas, margin, innerW, innerH);
+      canvas.width = canvas.height = 0;
+    }
+    return pdf.output('blob');
+  };
+  try { return await render(2); }
+  catch (e) { console.warn('PDF: reintento con menor resolución', e); return await render(1); }
+}
+
+let lastPdf = { blob: null, url: null, name: '' };
+function showPdfReady(blob, name) {
+  if (lastPdf.url) URL.revokeObjectURL(lastPdf.url);
+  lastPdf = { blob, url: URL.createObjectURL(blob), name };
+  document.getElementById('pdfReadyName').textContent = name;
+  let canShare = false;
+  try { canShare = !!(navigator.canShare && navigator.canShare({ files: [new File([blob], name, { type: 'application/pdf' })] })); } catch (e) {}
+  document.getElementById('pdfShareBtn').classList.toggle('hidden', !canShare);
+  const m = document.getElementById('pdfReadyModal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closePdfReady() {
+  const m = document.getElementById('pdfReadyModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+}
+document.getElementById('pdfShareBtn').onclick = async () => {
+  if (!lastPdf.blob) return;
+  try {
+    await navigator.share({ files: [new File([lastPdf.blob], lastPdf.name, { type: 'application/pdf' })], title: lastPdf.name });
+  } catch (e) { if (e && e.name !== 'AbortError') console.warn('share', e); }
+};
+document.getElementById('pdfOpenBtn').onclick = () => {
+  if (!lastPdf.url) return;
+  const w = window.open(lastPdf.url, '_blank');
+  if (!w) { const a = document.createElement('a'); a.href = lastPdf.url; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+};
+document.getElementById('pdfDownloadBtn').onclick = () => {
+  if (!lastPdf.url) return;
+  const a = document.createElement('a'); a.href = lastPdf.url; a.download = lastPdf.name;
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
 async function generatePDF(mode) {
   const modal = document.getElementById('pdfModal');
   modal.classList.add('hidden'); modal.classList.remove('flex');
@@ -2539,6 +2923,14 @@ async function generatePDF(mode) {
     printView.innerHTML = buildChartsHTML();
     renderPrintCharts(filtered);
     await new Promise(r => setTimeout(r, 300));
+    printView.querySelectorAll('canvas').forEach(cv => {
+      try {
+        const img = new Image();
+        img.src = cv.toDataURL('image/png');
+        img.style.cssText = 'display:block;width:100%;height:100%;';
+        cv.replaceWith(img);
+      } catch (e) { console.warn('canvas->img', e); }
+    });
     const chartsHtml = printView.innerHTML;
     content += chartsHtml;
     content += buildAnalysisHTML(getCurrentAnalysisHTML());
@@ -2550,14 +2942,20 @@ async function generatePDF(mode) {
 
   printView.innerHTML = meta + content;
 
+  const pdfFilename = `${(activeStudent||'report').replace(/\s+/g,'_')}_${Date.now()}.pdf`;
   try {
-    await html2pdf().set({
-      margin: 5,
-      filename: `${(activeStudent||'report').replace(/\s+/g,'_')}_${Date.now()}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(printView).save();
+    if (isMobileDevice()) {
+      const blob = await buildPdfBlobForMobile(printView);
+      showPdfReady(blob, pdfFilename);
+    } else {
+      await html2pdf().set({
+        margin: 5,
+        filename: pdfFilename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(printView).save();
+    }
   } catch (err) {
     console.error('PDF error:', err);
     alert('Error generando PDF');
@@ -2879,6 +3277,7 @@ document.getElementById('exportBackupBtn').addEventListener('click', async () =>
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     students, subjects, incidents, customOptions, slots,
+    studentClasses, currentCourse,
     attachments: attsCopy,
     title: document.getElementById('mainTitle').value,
     lang
@@ -2933,6 +3332,16 @@ async function mergeBackup(data) {
   });
   students.sort((a,b)=>a.localeCompare(b));
   saveStudents();
+
+  // Clases por curso: se fusionan sin pisar lo que ya existe
+  const inClasses = data.studentClasses || {};
+  Object.keys(inClasses).forEach(n => {
+    Object.keys(inClasses[n] || {}).forEach(c => {
+      if (!studentClasses[n]) studentClasses[n] = {};
+      if (!studentClasses[n][c]) studentClasses[n][c] = inClasses[n][c];
+    });
+  });
+  saveStudentClasses();
 
   (data.subjects || []).forEach(s => {
     if (!subjects.includes(s)) subjects.push(s);
@@ -3033,6 +3442,7 @@ document.getElementById('clearAllConfirmBtn').addEventListener('click', () => {
   const langKeyword = t('clearAllKeyword');
   if (document.getElementById('clearAllConfirmInput').value.trim() !== langKeyword) return;
   students = []; subjects = []; incidents = []; attachments = {}; slots = null;
+  studentClasses = {}; saveStudentClasses(); localStorage.removeItem(KEY_CURRENT_COURSE);
   customOptions = JSON.parse(JSON.stringify(defaultOptions));
   setActiveStudent(null);
   saveStudents(); saveSubjects(); saveIncidents(); saveAttachments(); saveOptions();
