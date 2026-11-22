@@ -3348,10 +3348,52 @@ function openFileViewer(attId) {
   else if (mime === 'application/pdf' && blob) {
     const url = URL.createObjectURL(blob);
     currentViewerBlobUrl = url;
-    const iframe = document.createElement('iframe');
-    iframe.src = url;
-    body.style.background = '#fff';
-    body.appendChild(iframe);
+
+    if (isMobileDevice()) {
+      // Móvil: Chrome no pinta PDFs en un iframe. Se abre directamente fuera del visor.
+      const w = window.open(url, '_blank');
+      if (w) return;   // abierto: no se muestra el modal
+
+      // Si el navegador bloquea la apertura, botones de respaldo
+      body.style.background = '#374151';
+      const wrap = document.createElement('div');
+      wrap.className = 'viewer-fallback';
+      wrap.innerHTML = `<div style="font-size:3rem;">📄</div><p style="word-break:break-all;">${escapeHtml(file.name)}</p>`;
+
+      const mkBtn = (label, bg, onClick) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = label;
+        b.style.cssText = `width:100%;max-width:280px;min-height:48px;padding:12px 24px;border-radius:8px;font-weight:700;color:#fff;background:${bg};`;
+        b.onclick = onClick;
+        return b;
+      };
+
+      const pdfFile = new File([blob], /\.pdf$/i.test(file.name) ? file.name : file.name + '.pdf', { type: 'application/pdf' });
+      let canShare = false;
+      try { canShare = !!(navigator.canShare && navigator.canShare({ files: [pdfFile] })); } catch (e) {}
+
+      if (canShare) {
+        wrap.appendChild(mkBtn('📤 ' + (lang === 'eu' ? 'Ireki / Partekatu' : 'Ouvrir / Partager'), '#4f46e5', async () => {
+          try { await navigator.share({ files: [pdfFile], title: file.name }); }
+          catch (e) { if (e && e.name !== 'AbortError') console.warn('share', e); }
+        }));
+      }
+      wrap.appendChild(mkBtn('👁️ ' + (lang === 'eu' ? 'Ireki' : 'Ouvrir'), '#059669', () => {
+        const w2 = window.open(url, '_blank');
+        if (!w2) { const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+      }));
+      wrap.appendChild(mkBtn('⬇️ ' + t('downloadFile'), '#374151', () => {
+        const a = document.createElement('a'); a.href = url; a.download = pdfFile.name;
+        document.body.appendChild(a); a.click(); a.remove();
+      }));
+      body.appendChild(wrap);
+    } else {
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      body.style.background = '#fff';
+      body.appendChild(iframe);
+    }
   }
   else {
     body.style.background = '#374151';
