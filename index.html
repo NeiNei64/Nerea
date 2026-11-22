@@ -3897,6 +3897,7 @@ let essData = essNormalize(JSON.parse(localStorage.getItem(KEY_ESS) || '{}'));
 let essCourse = null, essAnchor = null;
 const essC = () => essCourse || currentCourse;
 let essLang = localStorage.getItem(KEY_ESS_LANG) || 'eu';
+if (essLang !== 'eu' && essLang !== 'fr') essLang = 'eu';
 let essMode = 'interview', essStep = 0, essLastStudent = null;
 const ESS_LI = { fr: 0, eu: 1, es: 2 };
 const L3 = a => a[ESS_LI[essLang]];
@@ -4023,7 +4024,7 @@ const ESS_Q = {
       o('avant la consigne collective (anticipation)', 'kontsigna kolektiboaren aurretik (aurreikuspena)', 'antes de la consigna colectiva (anticipación)'),
       o('pendant la consigne collective', 'kontsigna kolektiboan zehar', 'durante la consigna colectiva'),
       o('après la consigne collective (relance individuelle)', 'kontsigna kolektiboaren ondoren (banakako birgidatzea)', 'después de la consigna colectiva (relanzamiento individual)')]),
-    Q('but', 'But', 'multi', ['Zein helburu? / Quel but ?', 'Zein helburu?', '¿Con qué fin?'], [
+    Q('but', 'But', 'multi', ['Quel but ?', 'Zein helburu?', '¿Con qué fin?'], [
       o('vérifier la compréhension de la consigne', 'kontsigna ulertu den egiaztatzea', 'comprobar que entiende la consigna'),
       o('reformuler / simplifier la consigne', 'kontsigna berformulatu / sinplifikatzea', 'reformular / simplificar la consigna'),
       o('aider à démarrer la tâche', 'zeregina hasten laguntzea', 'ayudar a empezar la tarea'),
@@ -4037,7 +4038,7 @@ const ESS_Q = {
       o('modèles et exemples', 'ereduak eta adibideak', 'modelos y ejemplos')])
   ],
   d2c: [
-    Q('sur', 'Sur quoi', 'multi', ['Zeri buruz laguntzen duzu?', 'Zeri buruz laguntzen duzu?', '¿En qué ayudas?'], [
+    Q('sur', 'Sur quoi', 'multi', ['Sur quoi aidez-vous ?', 'Zeri buruz laguntzen duzu?', '¿En qué ayudas?'], [
       o('planification de la tâche', 'zereginaren plangintza', 'planificación de la tarea'),
       o('contrôle / vérification du travail', 'lanaren kontrola / egiaztapena', 'control / revisión del trabajo'),
       o('maintien de l\'attention', 'arreta mantentzea', 'mantener la atención'),
@@ -4052,7 +4053,7 @@ const ESS_Q = {
       o('renforcement positif / encouragements', 'indartze positiboa / animoak', 'refuerzo positivo / ánimos')])
   ],
   d3: [
-    Q('sur', 'Sur quoi', 'multi', ['Zeri buruz laguntzen duzu?', 'Zeri buruz laguntzen duzu?', '¿En qué ayudas?'], [
+    Q('sur', 'Sur quoi', 'multi', ['Sur quoi aidez-vous ?', 'Zeri buruz laguntzen duzu?', '¿En qué ayudas?'], [
       o('communication', 'komunikazioa', 'comunicación'),
       o('règles de vie de la classe et de l\'école', 'gelako eta eskolako bizi-arauak', 'normas de convivencia de la clase y la escuela'),
       o('relations avec les pairs / vie sociale', 'kideekiko harremanak / bizitza soziala', 'relación con los compañeros / vida social'),
@@ -4067,11 +4068,11 @@ const ESS_Q = {
       o('tableau de renforcement', 'indartze-taula', 'tabla de refuerzo')])
   ],
   extra: [
-    Q('aut', 'Degré d\'autonomie', 'single', ['Zein autonomia maila du?', 'Zein autonomia maila du?', '¿Qué grado de autonomía tiene?'], [
+    Q('aut', 'Degré d\'autonomie', 'single', ['Quel est son degré d\'autonomie ?', 'Zein autonomia maila du?', '¿Qué grado de autonomía tiene?'], [
       o('autonome pour l\'essentiel, aide ponctuelle', 'autonomoa oro har, noizbehinkako laguntza', 'autónomo en lo esencial, ayuda puntual'),
       o('a besoin d\'une aide régulière', 'laguntza erregularra behar du', 'necesita ayuda regular'),
       o('a besoin d\'une aide constante', 'etengabeko laguntza behar du', 'necesita ayuda constante')]),
-    Q('evo', 'Évolution', 'multi', ['Zer eboluzio ikusi duzu?', 'Zer eboluzio ikusi duzu?', '¿Qué evolución observas?'], [
+    Q('evo', 'Évolution', 'multi', ['Quelle évolution observez-vous ?', 'Zer eboluzio ikusi duzu?', '¿Qué evolución observas?'], [
       o('progrès constatés ces dernières semaines', 'azken asteetan aurrerapenak', 'progresos en las últimas semanas'),
       o('situation stable', 'egoera egonkorra', 'situación estable'),
       o('difficultés accrues récemment', 'zailtasunak areagotu dira', 'más dificultades recientemente'),
@@ -4171,6 +4172,10 @@ function essSummary(list, endMs) {
     if (!defaultOptions.fr[kind].includes(s)) untr.add(s);
     return s;
   };
+  const subjFr = n => {
+    const j = SUBJECTS_EXAMPLE.eu.findIndex(x => x.toLowerCase() === String(n).toLowerCase());
+    return j > -1 ? SUBJECTS_EXAMPLE.fr[j] : n;
+  };
   const dates = list.map(i => i.date.slice(0, 10)).sort();
   const first = dates[0];
   const days = Math.max(1, Math.ceil(((endMs || Date.now()) - new Date(first + 'T00:00:00').getTime()) / 86400000));
@@ -4192,7 +4197,7 @@ function essSummary(list, endMs) {
     slots: cnt(list.map(i => i.slotRange)).slice(0, 3),
     trig: cnt(list.flatMap(i => (i.triggers || []).filter(x => x !== 'Bestelakoa' && x !== 'Autre').map(x => tf('triggers', x)))).slice(0, 3),
     beh: cnt(list.flatMap(i => (i.behaviors || []).map(x => tf('behaviors', x)))).slice(0, 3),
-    subj: cnt(list.filter(i => i.subject).map(i => i.subject)).slice(0, 3),
+    subj: cnt(list.filter(i => i.subject).map(i => subjFr(i.subject))).slice(0, 3),
     good: effs.filter(x => x.r >= 0.7).sort((a, b) => b.r - a.r || b.n - a.n),
     poor: effs.filter(x => x.r < 0.4).sort((a, b) => a.r - b.r),
     untr: [...untr]
@@ -4205,16 +4210,20 @@ function essListFor(k) {
 }
 
 /* ---------- texto en francés ---------- */
+function essSentence(x) {
+  return String(x || '').split(/\n+/).map(l => l.trim()).filter(Boolean)
+    .map(l => /[.!?…]$/.test(l) ? l : l + '.').join(' ');
+}
 function essCompose(k) {
   const e = getEss();
   const lines = [];
   ESS_Q[k].forEach(q => {
     const sel = (e.ans[k + '.' + q.id] || []).map(i => q.opts[i] && q.opts[i][0]).filter(Boolean);
-    if (sel.length) lines.push(q.fr + ' : ' + sel.join(', '));
+    if (sel.length) lines.push(essSentence(q.fr + ' : ' + sel.join(', ')));
   });
-  const f = (e.free[k] || '').trim();
+  const f = essSentence(e.free[k]);
   if (f) lines.push(f);
-  return lines.join('\n');
+  return lines.join(' ');
 }
 function essRegister(k) {
   const s = essSummary(essListFor(k), essEnd());
@@ -4227,7 +4236,7 @@ function essRegister(k) {
   if (s.trig.length) L.push('Déclencheurs fréquents : ' + names(s.trig) + '.');
   if (s.good.length) L.push('Aides qui fonctionnent bien : ' + names(s.good) + '.');
   if (s.poor.length) L.push('Aides peu efficaces : ' + names(s.poor) + '.');
-  return L.join('\n');
+  return L.join(' ');
 }
 function essPositives() {
   const list = essPeriodList(activeStudent);
@@ -4254,11 +4263,11 @@ function essAuto(k) {
   let t = essCompose(k);
   if (k === 'd2c' || k === 'd3') {
     const r = essRegister(k);
-    if (r) t = (t ? t + '\n' : '') + r;
+    if (r) t = (t ? t + ' ' : '') + r;
   }
   if (k === 'extra') {
     const p = essPositives();
-    if (p) t = (t ? t + '\n' : '') + p;
+    if (p) t = (t ? t + ' ' : '') + p;
   }
   return t;
 }
@@ -4349,7 +4358,6 @@ function renderEss(keepScroll) {
         <select onchange="essSetLang(this.value)" class="w-full border rounded px-2 py-2 min-h-[44px] text-sm">
           <option value="eu" ${essLang === 'eu' ? 'selected' : ''}>Euskara</option>
           <option value="fr" ${essLang === 'fr' ? 'selected' : ''}>Français</option>
-          <option value="es" ${essLang === 'es' ? 'selected' : ''}>Español</option>
         </select></div>
       <div><label class="block text-xs font-semibold mb-1">${U('period')}</label>
         <select onchange="essSetPeriod(this.value)" class="w-full border rounded px-2 py-2 min-h-[44px] text-sm">
@@ -4400,7 +4408,7 @@ function renderEss(keepScroll) {
         <div class="p-3">
           <div class="text-xs font-bold" style="color:${f.c}">${escapeHtml(f.dom[0])}</div>
           <div class="font-bold text-sm mb-2" style="color:${f.c}">${escapeHtml(f.hdr[0])}</div>
-          <textarea rows="${Math.min(14, Math.max(6, txt.split('\n').length + 2))}" placeholder="${escapeHtml(f.ph)}" oninput="essManual('${f.k}',this.value)" class="w-full border rounded px-3 py-2 text-sm">${escapeHtml(txt)}</textarea>
+          <textarea rows="${Math.min(14, Math.max(5, Math.ceil(txt.length / 70) + 1))}" placeholder="${escapeHtml(f.ph)}" oninput="essManual('${f.k}',this.value)" class="w-full border rounded px-3 py-2 text-sm">${escapeHtml(txt)}</textarea>
           <div class="flex items-center justify-between mt-1 text-xs">
             <span class="text-amber-700">${man ? '✏️ ' + U('edited') : ''}</span>
             ${man ? `<button type="button" class="underline font-semibold text-indigo-700 min-h-[36px]" onclick="essResetField('${f.k}')">${U('regen')}</button>` : ''}
