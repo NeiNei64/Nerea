@@ -2420,11 +2420,12 @@ function effColor(rate) { return rate >= 0.7 ? EFF_GREEN : (rate >= 0.4 ? EFF_AM
 
 function computeEfficacy(list) {
   const map = {}, monthsSet = new Set();
-  let unrated = 0;
+  let unrated = 0, rated = 0;
   list.forEach(i => {
     const ints = i.interventions || [];
     if (typeof i.worked !== 'boolean') { if (ints.length) unrated++; return; }
     if (!ints.length) return;
+    rated++;
     const ym = (i.date || '').slice(0, 7);
     if (/^\d{4}-\d{2}$/.test(ym)) monthsSet.add(ym);
     ints.forEach(name => {
@@ -2447,12 +2448,12 @@ function computeEfficacy(list) {
       m++; if (m > 12) { m = 1; y++; }
     }
   }
-  return { items, months, unrated };
+  return { items, months, unrated, rated };
 }
 
 function buildEfficacyHTML(list, opts) {
   opts = opts || {};
-  const { items, months, unrated } = computeEfficacy(list);
+  const { items, months, unrated, rated } = computeEfficacy(list);
   if (!items.length) {
     return `<p class="text-sm text-gray-500">${LX(
       'Oraindik ez da esku-hartzerik baloratu. Editatu gorabehera bat eta markatu ✅ Bai edo ❌ Ez.',
@@ -2462,7 +2463,8 @@ function buildEfficacyHTML(list, opts) {
   const pool = items.filter(x => x.n >= 3).length ? items.filter(x => x.n >= 3) : items;
   const best = pool[0], worst = pool[pool.length - 1];
 
-  let html = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;font-size:12px;font-weight:600;">`;
+  const progress = `<div style="font-size:12px;color:#4b5563;margin-bottom:8px;">📝 ${LX('Baloratutako gorabeherak','Incidents évalués')}: <b>${rated}/${rated + unrated}</b>${unrated ? ` — <span style="color:#b45309;">${LX(`${unrated} falta dira (editatu eta ✅/❌ markatu)`, `${unrated} restant(s) (modifiez et marquez ✅/❌)`)}</span>` : ''}</div>`;
+  let html = progress + `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;font-size:12px;font-weight:600;">`;
   html += `<span style="background:#dcfce7;color:#166534;border-radius:999px;padding:4px 12px;">👍 ${escapeHtml(best.name)} · ${pct(best.rate)}%</span>`;
   if (worst !== best && worst.rate < 0.5) {
     html += `<span style="background:#fee2e2;color:#991b1b;border-radius:999px;padding:4px 12px;">👎 ${escapeHtml(worst.name)} · ${pct(worst.rate)}%</span>`;
@@ -2511,7 +2513,7 @@ function buildEfficacyHTML(list, opts) {
   </div>
   <p style="font-size:10px;color:#9ca3af;margin-top:6px;">${LX(
     'Gorabehera batean esku-hartze bat baino gehiago badago, emaitza guztiei esleitzen zaie. Zenbakiak: funtzionatu duena / guztira.',
-    'Si un incident a plusieurs interventions, le résultat est attribué à chacune. Chiffres : réussites / total.')}${unrated ? ' ' + LX(`${unrated} gorabehera baloratu gabe.`, `${unrated} incident(s) non évalué(s).`) : ''}</p>`;
+    'Si un incident a plusieurs interventions, le résultat est attribué à chacune. Chiffres : réussites / total.')}</p>`;
   return html;
 }
 
@@ -2918,13 +2920,15 @@ function paginatePrintView(root) {
     const cs = getComputedStyle(el);
     const h = el.getBoundingClientRect().height + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
     const newPage = el.id === 'printChartsContainer' || el.id === 'printEfficacyContainer' || el.id === 'printAnalysisContainer' || el.classList.contains('pdf-attachment-page');
+    // La paginación es manual: se quita el salto CSS para que html2pdf no añada una página en blanco
+    el.style.pageBreakBefore = ''; el.style.breakBefore = '';
     blocks.push({ el, kind, h, newPage });
   };
-  Array.from(root.children).forEach(ch => {
+  Array.from(root.children).forEach((ch, idx) => {
     if (ch.id === 'printTableContainer') {
       Array.from(ch.children).forEach(k => push(k, k.classList.contains('header') ? 'header' : (k.classList.contains('prow') ? 'row' : 'other')));
     } else {
-      push(ch, 'other');
+      push(ch, (idx === 0 && !ch.id && ch.classList.contains('text-center')) ? 'meta' : 'other');
     }
   });
 
@@ -2933,13 +2937,15 @@ function paginatePrintView(root) {
   const pages = [];
   let cur = null, curH = 0;
   blocks.forEach(b => {
-    if (!cur || b.newPage || (curH + b.h > pageH && curH > 0)) {
+    const hasContent = cur && cur.dataset.hasContent === '1';
+    if (!cur || (b.newPage && hasContent) || (curH + b.h > pageH && curH > 0)) {
       cur = document.createElement('div');
       cur.className = 'pdf-page';
       pages.push(cur); curH = 0;
       if (b.kind === 'row' && header) { cur.appendChild(header.el.cloneNode(true)); curH += header.h; }   // repite la cabecera de la tabla
     }
     cur.appendChild(b.el); curH += b.h;
+    if (b.kind !== 'meta') cur.dataset.hasContent = '1';   // la cabecera del informe no cuenta como página propia
   });
   root.innerHTML = '';
   pages.forEach(pg => root.appendChild(pg));
@@ -2968,8 +2974,9 @@ async function buildPdfBlobForMobile(printView) {
   const opt = (scale) => ({
     margin,
     image: { type: 'jpeg', quality: 0.92 },
-    html2canvas: { scale, useCORS: true, logging: false, windowWidth: 900, scrollX: 0, scrollY: 0 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas: { scale, useCORS: true, logging: false, windowWidth: 756, scrollX: 0, scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: [] }   // los saltos de página ya están hechos a mano
   });
   const render = async (scale) => {
     const pdf = await html2pdf().set(opt(scale)).from(pages[0]).toPdf().get('pdf');
