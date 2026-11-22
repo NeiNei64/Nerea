@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nereapp-cache-v4';
+const CACHE_NAME = 'nereapp-cache-v5';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -52,7 +52,7 @@ self.addEventListener('fetch', (event) => {
   // Navegaciones: red primero, caché solo si no hay conexión
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(async () => {
+      fetch(req, { cache: 'no-store' }).catch(async () => {
         const cached = await caches.match('./');
         return cached || new Response('Offline', { status: 503 });
       })
