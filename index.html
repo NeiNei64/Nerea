@@ -527,6 +527,10 @@
             </div>
           </div>
           <div class="bg-white rounded-lg shadow p-3 mb-3">
+            <h4 class="font-bold text-sm text-gray-800 mb-2">🎯 <span data-eu="Zerk funtzionatzen du?" data-fr="Qu'est-ce qui fonctionne ?">Zerk funtzionatzen du?</span></h4>
+            <div id="efficacyBody"></div>
+          </div>
+          <div class="bg-white rounded-lg shadow p-3 mb-3">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 class="text-center font-semibold text-sm text-gray-700 mb-2" data-eu="Gorabeherak denboran zehar" data-fr="Incidents dans le temps">Gorabeherak denboran zehar</h4>
@@ -982,6 +986,7 @@ const I18N = {
     wizardFinish: "Amaitu",
     studentNamePlaceholder: "Ikaslearen izena",
     filterStudent: "Ikaslea",
+    backupUpdated: "Lehendik zeuden {n} gorabehera eguneratu dira (adib. esku-hartzeak funtzionatu duen ala ez).",
     workedYes: "Funtzionatu du",
     workedNo: "Ez du funtzionatu",
     classAll: "Guztiak",
@@ -1111,6 +1116,7 @@ const I18N = {
     wizardFinish: "Terminer",
     studentNamePlaceholder: "Nom de l'élève",
     filterStudent: "Élève",
+    backupUpdated: "{n} incidents existants ont été mis à jour (ex. si l'intervention a fonctionné ou non).",
     workedYes: "A fonctionné",
     workedNo: "N'a pas fonctionné",
     classAll: "Tous",
@@ -2149,7 +2155,8 @@ document.getElementById('incidentForm').onsubmit = (e) => {
     slotRange: `${slot.start}-${slot.end}`,
     block: slot.block,
     triggers, behaviors, interventions, notes,
-    worked: incidentWorked
+    worked: incidentWorked,
+    updatedAt: Date.now()
   };
 
   if (editingIncidentId) {
@@ -2403,6 +2410,119 @@ function destroyCharts() {
   myChart = mySlotChart = myBlockChart = mySubjectChart = null;
 }
 
+/* =================================================================
+   ESKU-HARTZEEN EFIKAZIA: qué intervenciones funcionan y cuáles no
+   (incidencias con ✅ / ❌; las que no se han marcado no cuentan)
+   ================================================================= */
+const LX = (eu, fr) => lang === 'eu' ? eu : fr;
+const EFF_GREEN = '#16a34a', EFF_AMBER = '#d97706', EFF_RED = '#dc2626';
+function effColor(rate) { return rate >= 0.7 ? EFF_GREEN : (rate >= 0.4 ? EFF_AMBER : EFF_RED); }
+
+function computeEfficacy(list) {
+  const map = {}, monthsSet = new Set();
+  let unrated = 0;
+  list.forEach(i => {
+    const ints = i.interventions || [];
+    if (typeof i.worked !== 'boolean') { if (ints.length) unrated++; return; }
+    if (!ints.length) return;
+    const ym = (i.date || '').slice(0, 7);
+    if (/^\d{4}-\d{2}$/.test(ym)) monthsSet.add(ym);
+    ints.forEach(name => {
+      const e = map[name] || (map[name] = { name, yes: 0, no: 0, months: {} });
+      const m = e.months[ym] || (e.months[ym] = { yes: 0, no: 0 });
+      if (i.worked) { e.yes++; m.yes++; } else { e.no++; m.no++; }
+    });
+  });
+  const solid = x => (x.n >= 3 ? 1 : 0);   // con muy pocos datos no se puede fiar uno del porcentaje
+  const items = Object.values(map)
+    .map(e => ({ ...e, n: e.yes + e.no, rate: e.yes / (e.yes + e.no) }))
+    .sort((a, b) => solid(b) - solid(a) || b.rate - a.rate || b.n - a.n || a.name.localeCompare(b.name));
+  const months = [];
+  if (monthsSet.size) {
+    const sorted = [...monthsSet].sort();
+    let [y, m] = sorted[0].split('-').map(Number);
+    const [ey, em] = sorted[sorted.length - 1].split('-').map(Number);
+    while (y < ey || (y === ey && m <= em)) {
+      months.push(`${y}-${String(m).padStart(2, '0')}`);
+      m++; if (m > 12) { m = 1; y++; }
+    }
+  }
+  return { items, months, unrated };
+}
+
+function buildEfficacyHTML(list, opts) {
+  opts = opts || {};
+  const { items, months, unrated } = computeEfficacy(list);
+  if (!items.length) {
+    return `<p class="text-sm text-gray-500">${LX(
+      'Oraindik ez da esku-hartzerik baloratu. Editatu gorabehera bat eta markatu ✅ Bai edo ❌ Ez.',
+      'Aucune intervention évaluée pour le moment. Modifiez un incident et marquez ✅ Oui ou ❌ Non.')}</p>`;
+  }
+  const pct = r => Math.round(r * 100);
+  const pool = items.filter(x => x.n >= 3).length ? items.filter(x => x.n >= 3) : items;
+  const best = pool[0], worst = pool[pool.length - 1];
+
+  let html = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;font-size:12px;font-weight:600;">`;
+  html += `<span style="background:#dcfce7;color:#166534;border-radius:999px;padding:4px 12px;">👍 ${escapeHtml(best.name)} · ${pct(best.rate)}%</span>`;
+  if (worst !== best && worst.rate < 0.5) {
+    html += `<span style="background:#fee2e2;color:#991b1b;border-radius:999px;padding:4px 12px;">👎 ${escapeHtml(worst.name)} · ${pct(worst.rate)}%</span>`;
+  }
+  html += `</div>`;
+
+  // Ranking: de lo que mejor funciona a lo que peor
+  html += `<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">${LX('Sailkapena','Classement')}</div>`;
+  items.forEach(e => {
+    const c = effColor(e.rate), low = e.n < 3;
+    html += `<div style="margin-bottom:8px;${low ? 'opacity:.65;' : ''}">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;">
+        <span style="font-weight:600;color:#1f2937;min-width:0;overflow-wrap:anywhere;">${escapeHtml(e.name)}${low ? ` <span style="font-weight:400;color:#9ca3af;">(${LX('datu gutxi','peu de données')})</span>` : ''}</span>
+        <span style="font-weight:700;color:${c};white-space:nowrap;">${pct(e.rate)}% · ${e.yes}/${e.n}</span>
+      </div>
+      <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:#e5e7eb;margin-top:2px;">
+        <div style="width:${e.yes / e.n * 100}%;background:${EFF_GREEN};"></div>
+        <div style="width:${e.no / e.n * 100}%;background:${EFF_RED};"></div>
+      </div>
+    </div>`;
+  });
+
+  // Evolución en el tiempo: una fila por intervención, una columna por mes
+  const shown = opts.maxMonths ? months.slice(-opts.maxMonths) : months;
+  if (shown.length) {
+    html += `<div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;">${LX('Denboran zehar (hilabeteka)','Au fil du temps (par mois)')}</div>`;
+    html += `<div style="overflow-x:auto;"><table style="border-collapse:separate;border-spacing:2px;font-size:11px;">`;
+    html += `<thead><tr><th></th>${shown.map(ym => `<th style="font-weight:600;color:#6b7280;text-align:center;padding:0 2px;">${ym.slice(5)}/${ym.slice(2, 4)}</th>`).join('')}</tr></thead><tbody>`;
+    items.forEach(e => {
+      html += `<tr><td style="position:sticky;left:0;background:#fff;z-index:1;font-weight:600;color:#1f2937;max-width:120px;min-width:90px;padding-right:4px;overflow-wrap:anywhere;">${escapeHtml(e.name)}</td>`;
+      shown.forEach(ym => {
+        const m = e.months[ym];
+        if (!m) { html += `<td style="background:#f3f4f6;color:#9ca3af;text-align:center;min-width:42px;height:30px;border-radius:4px;">·</td>`; return; }
+        const n = m.yes + m.no;
+        html += `<td style="background:${effColor(m.yes / n)};color:#fff;text-align:center;min-width:42px;height:30px;border-radius:4px;font-weight:700;">${m.yes}/${n}</td>`;
+      });
+      html += `</tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  html += `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:11px;color:#4b5563;">
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${EFF_GREEN};"></span> ≥ 70% ${LX('ondo','bien')}</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${EFF_AMBER};"></span> 40–69% ${LX('tartekoa','mitigé')}</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${EFF_RED};"></span> &lt; 40% ${LX('ez du funtzionatzen','ne fonctionne pas')}</span>
+  </div>
+  <p style="font-size:10px;color:#9ca3af;margin-top:6px;">${LX(
+    'Gorabehera batean esku-hartze bat baino gehiago badago, emaitza guztiei esleitzen zaie. Zenbakiak: funtzionatu duena / guztira.',
+    'Si un incident a plusieurs interventions, le résultat est attribué à chacune. Chiffres : réussites / total.')}${unrated ? ' ' + LX(`${unrated} gorabehera baloratu gabe.`, `${unrated} incident(s) non évalué(s).`) : ''}</p>`;
+  return html;
+}
+
+function buildEfficacyPdfBlock(list) {
+  if (!computeEfficacy(list).items.length) return '';
+  return `<div id="printEfficacyContainer" style="page-break-before: always;">
+    <h2 class="text-lg font-bold border-b mb-3">🎯 ${LX('Zerk funtzionatzen du?', "Qu'est-ce qui fonctionne ?")}</h2>
+    ${buildEfficacyHTML(list, { maxMonths: 8 })}
+  </div>`;
+}
+
 function renderCharts() {
   const emptyState = document.getElementById('chartsEmptyState');
   const content = document.getElementById('chartsContent');
@@ -2423,6 +2543,7 @@ function renderCharts() {
   content.classList.remove('hidden');
 
   destroyCharts();
+  document.getElementById('efficacyBody').innerHTML = buildEfficacyHTML(filtered);
 
   const countsByDate = {};
   [...filtered].reverse().forEach(i => { countsByDate[i.date.slice(0,10)] = (countsByDate[i.date.slice(0,10)] || 0) + 1; });
@@ -2796,7 +2917,7 @@ function paginatePrintView(root) {
   const push = (el, kind) => {
     const cs = getComputedStyle(el);
     const h = el.getBoundingClientRect().height + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
-    const newPage = el.id === 'printChartsContainer' || el.id === 'printAnalysisContainer' || el.classList.contains('pdf-attachment-page');
+    const newPage = el.id === 'printChartsContainer' || el.id === 'printEfficacyContainer' || el.id === 'printAnalysisContainer' || el.classList.contains('pdf-attachment-page');
     blocks.push({ el, kind, h, newPage });
   };
   Array.from(root.children).forEach(ch => {
@@ -2933,6 +3054,7 @@ async function generatePDF(mode) {
     });
     const chartsHtml = printView.innerHTML;
     content += chartsHtml;
+    content += buildEfficacyPdfBlock(filtered);
     content += buildAnalysisHTML(getCurrentAnalysisHTML());
   }
 
@@ -3325,7 +3447,7 @@ async function mergeBackup(data) {
     }
   }
 
-  let newInc = 0, newStu = 0, newFiles = 0;
+  let newInc = 0, newStu = 0, newFiles = 0, updInc = 0;
 
   (data.students || []).forEach(s => {
     if (!students.includes(s)) { students.push(s); newStu++; }
@@ -3349,15 +3471,31 @@ async function mergeBackup(data) {
   subjects.sort((a,b)=>a.localeCompare(b));
   saveSubjects();
 
-  const existingIds = new Set(incidents.map(i => String(i.id)));
+  const byId = new Map(incidents.map(i => [String(i.id), i]));
   (data.incidents || []).forEach(inc => {
     if (!inc.id) inc.id = Date.now() + Math.random().toString(36).slice(2,7);
-    if (!existingIds.has(String(inc.id))) {
+    const local = byId.get(String(inc.id));
+    if (!local) {
       if (!inc.block) inc.block = 'class';
       incidents.push(inc);
-      existingIds.add(String(inc.id));
+      byId.set(String(inc.id), inc);
       newInc++;
+      return;
     }
+    // La incidencia ya existe: no se descarta la copia, se recuperan sus datos
+    const localTime = Number(local.updatedAt) || 0;
+    const backupTime = Number(inc.updatedAt) || 0;
+    let changed = false;
+    if (backupTime > localTime) {
+      Object.assign(local, inc);          // la copia es más reciente: manda la copia
+      changed = true;
+    } else {
+      Object.keys(inc).forEach(k => {     // si no: solo se rellena lo que falte (p. ej. «funcionó / no funcionó»)
+        const lv = local[k], bv = inc[k];
+        if ((lv === undefined || lv === null) && bv !== undefined && bv !== null) { local[k] = bv; changed = true; }
+      });
+    }
+    if (changed) updInc++;
   });
   saveIncidents();
 
@@ -3413,11 +3551,14 @@ async function mergeBackup(data) {
   renderSlotList();
   buildCheckboxes();
 
-  if (newInc === 0 && newStu === 0 && newFiles === 0) {
+  if (newInc === 0 && newStu === 0 && newFiles === 0 && updInc === 0) {
     alert(t('backupNoChanges'));
   } else {
-    alert(t('backupMerged').replace('{newInc}', newInc).replace('{newStu}', newStu).replace('{newFiles}', newFiles));
+    let msg = t('backupMerged').replace('{newInc}', newInc).replace('{newStu}', newStu).replace('{newFiles}', newFiles);
+    if (updInc > 0) msg += '\n' + t('backupUpdated').replace('{n}', updInc);
+    alert(msg);
   }
+  if (activeStudent && typeof currentView !== 'undefined' && currentView === 'student') renderStudentDetail();
 }
 
 /* =================================================================
