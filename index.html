@@ -456,15 +456,6 @@
         <span class="text-lg" data-eu="Egunerokoaren erregistroa" data-fr="Registre quotidien">Egunerokoaren erregistroa</span>
       </button>
 
-      <div id="nameModeBar" class="mb-3 flex items-center gap-2 hidden">
-        <label for="nameModeSelect" class="text-xs font-semibold text-gray-600" data-eu="👁️ Izenak" data-fr="👁️ Noms">👁️ Izenak</label>
-        <select id="nameModeSelect" class="border rounded px-2 py-2 min-h-[44px] text-sm bg-white">
-          <option value="full" data-eu="Izena eta abizena" data-fr="Prénom et nom">Izena eta abizena</option>
-          <option value="first" data-eu="Izena bakarrik" data-fr="Prénom seulement">Izena bakarrik</option>
-          <option value="hidden" data-eu="Ezkutatuta (adibidea)" data-fr="Masqués (exemple)">Ezkutatuta (adibidea)</option>
-        </select>
-      </div>
-
       <div id="homeFilterBar" class="mb-3 hidden">
         <div class="flex items-center gap-2 mb-2">
           <label for="courseSelect" class="text-xs font-semibold text-gray-600" data-eu="Ikasturtea" data-fr="Année scolaire">Ikasturtea</label>
@@ -739,6 +730,7 @@
         <div class="flex gap-1 border-b overflow-x-auto no-scrollbar">
           <button data-configtab="subjects" class="subtab-btn active" data-eu="Ikasgaiak" data-fr="Matières">Ikasgaiak</button>
           <button data-configtab="schedule" class="subtab-btn" data-eu="Ordutegia" data-fr="Horaires">Ordutegia</button>
+          <button data-configtab="example" class="subtab-btn" data-eu="Adibidea" data-fr="Exemple">Adibidea</button>
           <button data-configtab="backup" class="subtab-btn" data-eu="Babeskopia" data-fr="Sauvegarde">Babeskopia</button>
           <button data-configtab="danger" class="subtab-btn" data-eu="Arriskua" data-fr="Danger">Arriskua</button>
         </div>
@@ -809,6 +801,21 @@
               <span data-eu="Ordutegia hustu" data-fr="Vider l'horaire">Ordutegia hustu</span>
             </button>
           </div>
+        </div>
+
+        <div id="configtab-example" class="configtab-content p-4 hidden">
+          <h3 class="text-lg font-bold mb-1" data-eu="Adibideak" data-fr="Exemples">Adibideak</h3>
+          <p class="text-sm text-gray-500 mb-3" data-eu="Ikasle baten kopia anonimoa. Adibidean egiten dituzun aldaketak ez dira ikaslearengan aplikatzen." data-fr="Copie anonyme d'un élève. Les changements dans l'exemple ne touchent pas l'élève.">Ikasle baten kopia anonimoa.</p>
+          <label for="exampleSource" class="block text-xs font-semibold mb-1" data-eu="Kopiatu beharreko ikaslea" data-fr="Élève à copier">Kopiatu beharreko ikaslea</label>
+          <div class="flex gap-2 mb-3">
+            <select id="exampleSource" class="flex-1 min-w-0 border rounded px-3 py-2 min-h-[44px] bg-white"></select>
+            <button type="button" id="createExampleBtn" class="px-4 py-2 bg-indigo-600 text-white rounded font-semibold min-h-[44px] disabled:opacity-50"><span data-eu="+ Sortu" data-fr="+ Créer">+ Sortu</span></button>
+          </div>
+          <ul id="exampleList" class="divide-y border rounded mb-4"></ul>
+          <label class="flex items-center gap-2 text-sm min-h-[44px] cursor-pointer">
+            <input type="checkbox" id="hideSurname" class="w-4 h-4">
+            <span data-eu="Abizenak ezkutatu aplikazio osoan" data-fr="Masquer les noms de famille dans toute l'application">Abizenak ezkutatu aplikazio osoan</span>
+          </label>
         </div>
 
         <div id="configtab-backup" class="configtab-content p-4 hidden">
@@ -885,7 +892,7 @@
 /* =================================================================
    VERSIONADO Y MIGRACIÓN
    ================================================================= */
-const APP_VERSION = '6.7.1';
+const APP_VERSION = '6.8.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
 
@@ -967,7 +974,10 @@ const I18N = {
     editStudentTitle: "Ikaslea aldatu",
     nameRequired: "Izena beharrezkoa da.",
     recoverStudent: "Ezabatutako ikasle baten datuak daude izen honekin. Berreskuratu?\n\nOnartu = datu zaharrak berreskuratu\nUtzi = ikasle berri hutsa sortu",
-    aliasStudent: "Ikaslea",
+    exampleLabel: "Adibidea",
+    openExample: "Ireki",
+    noExamples: "Oraindik ez dago adibiderik.",
+    confirmDeleteExample: "Adibide hau ezabatu? Ikasleak ez dira ukituko.",
     selectStudentForCharts: "Hautatu ikasle bat grafikoak ikusteko.",
     restoreConfirm: "Ziur zaude fitxategi honetako datuak unekoekin bateratu nahi dituzula?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
@@ -1125,7 +1135,10 @@ const I18N = {
     editStudentTitle: "Modifier l'élève",
     nameRequired: "Le prénom est obligatoire.",
     recoverStudent: "Il existe des données d'un élève supprimé portant ce nom. Les récupérer ?\n\nOK = récupérer les anciennes données\nAnnuler = créer un nouvel élève vide",
-    aliasStudent: "Élève",
+    exampleLabel: "Exemple",
+    openExample: "Ouvrir",
+    noExamples: "Aucun exemple pour l'instant.",
+    confirmDeleteExample: "Supprimer cet exemple ? Les élèves ne sont pas touchés.",
     selectStudentForCharts: "Sélectionnez un élève pour voir les graphiques.",
     restoreConfirm: "Voulez-vous vraiment fusionner les données de ce fichier avec les données actuelles ?",
     restoreSuccess: "Données restaurées avec succès.",
@@ -1359,7 +1372,7 @@ const KEY_STUDENT_OPTIONS = 'aesh_student_options_v1';
 const KEY_NAME_MODE = 'aesh_name_mode';
 let studentInfo = JSON.parse(localStorage.getItem(KEY_STUDENT_INFO) || '{}');
 let studentOptions = JSON.parse(localStorage.getItem(KEY_STUDENT_OPTIONS) || '{}');
-let nameMode = localStorage.getItem(KEY_NAME_MODE) || 'full';
+let nameMode = localStorage.getItem(KEY_NAME_MODE) === 'first' ? 'first' : 'full';
 
 function saveStudentInfo() { localStorage.setItem(KEY_STUDENT_INFO, JSON.stringify(studentInfo)); }
 function saveStudentOptions() { localStorage.setItem(KEY_STUDENT_OPTIONS, JSON.stringify(studentOptions)); }
@@ -1412,10 +1425,9 @@ function realName(key) {
   const i = infoOf(key);
   return nameMode === 'first' || !i.surname ? i.name : `${i.name} ${i.surname}`;
 }
-// Nombre para documentos (respeta el modo ocultar)
+// Nombre para documentos
 function docName(key) {
-  if (!key) return '';
-  return nameMode === 'hidden' ? `${t('aliasStudent')} ${infoOf(key).num}` : realName(key);
+  return key ? realName(key) : '';
 }
 // Nombre en pantalla: si dos se ven igual, se numeran para distinguirlos
 function displayName(key) {
@@ -1427,7 +1439,6 @@ function displayName(key) {
 function sortStudents() {
   students.sort((a, b) => {
     const x = infoOf(a), y = infoOf(b);
-    if (nameMode === 'hidden') return x.num - y.num;
     return x.name.localeCompare(y.name) || (x.surname || '').localeCompare(y.surname || '') || x.num - y.num;
   });
 }
@@ -1438,10 +1449,7 @@ function openStudentModal(key) {
   studentModalKey = key || null;
   const i = key ? infoOf(key) : { name: '', surname: '' };
   document.getElementById('studentModalTitle').textContent = t(key ? 'editStudentTitle' : 'addStudentTitle');
-  // con los nombres ocultos no se enseñan tampoco al editar
-  const hide = key && nameMode === 'hidden';
   const n = document.getElementById('studentNameInput'), s = document.getElementById('studentSurnameInput');
-  n.type = s.type = hide ? 'password' : 'text';
   n.value = i.name; s.value = i.surname || '';
   const m = document.getElementById('studentModal');
   m.classList.remove('hidden'); m.classList.add('flex');
@@ -1454,7 +1462,7 @@ function closeStudentModal() {
 // Crea un alumno (o recupera uno borrado con el mismo nombre) y devuelve su clave
 function createStudent(name, surname) {
   const norm = v => (v || '').trim().toLowerCase();
-  const deleted = Object.keys(studentInfo).find(k => !students.includes(k)
+  const deleted = Object.keys(studentInfo).find(k => !students.includes(k) && !isExample(k)
     && norm(studentInfo[k].name) === norm(name) && norm(studentInfo[k].surname) === norm(surname));
   let key = deleted && confirm(t('recoverStudent')) ? deleted : null;
   if (!key) {
@@ -1487,18 +1495,74 @@ function saveStudentModal() {
 function refreshNames() {
   renderStudentsSelect();
   renderHomeStudents();
+  renderExamples();
   if (activeStudent && currentView === 'student') renderStudentDetail();
   updateBreadcrumbs();
 }
 ['studentNameInput', 'studentSurnameInput'].forEach(id => document.getElementById(id).addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); saveStudentModal(); }
 }));
-document.getElementById('nameModeSelect').value = nameMode;
-document.getElementById('nameModeSelect').addEventListener('change', e => {
-  nameMode = e.target.value;
+document.getElementById('hideSurname').checked = nameMode === 'first';
+document.getElementById('hideSurname').addEventListener('change', e => {
+  nameMode = e.target.checked ? 'first' : 'full';
   localStorage.setItem(KEY_NAME_MODE, nameMode);
-  sortStudents(); refreshNames();
+  refreshNames();
 });
+
+/* =================================================================
+   EJEMPLOS: copias anónimas con su propia clave (ex_...).
+   No están en la lista de alumnos, así que nada de lo que se haga
+   en ellas toca a un alumno real.
+   ================================================================= */
+const isExample = k => String(k || '').startsWith('ex_');
+const exampleKeys = () => Object.keys(studentInfo).filter(isExample).sort((a, b) => studentInfo[a].exNum - studentInfo[b].exNum);
+
+function createExample(source) {
+  const num = exampleKeys().reduce((m, k) => Math.max(m, studentInfo[k].exNum || 0), 0) + 1;
+  const key = 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  studentInfo[key] = { name: `${t('exampleLabel')} ${num}`, surname: '', num: nextStudentNum(), exNum: num, updatedAt: Date.now() };
+  studentOptions[key] = { ...clone(optionsOf(source)), updatedAt: Date.now() };
+  // se copian los registros sin notas ni textos libres, que pueden llevar nombres
+  incidents.filter(i => i.student === source).forEach((i, n) => {
+    incidents.push({ ...clone(i), id: `${key}_${n}`, student: key, notes: '', otherText: {}, updatedAt: Date.now() });
+  });
+  saveStudentInfo(); saveStudentOptions(); saveIncidents();
+  return key;
+}
+function deleteExample(key) {
+  if (!isExample(key) || !confirm(t('confirmDeleteExample'))) return;
+  delete studentInfo[key]; delete studentOptions[key]; delete studentClasses[key];
+  delete attachments[key]; delete essData[key];
+  incidents = incidents.filter(i => i.student !== key);
+  saveStudentInfo(); saveStudentOptions(); saveStudentClasses(); saveAttachments(); saveEss(); saveIncidents();
+  if (activeStudent === key) setActiveStudent(null);
+  renderExamples();
+}
+function renderExamples() {
+  const sel = document.getElementById('exampleSource');
+  sel.innerHTML = students.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(displayName(s))}</option>`).join('');
+  document.getElementById('createExampleBtn').disabled = students.length === 0;
+  const ul = document.getElementById('exampleList');
+  const keys = exampleKeys();
+  ul.innerHTML = keys.length ? '' : `<li class="p-3 text-sm text-gray-500">${t('noExamples')}</li>`;
+  keys.forEach(k => {
+    const n = incidents.filter(i => i.student === k).length;
+    const li = document.createElement('li');
+    li.className = 'flex items-center gap-2 p-3';
+    li.innerHTML = `<div class="flex-1 min-w-0"><div class="font-bold truncate">${escapeHtml(studentInfo[k].name)}</div><div class="text-xs text-gray-500">${n} ${incidentsLabel(n)}</div></div>
+      <button type="button" class="open-ex px-3 py-2 bg-indigo-600 text-white rounded font-semibold text-sm min-h-[44px]">${t('openExample')}</button>
+      <button type="button" class="del-ex icon-btn text-red-600 font-bold" title="${t('deleteBtn')}">✕</button>`;
+    li.querySelector('.open-ex').onclick = () => openStudentDetail(k);
+    li.querySelector('.del-ex').onclick = () => deleteExample(k);
+    ul.appendChild(li);
+  });
+}
+document.getElementById('createExampleBtn').onclick = () => {
+  const source = document.getElementById('exampleSource').value;
+  if (!source) return;
+  createExample(source);
+  renderExamples();
+};
 
 function setActiveStudent(name) {
   activeStudent = name || null;
@@ -1795,11 +1859,12 @@ function renderStudentsSelect() {
   if (!sel) return;
   const prev = sel.value;
   sel.innerHTML = '<option value="">--</option>';
-  students.forEach(s => {
+  const ex = [prev, formOriginStudent].find(isExample);
+  (ex ? [...students, ex] : students).forEach(s => {
     const o = document.createElement('option'); o.value = s; o.textContent = displayName(s);
     sel.appendChild(o);
   });
-  if (students.includes(prev)) sel.value = prev;
+  if (students.includes(prev) || (ex && prev === ex)) sel.value = prev;
   else if (activeStudent && students.includes(activeStudent)) sel.value = activeStudent;
 }
 
@@ -2101,9 +2166,9 @@ function essHasContent(e) {
 }
 function courseStats(c) {
   let cls = 0, ess = 0;
-  Object.values(studentClasses).forEach(o => { if (o && o[c] !== undefined) cls++; });
-  try { Object.values(essData || {}).forEach(d => { if (d && d.courses && essHasContent(d.courses[c])) ess++; }); } catch (_) {}
-  const inc = incidents.filter(i => courseOfDate(i.date) === c).length;
+  Object.entries(studentClasses).forEach(([k, o]) => { if (!isExample(k) && o && o[c] !== undefined) cls++; });
+  try { Object.entries(essData || {}).forEach(([k, d]) => { if (!isExample(k) && d && d.courses && essHasContent(d.courses[c])) ess++; }); } catch (_) {}
+  const inc = incidents.filter(i => !isExample(i.student) && courseOfDate(i.date) === c).length;
   return { cls, ess, inc };
 }
 const isLeapYear = y => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
@@ -2162,15 +2227,15 @@ function renameCourse(oldC) {
   if (st.inc > 0 && !confirm(t('courseRenameIncConfirm').replace('{n}', st.inc).replace('{from}', oldC).replace('{to}', newC))) return;
   const delta = parseInt(newC.slice(0, 4), 10) - parseInt(oldC.slice(0, 4), 10);
   // clases
-  Object.values(studentClasses).forEach(o => { if (o && o[oldC] !== undefined) { o[newC] = o[oldC]; delete o[oldC]; } });
+  Object.entries(studentClasses).filter(([k]) => !isExample(k)).forEach(([, o]) => { if (o && o[oldC] !== undefined) { o[newC] = o[oldC]; delete o[oldC]; } });
   saveStudentClasses();
   // fichas ESS
-  Object.values(essData).forEach(d => { if (d && d.courses && d.courses[oldC]) { d.courses[newC] = d.courses[oldC]; delete d.courses[oldC]; } });
+  Object.entries(essData).filter(([k]) => !isExample(k)).forEach(([, d]) => { if (d && d.courses && d.courses[oldC]) { d.courses[newC] = d.courses[oldC]; delete d.courses[oldC]; } });
   saveEss();
   // incidencias: su curso depende de la fecha, así que se desplaza el año
   if (st.inc > 0) {
     incidents.forEach(i => {
-      if (courseOfDate(i.date) !== oldC) return;
+      if (isExample(i.student) || courseOfDate(i.date) !== oldC) return;
       const y = parseInt(i.date.slice(0, 4), 10) + delta;
       let rest = i.date.slice(4);
       if (rest.startsWith('-02-29') && !isLeapYear(y)) rest = '-02-28' + rest.slice(6);
@@ -2188,14 +2253,14 @@ function deleteCourse(c) {
   if (!confirm(msg)) return;
   if (st.inc > 0 && !confirm(t('courseDeleteIncConfirm').replace('{n}', st.inc))) return;
   Object.keys(studentClasses).forEach(n => {
-    if (!studentClasses[n]) return;
+    if (isExample(n) || !studentClasses[n]) return;
     delete studentClasses[n][c];
     if (!Object.keys(studentClasses[n]).length) delete studentClasses[n];
   });
   saveStudentClasses();
-  Object.values(essData).forEach(d => { if (d && d.courses) delete d.courses[c]; });
+  Object.entries(essData).forEach(([k, d]) => { if (!isExample(k) && d && d.courses) delete d.courses[c]; });
   saveEss();
-  if (st.inc > 0) { incidents = incidents.filter(i => courseOfDate(i.date) !== c); saveIncidents(); }
+  if (st.inc > 0) { incidents = incidents.filter(i => isExample(i.student) || courseOfDate(i.date) !== c); saveIncidents(); }
   afterCourseChange(c, null);
 }
 document.getElementById('courseModalList').addEventListener('click', (e) => {
@@ -2329,7 +2394,6 @@ function renderHomeStudents() {
   const empty = document.getElementById('homeEmpty');
   const bar = document.getElementById('homeFilterBar');
   if (!list) return;
-  document.getElementById('nameModeBar').classList.toggle('hidden', students.length === 0);
   if (students.length === 0) {
     list.innerHTML = '';
     bar.classList.add('hidden');
@@ -2360,7 +2424,7 @@ function renderHomeStudents() {
     card.innerHTML = `
       <div class="flex items-start gap-3">
         <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0">
-          ${escapeHtml(nameMode === 'hidden' ? String(infoOf(s).num) : infoOf(s).name.charAt(0).toUpperCase())}
+          ${escapeHtml(infoOf(s).name.charAt(0).toUpperCase())}
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
@@ -2405,7 +2469,7 @@ function renderHomeStudents() {
 document.getElementById('addStudentHomeBtn').onclick = addStudentFromHome;
 
 function openStudentDetail(name) {
-  if (!students.includes(name)) return;
+  if (!students.includes(name) && !isExample(name)) return;
   setActiveStudent(name);
   navigateTo('student');
 }
@@ -2422,6 +2486,7 @@ function navigateTo(view, opts = {}) {
     history.pushState({ view, subtab: opts.subtab || currentSubtab, configTab: opts.configTab || currentConfigTab, student: activeStudent }, '', '#' + view);
   }
   currentView = view;
+  if ((view === 'home' || view === 'config') && isExample(activeStudent)) setActiveStudent(null);
   if (opts.subtab) currentSubtab = opts.subtab;
   if (opts.configTab) currentConfigTab = opts.configTab;
 
@@ -2588,6 +2653,7 @@ function switchConfigTab(name, force) {
   const tgt = document.getElementById('configtab-' + name);
   if (tgt) tgt.classList.remove('hidden');
   if (name === 'schedule') renderSlotList();
+  if (name === 'example') renderExamples();
 }
 
 /* =================================================================
@@ -2596,6 +2662,7 @@ function switchConfigTab(name, force) {
 function openIncidentForm(studentName) {
   formOriginStudent = studentName;
   resetForm();
+  renderStudentsSelect();
   
   const selContainer = document.getElementById('incidentStudentContainer');
   const fixedContainer = document.getElementById('incidentStudentFixed');
@@ -4992,6 +5059,7 @@ function wizardFinish() {
 (function init() {
   runMigrations(savedVersion, APP_VERSION);
   ensureStudentData();   // cada alumno existente recibe su propia copia de las opciones
+  if (isExample(activeStudent)) setActiveStudent(null);
   sortStudents();
   applyLang();
 
