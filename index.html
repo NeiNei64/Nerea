@@ -249,10 +249,12 @@
 <div id="customOptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
     <h3 class="font-bold text-lg mb-3" id="modalTitle">Aukera berria</h3>
-    <input type="text" id="modalInput" class="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:border-indigo-500">
+    <input type="text" id="modalInput" class="w-full border rounded px-3 py-2 mb-3 focus:outline-none focus:border-indigo-500">
+    <label for="modalInputOther" class="block text-xs font-semibold mb-1" data-eu="Frantsesez (aukerakoa)" data-fr="En basque (facultatif)">Frantsesez (aukerakoa)</label>
+    <input type="text" id="modalInputOther" class="w-full border rounded px-3 py-2 mb-4 focus:outline-none focus:border-indigo-500">
     <div class="flex justify-end gap-2">
-      <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold">Utzi</button>
-      <button onclick="saveModalOption()" class="px-4 py-2 bg-indigo-600 rounded text-white font-semibold">Gorde</button>
+      <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold" data-eu="Utzi" data-fr="Annuler">Utzi</button>
+      <button onclick="saveModalOption()" class="px-4 py-2 bg-indigo-600 rounded text-white font-semibold" data-eu="Gorde" data-fr="Enregistrer">Gorde</button>
     </div>
   </div>
 </div>
@@ -288,6 +290,20 @@
 </div>
 
 <datalist id="classSuggestions"></datalist>
+
+<div id="studentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
+  <div class="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
+    <h3 id="studentModalTitle" class="font-bold text-lg mb-3"></h3>
+    <label for="studentNameInput" class="block text-xs font-semibold mb-1" data-eu="Izena" data-fr="Prénom">Izena</label>
+    <input type="text" id="studentNameInput" maxlength="40" autocomplete="off" class="w-full border rounded px-3 py-2 mb-3 min-h-[44px]">
+    <label for="studentSurnameInput" class="block text-xs font-semibold mb-1" data-eu="Abizena (aukerakoa)" data-fr="Nom de famille (facultatif)">Abizena (aukerakoa)</label>
+    <input type="text" id="studentSurnameInput" maxlength="60" autocomplete="off" class="w-full border rounded px-3 py-2 mb-4 min-h-[44px]">
+    <div class="flex justify-end gap-2">
+      <button type="button" onclick="closeStudentModal()" class="px-4 py-2 bg-gray-300 rounded text-gray-700 font-semibold min-h-[44px]"><span data-eu="Utzi" data-fr="Annuler">Utzi</span></button>
+      <button type="button" onclick="saveStudentModal()" class="px-4 py-2 bg-indigo-600 rounded text-white font-semibold min-h-[44px]"><span data-eu="Gorde" data-fr="Enregistrer">Gorde</span></button>
+    </div>
+  </div>
+</div>
 
 <div id="classModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
@@ -440,6 +456,15 @@
         <span class="text-lg" data-eu="Egunerokoaren erregistroa" data-fr="Registre quotidien">Egunerokoaren erregistroa</span>
       </button>
 
+      <div id="nameModeBar" class="mb-3 flex items-center gap-2 hidden">
+        <label for="nameModeSelect" class="text-xs font-semibold text-gray-600" data-eu="👁️ Izenak" data-fr="👁️ Noms">👁️ Izenak</label>
+        <select id="nameModeSelect" class="border rounded px-2 py-2 min-h-[44px] text-sm bg-white">
+          <option value="full" data-eu="Izena eta abizena" data-fr="Prénom et nom">Izena eta abizena</option>
+          <option value="first" data-eu="Izena bakarrik" data-fr="Prénom seulement">Izena bakarrik</option>
+          <option value="hidden" data-eu="Ezkutatuta (adibidea)" data-fr="Masqués (exemple)">Ezkutatuta (adibidea)</option>
+        </select>
+      </div>
+
       <div id="homeFilterBar" class="mb-3 hidden">
         <div class="flex items-center gap-2 mb-2">
           <label for="courseSelect" class="text-xs font-semibold text-gray-600" data-eu="Ikasturtea" data-fr="Année scolaire">Ikasturtea</label>
@@ -466,7 +491,10 @@
       <div id="studentHeader" class="bg-white rounded-lg shadow p-4 mb-3">
         <div class="flex items-start justify-between gap-2">
           <div class="flex-1 min-w-0">
-            <h2 id="studentDetailName" class="text-xl font-bold text-indigo-700 truncate"></h2>
+            <div class="flex items-center gap-1">
+              <h2 id="studentDetailName" class="text-xl font-bold text-indigo-700 truncate"></h2>
+              <button type="button" onclick="openStudentModal(activeStudent)" class="icon-btn shrink-0" title="✏️" aria-label="✏️">✏️</button>
+            </div>
             <div id="studentDetailMeta" class="text-xs text-gray-500 mt-1"></div>
           </div>
           <div class="flex gap-1">
@@ -649,6 +677,8 @@
             </div>
           </div>
           
+          <p id="optionsOwnerHint" class="text-xs text-indigo-700 bg-indigo-50 rounded px-3 py-2"></p>
+
           <fieldset class="border rounded p-3">
             <legend class="px-2 text-sm font-semibold flex items-center gap-2">
               <span data-eu="Eragilea" data-fr="Déclencheur">Eragilea</span>
@@ -855,7 +885,7 @@
 /* =================================================================
    VERSIONADO Y MIGRACIÓN
    ================================================================= */
-const APP_VERSION = '6.6.0';
+const APP_VERSION = '6.7.1';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
 
@@ -927,6 +957,17 @@ const I18N = {
     peakSlot: "Ordu-tarte kritikoena",
     modalTitle: "Aukera berria gehitu",
     modalPlaceholder: "Idatzi hemen...",
+    modalEditTitle: "Aukera aldatu",
+    confirmDeleteOption: "Aukera hau ezabatu? (Ikasle honentzat bakarrik)",
+    optionExists: "Aukera hori badago jada.",
+    optionsOwner: "Aukera hauek {name} ikaslearenak dira bakarrik.",
+    optionsNoStudent: "Aukeratu ikasle bat bere aukerak ikusteko.",
+    otherPlaceholder: "Zehaztu (aukerakoa)",
+    addStudentTitle: "Ikasle berria",
+    editStudentTitle: "Ikaslea aldatu",
+    nameRequired: "Izena beharrezkoa da.",
+    recoverStudent: "Ezabatutako ikasle baten datuak daude izen honekin. Berreskuratu?\n\nOnartu = datu zaharrak berreskuratu\nUtzi = ikasle berri hutsa sortu",
+    aliasStudent: "Ikaslea",
     selectStudentForCharts: "Hautatu ikasle bat grafikoak ikusteko.",
     restoreConfirm: "Ziur zaude fitxategi honetako datuak unekoekin bateratu nahi dituzula?",
     restoreSuccess: "Datuak behar bezala berreskuratu dira.",
@@ -1074,6 +1115,17 @@ const I18N = {
     peakSlot: "Créneau le plus critique",
     modalTitle: "Ajouter une option",
     modalPlaceholder: "Écrivez ici...",
+    modalEditTitle: "Modifier l'option",
+    confirmDeleteOption: "Supprimer cette option ? (Pour cet élève uniquement)",
+    optionExists: "Cette option existe déjà.",
+    optionsOwner: "Ces options sont propres à {name}.",
+    optionsNoStudent: "Choisissez un élève pour voir ses options.",
+    otherPlaceholder: "Précisez (facultatif)",
+    addStudentTitle: "Nouvel élève",
+    editStudentTitle: "Modifier l'élève",
+    nameRequired: "Le prénom est obligatoire.",
+    recoverStudent: "Il existe des données d'un élève supprimé portant ce nom. Les récupérer ?\n\nOK = récupérer les anciennes données\nAnnuler = créer un nouvel élève vide",
+    aliasStudent: "Élève",
     selectStudentForCharts: "Sélectionnez un élève pour voir les graphiques.",
     restoreConfirm: "Voulez-vous vraiment fusionner les données de ce fichier avec les données actuelles ?",
     restoreSuccess: "Données restaurées avec succès.",
@@ -1296,6 +1348,158 @@ function saveSlots() {
   }
 }
 
+/* =================================================================
+   DATOS POR ALUMNO
+   Cada alumno se identifica por una clave interna que nunca cambia
+   (en los alumnos antiguos es su nombre original). El nombre visible
+   y las opciones del registro se guardan aparte, por esa clave.
+   ================================================================= */
+const KEY_STUDENT_INFO = 'aesh_student_info_v1';
+const KEY_STUDENT_OPTIONS = 'aesh_student_options_v1';
+const KEY_NAME_MODE = 'aesh_name_mode';
+let studentInfo = JSON.parse(localStorage.getItem(KEY_STUDENT_INFO) || '{}');
+let studentOptions = JSON.parse(localStorage.getItem(KEY_STUDENT_OPTIONS) || '{}');
+let nameMode = localStorage.getItem(KEY_NAME_MODE) || 'full';
+
+function saveStudentInfo() { localStorage.setItem(KEY_STUDENT_INFO, JSON.stringify(studentInfo)); }
+function saveStudentOptions() { localStorage.setItem(KEY_STUDENT_OPTIONS, JSON.stringify(studentOptions)); }
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function nextStudentNum() { return Object.values(studentInfo).reduce((m, i) => Math.max(m, i.num || 0), 0) + 1; }
+function infoOf(key) {
+  if (!Object.prototype.hasOwnProperty.call(studentInfo, key)) {
+    studentInfo[key] = { name: key, surname: '', num: nextStudentNum(), updatedAt: 0 };
+    saveStudentInfo();
+  }
+  return studentInfo[key];
+}
+// Lista propia del alumno: la primera vez es una copia de la lista que había
+// Las listas eu y fr van emparejadas: la posición i es la misma opción en los dos idiomas
+function pairOptions(o) {
+  ['triggers','behaviors','interventions'].forEach(k => {
+    const eu = (o.eu && o.eu[k]) || [], fr = (o.fr && o.fr[k]) || [];
+    const dEu = defaultOptions.eu[k], dFr = defaultOptions.fr[k];
+    const used = new Set(), pairs = [];
+    eu.forEach(e => {
+      const d = dEu.indexOf(e);
+      const f = [d > -1 ? dFr[d] : null, e].find(x => x !== null && fr.includes(x) && !used.has(x));
+      if (f !== undefined) used.add(f);
+      pairs.push([e, f !== undefined ? f : (d > -1 ? dFr[d] : e)]);
+    });
+    fr.forEach(f => {
+      if (used.has(f)) return;
+      const d = dFr.indexOf(f), e = d > -1 ? dEu[d] : f;
+      if (!pairs.some(p => p[0] === e)) pairs.push([e, f]);
+    });
+    o.eu[k] = pairs.map(p => p[0]);
+    o.fr[k] = pairs.map(p => p[1]);
+  });
+  o.paired = true;
+}
+function optionsOf(key) {
+  if (!Object.prototype.hasOwnProperty.call(studentOptions, key)) {
+    studentOptions[key] = { eu: clone(customOptions.eu), fr: clone(customOptions.fr), updatedAt: 0 };
+    saveStudentOptions();
+  }
+  if (!studentOptions[key].paired) { pairOptions(studentOptions[key]); saveStudentOptions(); }
+  return studentOptions[key];
+}
+function ensureStudentData() {
+  const keys = new Set([...students, ...incidents.map(i => i.student).filter(Boolean)]);
+  keys.forEach(k => { infoOf(k); optionsOf(k); });
+}
+function realName(key) {
+  const i = infoOf(key);
+  return nameMode === 'first' || !i.surname ? i.name : `${i.name} ${i.surname}`;
+}
+// Nombre para documentos (respeta el modo ocultar)
+function docName(key) {
+  if (!key) return '';
+  return nameMode === 'hidden' ? `${t('aliasStudent')} ${infoOf(key).num}` : realName(key);
+}
+// Nombre en pantalla: si dos se ven igual, se numeran para distinguirlos
+function displayName(key) {
+  if (!key) return '';
+  const label = docName(key);
+  const same = students.filter(s => docName(s) === label);
+  return same.length > 1 && same.includes(key) ? `${label} (${same.indexOf(key) + 1})` : label;
+}
+function sortStudents() {
+  students.sort((a, b) => {
+    const x = infoOf(a), y = infoOf(b);
+    if (nameMode === 'hidden') return x.num - y.num;
+    return x.name.localeCompare(y.name) || (x.surname || '').localeCompare(y.surname || '') || x.num - y.num;
+  });
+}
+
+/* ---------- alta y modificación del nombre ---------- */
+let studentModalKey = null;
+function openStudentModal(key) {
+  studentModalKey = key || null;
+  const i = key ? infoOf(key) : { name: '', surname: '' };
+  document.getElementById('studentModalTitle').textContent = t(key ? 'editStudentTitle' : 'addStudentTitle');
+  // con los nombres ocultos no se enseñan tampoco al editar
+  const hide = key && nameMode === 'hidden';
+  const n = document.getElementById('studentNameInput'), s = document.getElementById('studentSurnameInput');
+  n.type = s.type = hide ? 'password' : 'text';
+  n.value = i.name; s.value = i.surname || '';
+  const m = document.getElementById('studentModal');
+  m.classList.remove('hidden'); m.classList.add('flex');
+  setTimeout(() => n.focus(), 50);
+}
+function closeStudentModal() {
+  const m = document.getElementById('studentModal');
+  m.classList.add('hidden'); m.classList.remove('flex');
+}
+// Crea un alumno (o recupera uno borrado con el mismo nombre) y devuelve su clave
+function createStudent(name, surname) {
+  const norm = v => (v || '').trim().toLowerCase();
+  const deleted = Object.keys(studentInfo).find(k => !students.includes(k)
+    && norm(studentInfo[k].name) === norm(name) && norm(studentInfo[k].surname) === norm(surname));
+  let key = deleted && confirm(t('recoverStudent')) ? deleted : null;
+  if (!key) {
+    key = 'stu_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    studentInfo[key] = { name, surname, num: nextStudentNum(), updatedAt: Date.now() };
+    saveStudentInfo();
+    optionsOf(key);
+  }
+  students.push(key);
+  sortStudents(); saveStudents();
+  return key;
+}
+function saveStudentModal() {
+  const name = document.getElementById('studentNameInput').value.trim();
+  const surname = document.getElementById('studentSurnameInput').value.trim();
+  if (!name) { alert(t('nameRequired')); return; }
+  closeStudentModal();
+  if (studentModalKey) {
+    Object.assign(infoOf(studentModalKey), { name, surname, updatedAt: Date.now() });
+    saveStudentInfo(); sortStudents(); saveStudents();
+    refreshNames();
+  } else {
+    const key = createStudent(name, surname);
+    homeCourse = currentCourse;
+    refreshNames();
+    const prefill = (homeClassFilter !== '__all__' && homeClassFilter !== '__none__') ? homeClassFilter : '';
+    openClassModal(key, currentCourse, prefill);
+  }
+}
+function refreshNames() {
+  renderStudentsSelect();
+  renderHomeStudents();
+  if (activeStudent && currentView === 'student') renderStudentDetail();
+  updateBreadcrumbs();
+}
+['studentNameInput', 'studentSurnameInput'].forEach(id => document.getElementById(id).addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); saveStudentModal(); }
+}));
+document.getElementById('nameModeSelect').value = nameMode;
+document.getElementById('nameModeSelect').addEventListener('change', e => {
+  nameMode = e.target.value;
+  localStorage.setItem(KEY_NAME_MODE, nameMode);
+  sortStudents(); refreshNames();
+});
+
 function setActiveStudent(name) {
   activeStudent = name || null;
   if (activeStudent) localStorage.setItem(KEY_ACTIVE_STUDENT, activeStudent);
@@ -1416,37 +1620,73 @@ function applyLang() {
 /* =================================================================
    MODAL OPCIÓN PERSONALIZADA
    ================================================================= */
-function openCustomModal(type) {
+const OPTION_KEYS = { trigger: 'triggers', behavior: 'behaviors', intervention: 'interventions' };
+let editingOptionIndex = null;
+let formStudentShown = null;
+let otherTexts = { triggers: '', behaviors: '', interventions: '' };
+const otherLang = () => lang === 'eu' ? 'fr' : 'eu';
+const isOther = v => /^(bestelakoa|bestea|beste bat|autre|otro|otra)$/i.test(String(v).trim());
+function formStudent() { return document.getElementById('incidentStudent').value || null; }
+// "Bestelakoa" + texto escrito, para historial, PDF y CSV
+function withOther(inc, key) {
+  const txt = inc.otherText && inc.otherText[key];
+  return (inc[key] || []).map(v => (txt && isOther(v)) ? `${v}: ${txt}` : v);
+}
+
+function openCustomModal(type, index) {
+    if (!formStudent()) { alert(t('optionsNoStudent')); return; }
     currentModalType = type;
+    editingOptionIndex = (typeof index === 'number') ? index : null;
     const modal = document.getElementById('customOptionModal');
-    document.getElementById('modalTitle').textContent = t('modalTitle');
+    document.getElementById('modalTitle').textContent = t(editingOptionIndex === null ? 'modalTitle' : 'modalEditTitle');
     const inp = document.getElementById('modalInput');
     inp.placeholder = t('modalPlaceholder');
-    inp.value = '';
+    inp.value = editingOptionIndex === null ? '' : optionsOf(formStudent())[lang][OPTION_KEYS[type]][editingOptionIndex];
+    const inp2 = document.getElementById('modalInputOther');
+    inp2.placeholder = t('modalPlaceholder');
+    inp2.value = editingOptionIndex === null ? '' : optionsOf(formStudent())[otherLang()][OPTION_KEYS[type]][editingOptionIndex];
     modal.classList.remove('hidden'); modal.classList.add('flex');
     setTimeout(() => inp.focus(), 100);
 }
 function closeModal() {
     const modal = document.getElementById('customOptionModal');
     modal.classList.add('hidden'); modal.classList.remove('flex');
-    currentModalType = null;
+    currentModalType = null; editingOptionIndex = null;
 }
 function saveModalOption() {
     const val = document.getElementById('modalInput').value.trim();
-    if (val && currentModalType) {
-        const keyMap = { 'trigger': 'triggers', 'behavior': 'behaviors', 'intervention': 'interventions' };
-        customOptions[lang][keyMap[currentModalType]].push(val);
-        saveOptions();
+    const student = formStudent();
+    if (val && currentModalType && student) {
+        const own = optionsOf(student);
+        const key = OPTION_KEYS[currentModalType];
+        const list = own[lang][key], list2 = own[otherLang()][key];
+        let val2 = document.getElementById('modalInputOther').value.trim();
+        // sin traducción propia: se usa el mismo texto en los dos idiomas
+        if (editingOptionIndex !== null && val2 === list2[editingOptionIndex] && val2 === list[editingOptionIndex]) val2 = '';
+        if (!val2) val2 = isOther(val) ? (otherLang() === 'fr' ? 'Autre' : 'Bestelakoa') : val;
+        const clash = (l, v) => { const d = l.indexOf(v); return d > -1 && d !== editingOptionIndex; };
+        if (clash(list, val) || clash(list2, val2)) { alert(t('optionExists')); return; }
+        if (editingOptionIndex === null) { list.push(val); list2.push(val2); }
+        else {
+            // si estaba marcada, sigue marcada con el texto nuevo
+            const old = list[editingOptionIndex];
+            list[editingOptionIndex] = val;
+            list2[editingOptionIndex] = val2;
+            const cb = Array.from(document.querySelectorAll(`#incidentForm input[name="${currentModalType}"]`)).find(c => c.value === old);
+            if (cb) cb.value = val;
+        }
+        own.updatedAt = Date.now();
+        saveStudentOptions();
         buildCheckboxes();
     }
     closeModal();
 }
-document.getElementById('modalInput').addEventListener('keypress', (e) => {
+['modalInput', 'modalInputOther'].forEach(id => document.getElementById(id).addEventListener('keypress', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); saveModalOption(); }
-});
+}));
 
 /* =================================================================
-   CHECKBOXES DINÁMICOS
+   CHECKBOXES DINÁMICOS (propios de cada alumno)
    ================================================================= */
 function buildCheckboxes() {
   const groups = [
@@ -1454,16 +1694,21 @@ function buildCheckboxes() {
     { idForm: 'behaviorsGroupForm',    name: 'behavior',     key: 'behaviors' },
     { idForm: 'interventionsGroupForm',name: 'intervention', key: 'interventions' }
   ];
+  const student = formStudent();
+  const sameStudent = student === formStudentShown;
+  formStudentShown = student;
+  const hint = document.getElementById('optionsOwnerHint');
+  hint.textContent = student ? t('optionsOwner').replace('{name}', displayName(student)) : t('optionsNoStudent');
 
   groups.forEach(g => {
-    const baseItems = customOptions[lang][g.key];
-    const extra = (editOrphans[g.key] || []).filter(v => !baseItems.includes(v));
+    const baseItems = student ? optionsOf(student)[lang][g.key] : [];
+    const extra = student ? (editOrphans[g.key] || []).filter(v => !baseItems.includes(v)) : [];
     const items = [...baseItems, ...extra];
     const baseLen = baseItems.length;
     const container = document.getElementById(g.idForm);
     if (!container) return;
     const checked = new Set();
-    container.querySelectorAll('input:checked').forEach(i => checked.add(i.value));
+    if (sameStudent) container.querySelectorAll('input:checked').forEach(i => checked.add(i.value));
     container.innerHTML = '';
 
     items.forEach((label, i) => {
@@ -1477,30 +1722,70 @@ function buildCheckboxes() {
       cb.id = `${g.idForm}_${g.name}_${i}`;
       cb.className = 'w-4 h-4';
       if (checked.has(label)) cb.checked = true;
+      cb.onchange = updateOtherFields;
       const sp = document.createElement('span');
       sp.textContent = label;
       cbContainer.appendChild(cb);
       cbContainer.appendChild(sp);
       w.appendChild(cbContainer);
 
-      const delBtn = document.createElement('span');
-      delBtn.className = 'delete-icon no-print';
-      delBtn.innerHTML = '✕';
-      delBtn.title = t('deleteBtn');
-      delBtn.style.minWidth = '44px'; delBtn.style.textAlign = 'center';
-      delBtn.onclick = (e) => {
-        e.preventDefault();
-        if (confirm(t('confirmDelete') + " (" + label + ")")) {
-          customOptions[lang][g.key].splice(i, 1);
-          saveOptions();
-          buildCheckboxes();
-        }
-      };
-      if (i < baseLen) w.appendChild(delBtn);   // los valores extra no se borran de las listas
+      if (i < baseLen) {   // los valores extra no se modifican en las listas
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'no-print';
+        editBtn.textContent = '✏️';
+        editBtn.title = t('editBtn');
+        editBtn.style.minWidth = '36px'; editBtn.style.minHeight = '44px';
+        editBtn.onclick = () => openCustomModal(g.name, i);
+        w.appendChild(editBtn);
+
+        const delBtn = document.createElement('span');
+        delBtn.className = 'delete-icon no-print';
+        delBtn.innerHTML = '✕';
+        delBtn.title = t('deleteBtn');
+        delBtn.style.minWidth = '44px'; delBtn.style.textAlign = 'center';
+        delBtn.onclick = (e) => {
+          e.preventDefault();
+          if (confirm(t('confirmDeleteOption') + "\n" + label)) {
+            const own = optionsOf(student);
+            own.eu[g.key].splice(i, 1);
+            own.fr[g.key].splice(i, 1);
+            own.updatedAt = Date.now();
+            saveStudentOptions();
+            const cbx = w.querySelector('input'); cbx.checked = false;
+            buildCheckboxes();
+          }
+        };
+        w.appendChild(delBtn);
+      }
       container.appendChild(w);
     });
+
+    const other = document.createElement('input');
+    other.type = 'text';
+    other.className = 'other-text hidden md:col-span-2 w-full border rounded px-3 py-2 min-h-[44px] text-sm';
+    other.dataset.key = g.key;
+    other.maxLength = 200;
+    other.placeholder = t('otherPlaceholder');
+    other.setAttribute('aria-label', t('otherPlaceholder'));
+    other.value = otherTexts[g.key] || '';
+    other.oninput = () => { otherTexts[g.key] = other.value; };
+    other.onkeydown = e => { if (e.key === 'Enter') e.preventDefault(); };
+    container.appendChild(other);
+  });
+  updateOtherFields();
+}
+function updateOtherFields() {
+  document.querySelectorAll('#incidentForm .other-text').forEach(inp => {
+    const on = Array.from(inp.parentElement.querySelectorAll('input[type=checkbox]:checked')).some(c => isOther(c.value));
+    inp.classList.toggle('hidden', !on);
   });
 }
+document.getElementById('incidentStudent').addEventListener('change', () => {
+  editOrphans = { triggers: [], behaviors: [], interventions: [] };
+  otherTexts = { triggers: '', behaviors: '', interventions: '' };
+  buildCheckboxes();
+});
 
 /* =================================================================
    SELECTS
@@ -1511,7 +1796,7 @@ function renderStudentsSelect() {
   const prev = sel.value;
   sel.innerHTML = '<option value="">--</option>';
   students.forEach(s => {
-    const o = document.createElement('option'); o.value = s; o.textContent = s;
+    const o = document.createElement('option'); o.value = s; o.textContent = displayName(s);
     sel.appendChild(o);
   });
   if (students.includes(prev)) sel.value = prev;
@@ -1747,20 +2032,7 @@ function renderSubjectList() {
   });
 }
 
-function addStudentFromHome() {
-  const name = prompt(t('studentNamePlaceholder'));
-  if (!name) return;
-  const v = name.trim();
-  if (!v || students.includes(v)) return;
-  students.push(v);
-  students.sort((a,b)=>a.localeCompare(b));
-  saveStudents();
-  renderStudentsSelect();
-  homeCourse = currentCourse;
-  renderHomeStudents();
-  const prefill = (homeClassFilter !== '__all__' && homeClassFilter !== '__none__') ? homeClassFilter : '';
-  openClassModal(v, currentCourse, prefill);
-}
+function addStudentFromHome() { openStudentModal(null); }
 
 document.getElementById('addSubjectBtn').onclick = () => {
   const inp = document.getElementById('newSubject');
@@ -2017,7 +2289,7 @@ document.getElementById('classChips').addEventListener('click', (e) => {
 let classModalStudent = null, classModalCourse = null;
 function openClassModal(name, course, prefill) {
   classModalStudent = name; classModalCourse = course;
-  document.getElementById('classModalTitle').textContent = `${t('classModalTitle')}: ${name}`;
+  document.getElementById('classModalTitle').textContent = `${t('classModalTitle')}: ${displayName(name)}`;
   document.getElementById('classModalCourse').textContent = '';
   const inp = document.getElementById('classModalInput');
   inp.placeholder = t('classPlaceholder');
@@ -2057,6 +2329,7 @@ function renderHomeStudents() {
   const empty = document.getElementById('homeEmpty');
   const bar = document.getElementById('homeFilterBar');
   if (!list) return;
+  document.getElementById('nameModeBar').classList.toggle('hidden', students.length === 0);
   if (students.length === 0) {
     list.innerHTML = '';
     bar.classList.add('hidden');
@@ -2087,25 +2360,30 @@ function renderHomeStudents() {
     card.innerHTML = `
       <div class="flex items-start gap-3">
         <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0">
-          ${escapeHtml(s.charAt(0).toUpperCase())}
+          ${escapeHtml(nameMode === 'hidden' ? String(infoOf(s).num) : infoOf(s).name.charAt(0).toUpperCase())}
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
-            <div class="font-bold text-gray-900 truncate min-w-0">${escapeHtml(s)}</div>
+            <div class="font-bold text-gray-900 truncate min-w-0">${escapeHtml(displayName(s))}</div>
             ${clsBadge}
           </div>
           <div class="text-xs text-gray-500 mt-0.5">${inc.length} ${incidentsLabel(inc.length)}${filesCount > 0 ? ` · 📎 ${filesCount}` : ''}</div>
           <div class="text-xs text-gray-400 mt-0.5">${lastDate ? `${t('lastIncident')}: ${lastDate}` : t('noIncidentsYet')}</div>
         </div>
         ${editModeStudents ? `<div class="flex shrink-0">
+          <button class="name-student-btn icon-btn text-lg" title="${escapeHtml(t('editStudentTitle'))}">✏️</button>
           <button class="class-student-btn icon-btn text-lg" title="${escapeHtml(t('classModalTitle'))}">🏫</button>
-          <button class="del-student-btn icon-btn text-red-600 hover:text-red-800 font-bold text-lg" data-name="${escapeHtml(s)}">✕</button>
+          <button class="del-student-btn icon-btn text-red-600 hover:text-red-800 font-bold text-lg">✕</button>
         </div>` : ''}
       </div>
     `;
     if (!editModeStudents) {
       card.onclick = () => openStudentDetail(s);
     } else {
+      card.querySelector('.name-student-btn').onclick = (e) => {
+        e.stopPropagation();
+        openStudentModal(s);
+      };
       card.querySelector('.class-student-btn').onclick = (e) => {
         e.stopPropagation();
         openClassModal(s, homeCourse);
@@ -2229,7 +2507,7 @@ function updateBreadcrumbs() {
     else if (currentSubtab === 'charts') subtabLabel = lang === 'eu' ? 'Grafikoak' : 'Graphiques';
     else if (currentSubtab === 'docs') subtabLabel = lang === 'eu' ? 'Dokumentuak' : 'Documents';
     else if (currentSubtab === 'ess') subtabLabel = lang === 'eu' ? 'Fitxa ESS' : 'Fiche ESS';
-    el.innerHTML = `<button onclick="navigateTo('home')">🏠 ${homeLbl}</button><span class="sep">›</span><button onclick="navigateTo('student',{subtab:'history'})">${escapeHtml(activeStudent)}</button><span class="sep">›</span><span>${subtabLabel}</span>`;
+    el.innerHTML = `<button onclick="navigateTo('home')">🏠 ${homeLbl}</button><span class="sep">›</span><button onclick="navigateTo('student',{subtab:'history'})">${escapeHtml(displayName(activeStudent))}</button><span class="sep">›</span><span>${subtabLabel}</span>`;
     return;
   }
   if (currentView === 'form') {
@@ -2275,7 +2553,7 @@ function renderStudentDetail() {
   const nameEl = document.getElementById('studentDetailName');
   const metaEl = document.getElementById('studentDetailMeta');
   if (!activeStudent) return;
-  nameEl.textContent = activeStudent;
+  nameEl.textContent = displayName(activeStudent);
   const inc = incidents.filter(i => i.student === activeStudent);
   const files = getAttachmentsForStudent(activeStudent).length;
   const last = inc.length ? inc.sort((a,b)=> b.date.localeCompare(a.date))[0].date.slice(0,10) : '';
@@ -2328,7 +2606,7 @@ function openIncidentForm(studentName) {
     selContainer.classList.add('hidden');
     fixedContainer.classList.remove('hidden');
     fixedContainer.classList.add('flex');
-    fixedName.textContent = studentName;
+    fixedName.textContent = displayName(studentName);
     sel.value = studentName;
     sel.removeAttribute('required');
   } else {
@@ -2338,6 +2616,7 @@ function openIncidentForm(studentName) {
     sel.value = activeStudent || '';
     sel.setAttribute('required', 'true');
   }
+  buildCheckboxes();
   
   navigateTo('form');
 }
@@ -2360,12 +2639,17 @@ document.getElementById('incidentForm').onsubmit = (e) => {
   const behaviors = Array.from(document.querySelectorAll('#behaviorsGroupForm input[name="behavior"]:checked')).map(c=>c.value);
   const interventions = Array.from(document.querySelectorAll('#interventionsGroupForm input[name="intervention"]:checked')).map(c=>c.value);
   const notes = document.getElementById('incidentNotes').value.trim();
+  const otherText = {};
+  [['triggers', triggers], ['behaviors', behaviors], ['interventions', interventions]].forEach(([k, arr]) => {
+    const txt = (otherTexts[k] || '').trim();
+    if (txt && arr.some(isOther)) otherText[k] = txt;
+  });
 
   const payload = {
     date, student, subject,
     slotRange: `${slot.start}-${slot.end}`,
     block: slot.block,
-    triggers, behaviors, interventions, notes,
+    triggers, behaviors, interventions, notes, otherText,
     worked: incidentWorked,
     updatedAt: Date.now()
   };
@@ -2416,6 +2700,9 @@ function resetForm() {
   editSlotExtra = null;
   editOrphans = { triggers: [], behaviors: [], interventions: [] };
   document.getElementById('incidentForm').reset();
+  otherTexts = { triggers: '', behaviors: '', interventions: '' };
+  formStudentShown = null;
+  document.querySelectorAll('#incidentForm input[type=checkbox]').forEach(c => c.checked = false);
   incidentWorked = null; updateWorkedButtons();
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -2470,9 +2757,11 @@ function editIncident(id) {
 
   document.querySelectorAll('#incidentForm input[type=checkbox]').forEach(c => c.checked = false);
   [['triggers','triggers'],['behaviors','behaviors'],['interventions','interventions']].forEach(([k]) => {
-    const known = customOptions[lang][k].map(x => x.trim());
+    const known = optionsOf(inc.student)[lang][k].map(x => x.trim());
     editOrphans[k] = (inc[k] || []).filter(v => !known.includes(String(v).trim()));
   });
+  otherTexts = { triggers: '', behaviors: '', interventions: '', ...(inc.otherText || {}) };
+  document.querySelectorAll('#incidentForm .other-text').forEach(o => o.value = otherTexts[o.dataset.key]);
   buildCheckboxes();
   const markChecks = (name, vals) => {
     (vals || []).forEach(v => {
@@ -2484,6 +2773,7 @@ function editIncident(id) {
   markChecks('trigger', inc.triggers);
   markChecks('behavior', inc.behaviors);
   markChecks('intervention', inc.interventions);
+  updateOtherFields();
   document.getElementById('incidentNotes').value = inc.notes || '';
   incidentWorked = (typeof inc.worked === 'boolean') ? inc.worked : null;
   updateWorkedButtons();
@@ -2556,11 +2846,11 @@ function renderHistory() {
     card.innerHTML = `
       <div class="flex justify-between items-start gap-2">
         <div class="flex-1 min-w-0">
-          <div class="font-bold text-indigo-700 text-sm">${escapeHtml(inc.student)}${attBadgeHtml} <span class="text-gray-500 font-normal text-xs">· ${dateStr}${incClassTxt}</span></div>
+          <div class="font-bold text-indigo-700 text-sm">${escapeHtml(displayName(inc.student))}${attBadgeHtml} <span class="text-gray-500 font-normal text-xs">· ${dateStr}${incClassTxt}</span></div>
           <div class="text-xs text-gray-500 mt-0.5">${subjectBadge} ${inc.slotRange} — ${blockLabel(inc.block)}</div>
-          ${row(lang==='eu'?'Eragilea':'Déclencheur', inc.triggers)}
-          ${row(lang==='eu'?'Jokabidea':'Comportement', inc.behaviors)}
-          ${row(lang==='eu'?'Esku-hartzea':'Intervention', inc.interventions)}
+          ${row(lang==='eu'?'Eragilea':'Déclencheur', withOther(inc, 'triggers'))}
+          ${row(lang==='eu'?'Jokabidea':'Comportement', withOther(inc, 'behaviors'))}
+          ${row(lang==='eu'?'Esku-hartzea':'Intervention', withOther(inc, 'interventions'))}
           ${inc.worked === true ? `<div class="text-sm mt-1 font-semibold text-green-700">✅ ${t('workedYes')}</div>` : inc.worked === false ? `<div class="text-sm mt-1 font-semibold text-red-700">❌ ${t('workedNo')}</div>` : ''}
           ${inc.notes ? `<div class="text-sm mt-1 italic text-gray-600">💬 ${escapeHtml(inc.notes)}</div>` : ''}
         </div>
@@ -2607,10 +2897,10 @@ document.getElementById('exportCsv').addEventListener('click', () => {
   const rows = [header.join(';')];
   filtered.forEach(i => {
     rows.push([
-      i.date, i.student, i.slotRange, i.block, i.subject || '',
-      (i.triggers||[]).join('|'),
-      (i.behaviors||[]).join('|'),
-      (i.interventions||[]).join('|'),
+      i.date, displayName(i.student), i.slotRange, i.block, i.subject || '',
+      withOther(i, 'triggers').join('|'),
+      withOther(i, 'behaviors').join('|'),
+      withOther(i, 'interventions').join('|'),
       i.worked === true ? 'yes' : i.worked === false ? 'no' : '',
       (i.notes||'').replace(/[\r\n;]/g,' ')
     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(';'));
@@ -2619,7 +2909,7 @@ document.getElementById('exportCsv').addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${(activeStudent||'export').replace(/\s+/g,'_')}_incidents.csv`;
+  a.download = `${(docName(activeStudent)||'export').replace(/\s+/g,'_')}_incidents.csv`;
   a.click();
   URL.revokeObjectURL(url);
 });
@@ -2937,7 +3227,7 @@ function buildAnalysisHTML(analysisHtml) {
 
 function buildTableHTML(filtered, withPageBreak, includeAttachments) {
   let statsHtml = `<div id="printStatsInline">`;
-  statsHtml += `<div style="margin-bottom: 5px;"><b>${escapeHtml(activeStudent||'')}</b>: ${filtered.length} ${incidentsLabel(filtered.length)}</div>`;
+  statsHtml += `<div style="margin-bottom: 5px;"><b>${escapeHtml(docName(activeStudent))}</b>: ${filtered.length} ${incidentsLabel(filtered.length)}</div>`;
   statsHtml += `<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #ccc; font-weight: bold;">${t('total')}: ${filtered.length}</div>`;
   statsHtml += `</div>`;
 
@@ -2967,9 +3257,9 @@ function buildTableHTML(filtered, withPageBreak, includeAttachments) {
       <div class="pcell pc-ordua">${slotStr}</div>
       <div class="pcell pc-ik" style="background-color:${subjColor}; color:white; font-weight:bold; text-align:center;">${escapeHtml(subjShort)}</div>
       ${attCell}
-      <div class="pcell pc-erag">${(i.triggers||[]).map(escapeHtml).join(', ')}</div>
-      <div class="pcell pc-jok">${(i.behaviors||[]).map(escapeHtml).join(', ')}</div>
-      <div class="pcell pc-esku">${(i.interventions||[]).map(escapeHtml).join(', ')}${i.worked === true ? ' ✅' : i.worked === false ? ' ❌' : ''}</div>
+      <div class="pcell pc-erag">${withOther(i, 'triggers').map(escapeHtml).join(', ')}</div>
+      <div class="pcell pc-jok">${withOther(i, 'behaviors').map(escapeHtml).join(', ')}</div>
+      <div class="pcell pc-esku">${withOther(i, 'interventions').map(escapeHtml).join(', ')}${i.worked === true ? ' ✅' : i.worked === false ? ' ❌' : ''}</div>
       <div class="pcell pc-ohar">${escapeHtml(i.notes || '')}</div>
     </div>`;
   });
@@ -3015,7 +3305,7 @@ function buildAttachmentsHTML() {
     const size = isLink ? '—' : formatBytes(f.size);
     const type = f.mime?.startsWith('image/') ? '🖼️' : '📄';
     rows += `<tr>
-      <td>${escapeHtml(activeStudent)}</td>
+      <td>${escapeHtml(docName(activeStudent))}</td>
       <td class="icon-cell">${type}</td>
       <td>${escapeHtml(f.name)}</td>
       <td>${isLink ? '🔗 ' + t('linkLabel') : '📎 ' + t('localLabel')}</td>
@@ -3259,7 +3549,7 @@ async function generatePDF(mode) {
   const now = new Date();
   const meta = `<div class="text-center mb-6">
     <h1 class="text-2xl font-bold">${lang==='eu'?'Gorabeheren txostena':'Rapport d\'incidents'}</h1>
-    <p class="text-sm text-gray-600 mt-1"><b>${escapeHtml(activeStudent)}</b></p>
+    <p class="text-sm text-gray-600 mt-1"><b>${escapeHtml(docName(activeStudent))}</b></p>
     <p class="text-xs text-gray-500">${t('generated')}: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</p>
   </div>`;
 
@@ -3293,7 +3583,7 @@ async function generatePDF(mode) {
 
   printView.innerHTML = meta + content;
 
-  const pdfFilename = `${(activeStudent||'report').replace(/\s+/g,'_')}_${Date.now()}.pdf`;
+  const pdfFilename = `${(docName(activeStudent)||'report').replace(/\s+/g,'_')}_${Date.now()}.pdf`;
   try {
     if (isMobileDevice()) {
       const blob = await buildPdfBlobForMobile(printView);
@@ -3670,6 +3960,7 @@ document.getElementById('exportBackupBtn').addEventListener('click', async () =>
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     students, subjects, incidents, customOptions, slots,
+    studentInfo, studentOptions,
     studentClasses, currentCourse, essData,
     attachments: attsCopy,
     title: document.getElementById('mainTitle').value,
@@ -3720,10 +4011,29 @@ async function mergeBackup(data) {
 
   let newInc = 0, newStu = 0, newFiles = 0, updInc = 0;
 
+  // Nombres y opciones por alumno: gana la modificación más reciente
+  const mergeByDate = (local, incoming) => {
+    Object.keys(incoming || {}).forEach(k => {
+      const has = Object.prototype.hasOwnProperty.call(local, k);
+      if (!has || (incoming[k].updatedAt || 0) > (local[k].updatedAt || 0)) {
+        const num = has ? local[k].num : undefined;
+        local[k] = clone(incoming[k]);
+        if (num) local[k].num = num;
+      }
+    });
+  };
+  const before = JSON.stringify([studentInfo, studentOptions]);
+  mergeByDate(studentInfo, data.studentInfo);
+  mergeByDate(studentOptions, data.studentOptions);
+  const used = new Set();
+  Object.values(studentInfo).forEach(i => { if (!i.num || used.has(i.num)) i.num = nextStudentNum(); used.add(i.num); });
+  saveStudentInfo(); saveStudentOptions();
+  const profilesChanged = before !== JSON.stringify([studentInfo, studentOptions]);
+
   (data.students || []).forEach(s => {
     if (!students.includes(s)) { students.push(s); newStu++; }
   });
-  students.sort((a,b)=>a.localeCompare(b));
+  sortStudents();
   saveStudents();
 
   // Clases por curso: se fusionan sin pisar lo que ya existe
@@ -3797,6 +4107,7 @@ async function mergeBackup(data) {
     }
     saveOptions();
   }
+  ensureStudentData();
 
   if (Array.isArray(data.slots) && data.slots.length > 0) {
     const existing = new Set((slots || []).map(s => slotsToValue(s)));
@@ -3832,7 +4143,7 @@ async function mergeBackup(data) {
   renderSlotList();
   buildCheckboxes();
 
-  if (newInc === 0 && newStu === 0 && newFiles === 0 && updInc === 0) {
+  if (newInc === 0 && newStu === 0 && newFiles === 0 && updInc === 0 && !profilesChanged) {
     alert(t('backupNoChanges'));
   } else {
     let msg = t('backupMerged').replace('{newInc}', newInc).replace('{newStu}', newStu).replace('{newFiles}', newFiles);
@@ -3868,6 +4179,8 @@ document.getElementById('clearAllConfirmBtn').addEventListener('click', () => {
   essData = {}; localStorage.removeItem(KEY_ESS);
   customOptions = JSON.parse(JSON.stringify(defaultOptions));
   setActiveStudent(null);
+  studentInfo = {}; studentOptions = {}; saveStudentInfo(); saveStudentOptions();
+  localStorage.removeItem(KEY_NAME_MODE);
   saveStudents(); saveSubjects(); saveIncidents(); saveAttachments(); saveOptions();
   localStorage.setItem(KEY_SLOTS, 'null');
   localStorage.removeItem(KEY_ACTIVE_STUDENT);
@@ -4394,7 +4707,7 @@ function renderEss(keepScroll) {
     h += `<div class="bg-white rounded-lg shadow p-3 mb-3 text-sm">
       <div class="font-bold text-base mb-2">Fiche de préparation à l'ESS</div>
       <div class="grid grid-cols-2 gap-2 mb-2">
-        <div class="col-span-2"><span class="text-xs font-semibold">Nom de l'élève</span><div class="border rounded px-3 py-2 bg-gray-50 min-h-[44px] flex items-center">${escapeHtml(activeStudent)}</div></div>
+        <div class="col-span-2"><span class="text-xs font-semibold">Nom de l'élève</span><div class="border rounded px-3 py-2 bg-gray-50 min-h-[44px] flex items-center">${escapeHtml(docName(activeStudent))}</div></div>
         <div><span class="text-xs font-semibold">Classe</span><input type="text" value="${escapeHtml(essCls(e))}" oninput="essSetMeta('cls',this.value)" class="w-full border rounded px-3 py-2 min-h-[44px]"></div>
         <div><span class="text-xs font-semibold">Date</span><input type="date" value="${escapeHtml(e.date)}" onchange="essSetMeta('date',this.value)" class="w-full border rounded px-3 py-2 min-h-[44px]"></div>
       </div>
@@ -4429,7 +4742,7 @@ function renderEss(keepScroll) {
 
 /* ---------- exportar ---------- */
 function essPdfName() {
-  return `Fiche_ESS_${(activeStudent || 'eleve').replace(/\s+/g, '_')}_${getEss().date}.pdf`;
+  return `Fiche_ESS_${(docName(activeStudent) || 'eleve').replace(/\s+/g, '_')}_${getEss().date}.pdf`;
 }
 function pdfSafe(s) {
   return String(s).replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/œ/g, 'oe').replace(/Œ/g, 'OE')
@@ -4485,7 +4798,7 @@ async function essExportOriginal() {
       tf.setFontSize(fit.size);
       tf.updateAppearances(font);
     };
-    put('Text Box 1', activeStudent, 8, 5);
+    put('Text Box 1', docName(activeStudent), 8, 5);
     put('Text Box 1_2', essCls(e), 8, 5);
     put('Text Box 1_3', fmtFr(e.date), 8, 5);
     ESS_FIELDS.forEach(f => put(f.pdf, essText(f.k), f.k === 'extra' ? 11 : 10, 5, f.dom[0] + ' / ' + f.hdr[0].slice(0, 40)));
@@ -4508,7 +4821,7 @@ async function essExportText() {
     <div style="font-size:10px;white-space:pre-wrap;line-height:1.35;">${escapeHtml(essText(f.k)) || '&nbsp;'}</div></div>`;
   printView.innerHTML = `<div style="padding:4px;">
     <h1 style="font-size:16px;font-weight:bold;text-align:center;margin-bottom:8px;">Fiche de préparation à l'ESS</h1>
-    <div style="font-size:11px;margin-bottom:10px;"><b>Nom de l'élève :</b> ${escapeHtml(activeStudent)} &nbsp; <b>Classe :</b> ${escapeHtml(essCls(e))} &nbsp; <b>Date :</b> ${fmtFr(e.date)}<br>
+    <div style="font-size:11px;margin-bottom:10px;"><b>Nom de l'élève :</b> ${escapeHtml(docName(activeStudent))} &nbsp; <b>Classe :</b> ${escapeHtml(essCls(e))} &nbsp; <b>Date :</b> ${fmtFr(e.date)}<br>
     ${e.aideMut ? '☑' : '☐'} Aide mutualisée &nbsp; ${e.aideInd ? '☑' : '☐'} Aide individuelle</div>
     ${ESS_FIELDS.map(block).join('')}</div>`;
   printView.style.display = 'block';
@@ -4664,10 +4977,8 @@ function wizardFinish() {
   const nameInput = document.getElementById('wizardStudentName');
   if (nameInput) {
     const v = nameInput.value.trim();
-    if (v && !students.includes(v)) {
-      students.push(v);
-      students.sort((a,b)=>a.localeCompare(b));
-      saveStudents();
+    if (v) {
+      createStudent(v, '');
       renderStudentsSelect();
       renderHomeStudents();
     }
@@ -4680,6 +4991,8 @@ function wizardFinish() {
    ================================================================= */
 (function init() {
   runMigrations(savedVersion, APP_VERSION);
+  ensureStudentData();   // cada alumno existente recibe su propia copia de las opciones
+  sortStudents();
   applyLang();
 
   const savedTitle = localStorage.getItem(KEY_TITLE);
