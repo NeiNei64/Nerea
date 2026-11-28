@@ -261,7 +261,7 @@
 
 <div id="pdfModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-    <h3 class="font-bold text-lg mb-3">PDF Aukerak / Options PDF</h3>
+    <h3 class="font-bold text-lg mb-3" data-eu="PDF aukerak" data-fr="Options PDF">PDF aukerak</h3>
     <div class="mb-4 p-3 bg-gray-50 rounded border">
       <label class="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" id="pdfIncludeAttachments" class="w-4 h-4">
@@ -271,20 +271,20 @@
     </div>
     <div class="space-y-3">
       <button onclick="generatePDF('full')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
-        <div class="font-bold text-indigo-800">1. Historikoa soilik</div>
-        <div class="text-xs text-gray-600">Taula soilik / Tableau uniquement</div>
+        <div class="font-bold text-indigo-800" data-eu="1. Historikoa soilik" data-fr="1. Historique seulement">1. Historikoa soilik</div>
+        <div class="text-xs text-gray-600" data-eu="Taula soilik" data-fr="Tableau uniquement">Taula soilik</div>
       </button>
       <button onclick="generatePDF('charts')" class="w-full text-left px-4 py-3 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200">
-        <div class="font-bold text-emerald-800">2. Grafikoak soilik</div>
-        <div class="text-xs text-gray-600">Grafikoak soilik / Graphiques uniquement</div>
+        <div class="font-bold text-emerald-800" data-eu="2. Grafikoak soilik" data-fr="2. Graphiques seulement">2. Grafikoak soilik</div>
+        <div class="text-xs text-gray-600" data-eu="Grafikoak soilik" data-fr="Graphiques uniquement">Grafikoak soilik</div>
       </button>
       <button onclick="generatePDF('all')" class="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200">
-        <div class="font-bold text-blue-800">3. Historia eta Grafikoak</div>
-        <div class="text-xs text-gray-600">Taula eta grafikoak / Tableau et graphiques</div>
+        <div class="font-bold text-blue-800" data-eu="3. Historia eta Grafikoak" data-fr="3. Historique et graphiques">3. Historia eta Grafikoak</div>
+        <div class="text-xs text-gray-600" data-eu="Taula eta grafikoak" data-fr="Tableau et graphiques">Taula eta grafikoak</div>
       </button>
     </div>
     <div class="mt-4 text-right">
-      <button onclick="document.getElementById('pdfModal').classList.add('hidden'); document.getElementById('pdfModal').classList.remove('flex');" class="text-sm text-gray-500 hover:text-gray-700">Utzi</button>
+      <button onclick="document.getElementById('pdfModal').classList.add('hidden'); document.getElementById('pdfModal').classList.remove('flex');" class="text-sm text-gray-500 hover:text-gray-700" data-eu="Utzi" data-fr="Annuler">Utzi</button>
     </div>
   </div>
 </div>
@@ -371,7 +371,7 @@
 
 <div id="largeFileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 no-print">
   <div class="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-    <h3 class="font-bold text-lg mb-2 text-orange-700">⚠️ Archivo demasiado grande / Fichier trop volumineux</h3>
+    <h3 class="font-bold text-lg mb-2 text-orange-700" data-eu="⚠️ Fitxategi handiegia" data-fr="⚠️ Fichier trop volumineux">⚠️ Fitxategi handiegia</h3>
     <p class="text-sm text-gray-700 mb-3" id="largeFileModalText"></p>
     <div class="space-y-3">
       <button onclick="chooseFileMode('local')" class="w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200">
@@ -497,6 +497,13 @@
             </button>
           </div>
         </div>
+        <details id="profileBox" class="mt-3 border rounded-lg no-print">
+          <summary class="px-3 py-3 text-sm font-semibold cursor-pointer"><span data-eu="Profila / Beharrak" data-fr="Profil / Besoins">Profila / Beharrak</span><span id="profileCount"></span></summary>
+          <div class="px-3 pb-3">
+            <p class="text-xs text-gray-500 mb-1" data-eu="Gailu honetan gordetzen da. Ez da PDFan agertzen." data-fr="Enregistré sur cet appareil. N'apparaît pas dans le PDF.">Gailu honetan gordetzen da.</p>
+            <div id="profileList" class="grid grid-cols-1 md:grid-cols-2 gap-x-3"></div>
+          </div>
+        </details>
         <div id="studentSubtabs" class="flex gap-1 mt-3 border-b overflow-x-auto no-scrollbar">
           <button data-subtab="history" class="subtab-btn active" data-eu="Historia" data-fr="Historique">Historia</button>
           <button data-subtab="charts" class="subtab-btn" data-eu="Grafikoak" data-fr="Graphiques">Grafikoak</button>
@@ -730,7 +737,7 @@
         <div class="flex gap-1 border-b overflow-x-auto no-scrollbar">
           <button data-configtab="subjects" class="subtab-btn active" data-eu="Ikasgaiak" data-fr="Matières">Ikasgaiak</button>
           <button data-configtab="schedule" class="subtab-btn" data-eu="Ordutegia" data-fr="Horaires">Ordutegia</button>
-          <button data-configtab="example" class="subtab-btn" data-eu="Adibidea" data-fr="Exemple">Adibidea</button>
+          <button data-configtab="example" class="subtab-btn" data-eu="Adibideak" data-fr="Exemples">Adibideak</button>
           <button data-configtab="backup" class="subtab-btn" data-eu="Babeskopia" data-fr="Sauvegarde">Babeskopia</button>
           <button data-configtab="danger" class="subtab-btn" data-eu="Arriskua" data-fr="Danger">Arriskua</button>
         </div>
@@ -781,9 +788,9 @@
             <div class="col-span-2 md:col-span-1">
               <label class="block text-xs font-semibold mb-1" data-eu="Blokea" data-fr="Bloc">Blokea</label>
               <select id="newSlotBlock" class="w-full border rounded px-2 py-2 min-h-[44px]">
-                <option value="class" data-eu="Klasea" data-fr="Classe">Klasea / Classe</option>
-                <option value="break" data-eu="Atsedenaldia" data-fr="Pause">Atsedenaldia / Pause</option>
-                <option value="peri"  data-eu="Periskolarra" data-fr="Périscolaire">Periskolarra / Périscolaire</option>
+                <option value="class" data-eu="Klasea" data-fr="Classe">Klasea</option>
+                <option value="break" data-eu="Atsedenaldia" data-fr="Pause">Atsedenaldia</option>
+                <option value="peri"  data-eu="Periskolarra" data-fr="Périscolaire">Periskolarra</option>
               </select>
             </div>
             <div class="col-span-2 md:col-span-1 md:self-end">
@@ -804,7 +811,11 @@
         </div>
 
         <div id="configtab-example" class="configtab-content p-4 hidden">
-          <h3 class="text-lg font-bold mb-1" data-eu="Adibideak" data-fr="Exemples">Adibideak</h3>
+          <h3 class="text-lg font-bold mb-1" data-eu="Txantiloiak, trastornoaren arabera" data-fr="Modèles par trouble">Txantiloiak</h3>
+          <p class="text-sm text-gray-500 mb-3" data-eu="Hemengo aldaketak profil bat berriro markatzean aplikatzen dira; ez dute ikasleen zerrendarik aldatzen." data-fr="Les changements s'appliquent quand vous cochez un profil ; ils ne modifient pas les listes déjà en place.">Txantiloiak.</p>
+          <div id="catalogList" class="space-y-2 mb-3"></div>
+          <button type="button" id="downloadExamplesBtn" class="px-4 py-2 mb-6 bg-blue-600 text-white rounded text-sm font-semibold min-h-[44px]">⬇️ <span data-eu="Adibideak deskargatu" data-fr="Télécharger les exemples">Adibideak deskargatu</span></button>
+          <h3 class="text-lg font-bold mb-1" data-eu="Kopia anonimoak" data-fr="Copies anonymes">Kopia anonimoak</h3>
           <p class="text-sm text-gray-500 mb-3" data-eu="Ikasle baten kopia anonimoa. Adibidean egiten dituzun aldaketak ez dira ikaslearengan aplikatzen." data-fr="Copie anonyme d'un élève. Les changements dans l'exemple ne touchent pas l'élève.">Ikasle baten kopia anonimoa.</p>
           <label for="exampleSource" class="block text-xs font-semibold mb-1" data-eu="Kopiatu beharreko ikaslea" data-fr="Élève à copier">Kopiatu beharreko ikaslea</label>
           <div class="flex gap-2 mb-3">
@@ -825,7 +836,7 @@
           </p>
           <div class="flex flex-wrap gap-2">
             <button id="exportBackupBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold min-h-[44px]">
-              ⬇️ <span data-eu="Babeskopia deskargatu" data-fr="Télécharger la sauvegarde">Babeskopia deskargatu</span>
+              ⬇️ <span data-eu="Babeskopia osoa deskargatu" data-fr="Télécharger la sauvegarde complète">Babeskopia osoa deskargatu</span>
             </button>
             <label for="importBackupInput" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-semibold cursor-pointer min-h-[44px] inline-flex items-center">
               ⬆️ <span data-eu="Babeskopia kargatu" data-fr="Charger une sauvegarde">Babeskopia kargatu</span>
@@ -892,7 +903,7 @@
 /* =================================================================
    VERSIONADO Y MIGRACIÓN
    ================================================================= */
-const APP_VERSION = '6.8.0';
+const APP_VERSION = '6.11.0';
 const STORAGE_VERSION_KEY = 'aesh_app_version';
 const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
 
@@ -974,6 +985,8 @@ const I18N = {
     editStudentTitle: "Ikaslea aldatu",
     nameRequired: "Izena beharrezkoa da.",
     recoverStudent: "Ezabatutako ikasle baten datuak daude izen honekin. Berreskuratu?\n\nOnartu = datu zaharrak berreskuratu\nUtzi = ikasle berri hutsa sortu",
+    addItem: "Gehitu",
+    confirmDeleteTemplate: "Txantiloi hau ezabatu?",
     exampleLabel: "Adibidea",
     openExample: "Ireki",
     noExamples: "Oraindik ez dago adibiderik.",
@@ -1135,6 +1148,8 @@ const I18N = {
     editStudentTitle: "Modifier l'élève",
     nameRequired: "Le prénom est obligatoire.",
     recoverStudent: "Il existe des données d'un élève supprimé portant ce nom. Les récupérer ?\n\nOK = récupérer les anciennes données\nAnnuler = créer un nouvel élève vide",
+    addItem: "Ajouter",
+    confirmDeleteTemplate: "Supprimer ce modèle ?",
     exampleLabel: "Exemple",
     openExample: "Ouvrir",
     noExamples: "Aucun exemple pour l'instant.",
@@ -1415,6 +1430,13 @@ function optionsOf(key) {
     saveStudentOptions();
   }
   if (!studentOptions[key].paired) { pairOptions(studentOptions[key]); saveStudentOptions(); }
+  const o = studentOptions[key];
+  if (!o.otherAdded) {   // una sola vez: si luego se borra, no vuelve
+    ['behaviors','interventions'].forEach(k => {
+      if (!o.eu[k].some(v => /^(bestelakoa|autre)$/i.test(v.trim()))) { o.eu[k].push('Bestelakoa'); o.fr[k].push('Autre'); }
+    });
+    o.otherAdded = true; saveStudentOptions();
+  }
   return studentOptions[key];
 }
 function ensureStudentData() {
@@ -1520,7 +1542,7 @@ const exampleKeys = () => Object.keys(studentInfo).filter(isExample).sort((a, b)
 function createExample(source) {
   const num = exampleKeys().reduce((m, k) => Math.max(m, studentInfo[k].exNum || 0), 0) + 1;
   const key = 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  studentInfo[key] = { name: `${t('exampleLabel')} ${num}`, surname: '', num: nextStudentNum(), exNum: num, updatedAt: Date.now() };
+  studentInfo[key] = { name: `${t('exampleLabel')} ${num}`, surname: '', num: nextStudentNum(), exNum: num, updatedAt: Date.now(), profile: [...(infoOf(source).profile || [])] };
   studentOptions[key] = { ...clone(optionsOf(source)), updatedAt: Date.now() };
   // se copian los registros sin notas ni textos libres, que pueden llevar nombres
   incidents.filter(i => i.student === source).forEach((i, n) => {
@@ -1659,6 +1681,8 @@ function applyLang() {
     el.textContent = lang === 'eu' ? el.dataset.eu : el.dataset.fr;
   });
   document.getElementById('langBtn').textContent = lang === 'eu' ? 'FR' : 'EU';
+  document.getElementById('newSubject').placeholder = lang === 'eu' ? 'Ikasgaia' : 'Matière';
+  document.getElementById('linkNameInput').placeholder = lang === 'eu' ? 'Adib.: txosten psikopedagogikoa' : 'Ex. : bilan psychopédagogique';
   document.title = lang === 'eu' ? 'NereApp - Gorabeherak' : 'NereApp - Incidents';
 
   buildCheckboxes();
@@ -1672,6 +1696,7 @@ function applyLang() {
   if (activeStudent) renderStudentDetail();
   updateBreadcrumbs();
   updateInstallBannerText();
+  if (currentView === 'config' && currentConfigTab === 'example') { renderExamples(); renderCatalog(); }
 
   const titleInput = document.getElementById('mainTitle');
   const euDefault = I18N.eu.titleDefault;
@@ -1684,6 +1709,163 @@ function applyLang() {
 /* =================================================================
    MODAL OPCIÓN PERSONALIZADA
    ================================================================= */
+/* =================================================================
+   PERFIL / NECESIDADES Y PLANTILLAS
+   El perfil se guarda en el dispositivo (y en la copia de seguridad
+   completa). Nunca se escribe en PDF, CSV ni ficha ESS.
+   ================================================================= */
+const KEY_CATALOG = 'aesh_catalog_v1';
+const PHASES = ['triggers','behaviors','interventions'];
+const PROFILE_NAMES = {"tsa": {"eu": "TSA / Autismoa", "fr": "TSA / Autisme"}, "tdah": {"eu": "TDAH / Arreta falta eta hiperaktibitatea", "fr": "TDAH"}, "comp": {"eu": "Jokabide-nahasmenduak", "fr": "Troubles du comportement"}, "dys": {"eu": "Dys nahasmenduak (dislexia, dispraxia/GKN, disortografia, diskalkulia)", "fr": "Troubles Dys (dyslexie, dyspraxie/TDC, dysorthographie, dyscalculie)"}, "lang": {"eu": "Hizkuntza-nahasmenduak / disfasia", "fr": "Troubles du langage / dysphasie"}, "intel": {"eu": "Adimen- / kognizio-nahasmenduak", "fr": "Troubles intellectuels et cognitifs"}, "visu": {"eu": "Ikusmen-urritasuna", "fr": "Déficience visuelle"}, "audi": {"eu": "Entzumen-urritasuna", "fr": "Déficience auditive"}, "motor": {"eu": "Motor-nahasmenduak", "fr": "Troubles moteurs"}};
+const CATALOG_VERSION = 3;
+const OLD_CATALOG = {"tsa": {"triggers": [["Ustekabeko aldaketa", "Changement imprévu"], ["Agindu inplizitu edo anbiguoa", "Consigne implicite ou ambiguë"], ["Zentzumen-gainkarga (zarata, argia, ukitzea)", "Surcharge sensorielle (bruit, lumière, contact)"], ["Ustekabeko aldaketa edo jarduera-aldaketa", "Transition - Changement d'activité ou d'imprévu"], ["Zentzumen-gainkarga (zarata, argia, jendetza)", "Surcharge sensorielle (bruit, lumière, foule)"], ["Agindu inplizitu edo abstraktua", "Consigne implicite ou abstraite"], ["Behartutako harreman soziala", "Interaction sociale imposée"], ["Itxaronaldi luzea euskarririk gabe", "Attente prolongée sans support"]], "behaviors": [["Mugimendu errepikakorrak", "Gestes répétitifs"], ["Belarriak estaltzea / ihes egitea", "Se boucher les oreilles / fuir"], ["Krisia (gainezka egitea)", "Crise (débordement)"], ["Kulunkatu, eskuak astindu edo biraka ibili", "Se balance, agite les mains ou tourne sur soi"], ["Belarriak edo begiak estaltzen ditu", "Se bouche les oreilles ou les yeux"], ["Hitzak edo esaldiak errepikatzen ditu", "Répète des mots ou des phrases"], ["Errutina berari eusten dio", "Insiste pour garder la même routine"], ["Oihu egin, negar egin edo lurrera bota", "Crie, pleure ou se jette au sol"]], "interventions": [["Aldaketa aldez aurretik iragartzea", "Anticiper le changement"], ["Ikus-agenda / piktogramak", "Emploi du temps visuel / pictogrammes"], ["Gune lasaira erretiratzea", "Retrait dans un espace calme"], ["Gune lasai batera erretiratzea", "Retrait vers un espace apaisant / calme"], ["Ikus-euskarria / tenporizadorea erabiltzea", "Utilisation d'un support visuel / Timer"], ["Labur eta argi birformulatzea", "Reformulation courte et explicite"], ["Zarataren aurkako kaskoa / zentzumen-objektua", "Utilisation d'un casque antibruit / objet sensoriel"], ["Hurrengo urratsa aurreratzea", "Anticipation de l'étape suivante"]]}, "tdah": {"triggers": [["Ataza luze edo errepikakorra", "Tâche longue ou répétitive"], ["Itxaronaldia / txanda itxaron beharra", "Attente / tour de parole"], ["Distraktore asko", "Nombreuses distractions"], ["Inguruko distrakzioak", "Distraction environnementale"], ["Txanda itxarotea / jarduerarik eza", "Attente de tour / Inactivité"], ["Akatsaren aurreko frustrazioa", "Frustration face à l'erreur"], ["Urratsetan banatu gabeko agindu anitza", "Consigne multiple non séquencée"]], "behaviors": [["Eserita egon ezina", "Agitation motrice"], ["Hitza moztea / inpultsibitatea", "Coupe la parole / impulsivité"], ["Ataza amaitu gabe uztea", "Abandon de la tâche"], ["Altxatu edo bere lekutik joaten da", "Se lève ou quitte sa place"], ["Aulkian mugitu, objektuekin jolastu", "Remue sur sa chaise, manipule des objets"], ["Hitza mozten du, amaitu aurretik erantzuten du", "Coupe la parole, répond avant la fin"], ["Jarduera batetik bestera, amaitu gabe", "Passe d'une activité à l'autre sans finir"], ["Bere txanda itxaron gabe jarduten du", "Agit sans attendre son tour"]], "interventions": [["Ataza urrats txikitan banatzea", "Découper la tâche en petites étapes"], ["Mugimendu-etenaldia", "Pause motrice"], ["Berehalako indartze positiboa", "Renforcement positif immédiat"], ["Ataza urrats laburretan zatitzea", "Fractionnement de la tâche en étapes courtes"], ["Etenaldi aktiboa baimentzea (enkargua, mugimendua)", "Pause active autorisée (mission, mouvement)"], ["Lasai birzentratzea eta begi-kontaktua", "Recentration calme et contact visuel"], ["Irakaslearen ondoan / distrakzioetatik urrun jartzea", "Installation près de l'enseignant / loin des distractions"]]}, "comp": {"triggers": [["Ezetza edo muga bat", "Refus ou limite posée"], ["Helduaren agindu zuzena", "Demande directe de l'adulte"], ["Jende aurreko zuzenketa", "Remarque devant le groupe"], ["Bidegabekeria edo zigor sentipena", "Sentiment d'injustice ou de sanction"], ["Kideekiko gatazka", "Conflit avec les pairs"], ["Muga edo arau bati ezetza", "Refus d'une limite ou d'une règle"], ["Porrota edo ohartarazpena taldearen aurrean", "Échec ou remarque devant le groupe"], ["Pilatutako nekea edo tentsioa", "Fatigue ou tension accumulée"]], "behaviors": [["Oposizioa", "Opposition"], ["Oldarkortasun fisikoa", "Agressivité physique"], ["Objektuak botatzea", "Jette des objets"], ["«Ez» dio eta agindua eztabaidatzen du", "Dit « non » et conteste la consigne"], ["Iraindu edo mehatxatu egiten du", "Insulte ou menace"], ["Materiala bota edo hausten du", "Jette ou casse du matériel"], ["Jo, bultzatu edo hozka egiten du", "Frappe, pousse ou mord"], ["Baimenik gabe gelatik ateratzen da", "Sort de la classe sans autorisation"]], "interventions": [["Bi aukera eskaintzea", "Proposer deux choix"], ["Arau argiak eta aurreikusgarriak gogoraraztea", "Rappeler des règles claires et prévisibles"], ["Banakako elkarrizketa lasaia", "Échange calme à part"], ["Ahozko lasaitzea (tonu neutroa)", "Désescalade verbale (ton neutre, calme)"], ["Aukera mugatua eskaintzea (2 aukera)", "Proposition d'un choix limité (2 options)"], ["Aldi baterako erretiratzea / lasaitzeko tartea", "Mise en retrait temporaire / Temps calme"], ["Lasaitu ondoren bitartekaritza", "Médiation après retour au calme"], ["Laguntza eskatzea (eskola-bizitza / zuzendaritza)", "Appel au relais (vie scolaire / direction)"]]}, "dys": {"triggers": [["Ozen irakurtzea", "Lecture à voix haute"], ["Idatzi edo kopiatu beharra", "Écriture ou copie"], ["Kalkulua edo problema", "Calcul ou problème"], ["Irakurketa edo idazketa luzea", "Tâche de lecture ou d'écriture longue"], ["Arbeletik kopiatzea denbora mugatuan", "Copie au tableau sous contrainte de temps"], ["Ataza bikoitza (entzun + idatzi)", "Double tâche (écouter + écrire)"], ["Gainkarga kognitiboa / ikusmen-nekea", "Surcharge cognitive / Fatigue visuelle"], ["Egokitu gabeko euskarria (letra, diseinua)", "Support non adapté (police, mise en page)"]], "behaviors": [["Atazari ihes egitea", "Évitement de la tâche"], ["Neke azkarra", "Fatigue rapide"], ["Autoestimu baxuko hitzak", "Propos de dévalorisation"], ["Irakurtzean hitzak alderantzikatu, saltatu edo asmatu", "Inverse, saute ou devine des mots en lisant"], ["Oso poliki edo irakurtezin idazten du", "Écrit très lentement ou de façon illisible"], ["Ezabatu, zirriborratu edo orria urratzen du", "Efface, rature ou déchire sa feuille"], ["Lerroa galtzen du irakurtzean edo kopiatzean", "Perd sa ligne en lisant ou en copiant"], ["«Ez dut balio» esaten du", "Dit « je suis nul »"]], "interventions": [["Material egokitua (letra, tartea)", "Support adapté (police, interligne)"], ["Ahozko erantzuna onartzea", "Accepter la réponse orale"], ["Tresna konpentsatzaileak (ordenagailua, kalkulagailua)", "Outils de compensation (ordinateur, calculatrice)"], ["Idatzi beharrekoa arintzea (fotokopia, hutsuneak)", "Allègement de la quantité d'écrit (photocopie, texte à trous)"], ["Ahoz egitea / helduari diktatzea", "Passage par l'oral / Dictée à l'adulte"], ["Denbora gehigarria ematea", "Temps supplémentaire accordé"], ["Tresna digitala / ordenagailua", "Utilisation de l'outil numérique / ordinateur"], ["Ikus-gida (irakurtzeko erregela, estalkia, koloreak)", "Guidage visuel (règle de lecture, cache, couleurs)"]]}, "lang": {"triggers": [["Ahozko azalpen luzea", "Longue explication orale"], ["Taldearen aurrean hitz egin beharra", "Prise de parole devant le groupe"], ["Ulertua ez izatea", "Ne pas être compris"], ["Ahozko agindu luze edo azkarra", "Consigne orale longue ou rapide"], ["Taldearen aurrean ahoz adierazi beharra", "Situation d'expression orale devant le groupe"], ["Helduarekin edo kideekin elkar ez ulertzea", "Incompréhension mutuelle avec l'adulte ou les pairs"], ["Irudirik gabeko hitz abstraktuak", "Vocabulaire abstrait non illustré"]], "behaviors": [["Isiltzea / blokeatzea", "Mutisme / blocage"], ["Keinuz adieraztea edo haserretzea", "S'exprime par gestes ou s'énerve"], ["Ulertu gabe erantzutea", "Répond sans avoir compris"], ["Hitzak bilatzen ibiltzen da", "Cherche ses mots"], ["Hitz egin ordez seinalatu edo keinuak egiten ditu", "Montre ou fait des gestes au lieu de parler"], ["Galderatik kanpo erantzuten du", "Répond à côté de la question"], ["Besteak imitatzen ditu zer egin jakiteko", "Imite les autres pour savoir quoi faire"], ["Galdetzen diotenean isilik geratzen da", "Se tait quand on l'interroge"]], "interventions": [["Esaldi laburrak eta birformulatzea", "Phrases courtes et reformulation"], ["Irudi eta keinuen laguntza", "Appui par images et gestes"], ["Erantzuteko denbora gehiago ematea", "Laisser plus de temps pour répondre"], ["Hitz errazekin eta esaldi laburrekin birformulatzea", "Reformulation avec mots simples et phrases courtes"], ["Keinu, piktograma edo eskemen laguntza", "Appui par gestes, pictogrammes ou schémas"], ["Hasi aurretik ulertu duela egiaztatzea", "Vérification de la compréhension avant démarrage"], ["Erantzuteko denbora uztea", "Laisser un temps de latence pour répondre"]]}, "intel": {"triggers": [["Ataza abstraktu edo zailegia", "Tâche abstraite ou trop difficile"], ["Agindu bat baino gehiago batera", "Plusieurs consignes à la fois"], ["Egoera berria", "Situation nouvelle"], ["Agindu konplexu edo abstraktuegia", "Consigne trop complexe ou abstraite"], ["Gelako erritmo azkarregia", "Rythme de classe trop rapide"], ["Banakako laguntza falta", "Manque d'étayage individuel"], ["Euskarri-aldaketa erakutsi gabe", "Changement de support sans démonstration"]], "behaviors": [["Zain geratzea / ez hastea", "Reste en attente / ne démarre pas"], ["Helduaren etengabeko bilaketa", "Sollicite sans cesse l'adulte"], ["Etsitzea", "Découragement"], ["Ez da hasten helduarik gabe", "Ne démarre pas sans l'adulte"], ["Galdera bera errepikatzen du", "Repose la même question"], ["Agindua ahazten du ataza erdian", "Oublie la consigne en cours de tâche"], ["Ondokoari kopiatzen dio", "Copie sur son voisin"], ["Eredua egokitu gabe errepikatzen du", "Reproduit l'exemple sans l'adapter"]], "interventions": [["Agindu bakarra aldiko", "Une seule consigne à la fois"], ["Eredua erakustea", "Montrer un exemple"], ["Material manipulagarria", "Matériel à manipuler"], ["Eredua erakutsi / adibide bat elkarrekin egin", "Modélisation / Faire un exemple ensemble"], ["Urratsez urrats antolatzea", "Séquençage étape par étape"], ["Material manipulagarri zehatza", "Utilisation de matériel de manipulation concret"], ["Ariketaren zailtasuna egokitzea", "Adaptation du niveau de difficulté de l'exercice"]]}, "visu": {"triggers": [["Ikusi ezin den materiala", "Support illisible pour l'élève"], ["Argi desegokia edo islak", "Éclairage inadapté ou reflets"], ["Gunearen antolaketa aldatzea", "Réorganisation de l'espace"], ["Testu txikia edo kontraste gutxikoa", "Texte trop petit ou peu contrasté"], ["Arbeletik kopiatu edo urrutira irakurri beharra", "Copie du tableau ou lecture de loin"], ["Distira, islak edo kontrargia", "Éblouissement, reflets ou contre-jour"], ["Argi gutxi edo argiaren bat-bateko aldaketa", "Manque de lumière ou changement brusque de luminosité"], ["Ikusmen-lan luzea (pilatutako nekea)", "Tâche visuelle prolongée (fatigue accumulée)"], ["Ikusmenez soilik emandako informazioa (bideoa, eskema, keinua, kolorea)", "Information uniquement visuelle (vidéo, schéma, geste, couleur)"], ["Orri kargatua (irudiak, zutabeak, taulak)", "Document chargé (images, colonnes, tableaux)"], ["Leku berria, oztopoak edo altzariak lekuz aldatuta", "Lieu nouveau, encombré ou meubles déplacés"], ["Gainerakoen denbora bera izatea", "Même temps imparti que les autres"], ["Jolastokia edo kirola (baloiak, korrikak, zarata)", "Récréation ou sport (ballons, courses, bruit)"], ["Material egokitua falta edo prestatu gabe", "Matériel adapté absent ou non préparé"]], "behaviors": [["Gehiegi hurbiltzea / begiak nekatzea", "Se rapproche beaucoup / fatigue visuelle"], ["Mugitzeko zalantza", "Hésitation à se déplacer"], ["Jarduera uztea", "Se retire de l'activité"], ["Orrira edo pantailara asko hurbiltzen da", "Approche les yeux très près de la feuille ou de l'écran"], ["Begiak kizkurtu edo igurzten ditu, malkoak", "Plisse ou frotte les yeux, larmoie"], ["Buruko mina edo begietako mina adierazten du", "Se plaint de maux de tête ou aux yeux"], ["Burua okertzen du edo zeharka begiratzen du", "Penche la tête ou regarde de côté"], ["Lerroa galtzen du, hitzak saltatzen ditu", "Perd la ligne, saute des mots"], ["Poliki kopiatzen du, akatsekin edo lerrotik kanpo", "Copie lentement, avec erreurs ou hors des lignes"], ["Ondokoaren koadernora begiratzen du", "Regarde le cahier du voisin"], ["Talka egin, zalantzaz ibili edo hormari jarraitu", "Se cogne, hésite ou longe les murs"], ["Deskonektatu, urduritu edo hizketan hasten da", "Décroche, s'agite ou bavarde"], ["Ez du bere laguntza-tresna erabili nahi besteen aurrean", "Refuse d'utiliser son aide (loupe, tablette) devant les autres"], ["Jolastokian aparte geratzen da", "Reste à l'écart en récréation"]], "interventions": [["Handitzea eta kontraste handia", "Agrandissement et contraste élevé"], ["Ozen deskribatzea", "Décrire à voix haute"], ["Lekua egokitzea", "Adapter la place en classe"], ["Arbelekoaren kopia bat eskura ematea", "Donner sur la table une copie de ce qui est au tableau"], ["Letraren tamaina ikaslearekin probatu eta egokitzea", "Tester avec l'élève la bonne taille de caractères"], ["Kontrastea indartzea (arkatz beltz lodia, lerro markatuak)", "Renforcer le contraste (feutre noir, lignes épaisses)"], ["Argia egokitzea: lanpara, pertsianak, leihoari bizkarra", "Régler la lumière : lampe, stores, dos à la fenêtre"], ["Idazten edo erakusten dena ozen esatea", "Dire à voix haute ce qui est écrit ou montré"], ["Pertsonak izendatzea eta lekua zehatz adieraztea (ez «hor»)", "Nommer les personnes et situer précisément (pas « là-bas »)"], ["Orria sinplifikatzea: ariketa bat aldiko, irakurtzeko estalkia", "Épurer la page : un exercice à la fois, cache de lecture"], ["Atril edo mahai inklinatua", "Pupitre ou plan incliné"], ["Begientzako atsedenaldi laburrak, nekatu aurretik", "Courtes pauses visuelles avant la fatigue"], ["Denbora gehiago eman edo kantitatea murriztea", "Accorder plus de temps ou réduire la quantité"], ["Ahoz edo audioz lan egitea", "Passer par l'oral ou l'audio"], ["Lupa, zooma edo tabletaren kamera arbelerako", "Loupe, zoom ou caméra de tablette pour le tableau"], ["Pasabideak libre utzi eta aldaketak aldez aurretik esan", "Dégager les passages et prévenir des changements"], ["Ukondoa eskaintzea gidatzeko, aurretik galdetuta", "Proposer son coude pour guider, après avoir demandé"], ["Zer laguntzen dion ikasleari diskretuki galdetzea", "Demander discrètement à l'élève ce qui l'aide"], ["Irakaslearekin eta zerbitzu espezializatuarekin koordinatzea (SAAAS)", "Faire le point avec l'enseignant et le service spécialisé (SAAAS)"]]}, "audi": {"triggers": [["Inguruko zarata", "Bruit ambiant"], ["Bizkarra emanda hitz egitea", "Consigne donnée de dos"], ["Taldeko elkarrizketa", "Discussion à plusieurs"], ["Gelako hondoko zarata handia", "Bruit de fond élevé dans la classe"], ["Irakaslea bizkarra emanda edo ibiltzen ari dela hizketan", "Enseignant parlant de dos ou en marchant"], ["Aparatuaren / HF sistemaren matxura", "Dysfonctionnement de l'appareil / système HF"], ["Ikus-euskarririk gabeko agindua", "Consigne donnée sans support visuel"]], "behaviors": [["Ez erantzutea", "Ne répond pas"], ["Behin eta berriz errepikatzeko eskatzea", "Fait répéter souvent"], ["Isolatzea", "S'isole"], ["Ez du erantzuten bere izena entzutean", "Ne réagit pas à son prénom"], ["Ezpainei begiratu edo belarria hurbiltzen du", "Fixe les lèvres ou tourne l'oreille"], ["Errepikatzeko eskatzen du", "Fait répéter"], ["Besteei begiratzen die jardun aurretik", "Regarde les autres avant d'agir"], ["Aparatua kendu edo ukitzen du", "Retire ou manipule son appareil"]], "interventions": [["Aurrez aurre hitz egitea", "Parler face à l'élève"], ["Ikus-euskarria / idatzia", "Support visuel / écrit"], ["Ulertu duela egiaztatzea", "Vérifier la compréhension"], ["Irakaslearen aurrez aurre jartzea (ezpain-irakurketa)", "Placement face à l'enseignant (lecture labiale)"], ["HF mikrofonoa / audifonoa egiaztatzea", "Vérification du micro HF / appareil auditif"], ["Gako-hitzak eta aginduak arbelean idaztea", "Écriture des mots-clés et consignes au tableau"], ["Aginduak ematean zarata murriztea", "Réduction du bruit ambiant lors des consignes"]]}, "motor": {"triggers": [["Ataza motor fina", "Tâche de motricité fine"], ["Lekuz aldatzea", "Déplacement"], ["Denbora mugatua", "Temps limité"], ["Neke fisikoa / jarrerak eragindako mina", "Fatigue physique / Douleur posturale"], ["Manipulazio fin konplexua (moztu, marraztu)", "Manipulation fine complexe (découpage, tracé)"], ["Irisgarritasun-oztopoa / lekualdatzea", "Obstacle d'accessibilité / Déplacement"], ["Egokitu gabeko jarduera fisikoa", "Activité physique non adaptée"]], "behaviors": [["Nekea edo mina", "Fatigue ou douleur"], ["Frustrazioa keinuagatik", "Frustration face au geste"], ["Parte hartzeari uko egitea", "Refus de participer"], ["Objektuak askatu edo erortzen zaizkio", "Lâche ou fait tomber les objets"], ["Eskua uzkurtzen du, gehiegi edo gutxiegi estutzen du", "Crispe la main, appuie trop ou pas assez"], ["Erori egiten da aulkian edo jarrera aldatzen du maiz", "S'affale ou change souvent de posture"], ["Estropezu egin edo oreka galtzen du", "Trébuche ou perd l'équilibre"], ["Keinu zehatzak saihesten ditu (moztu, botoiak lotu)", "Évite les gestes précis (découper, boutonner)"]], "interventions": [["Material egokitua (guraizeak, heldulekua)", "Matériel adapté (ciseaux, guide-doigts)"], ["Denbora gehigarria", "Temps supplémentaire"], ["Keinuan laguntzea eta atsedena", "Aide au geste et temps de repos"], ["Jarrera ergonomikoa / berriro kokatzea", "Installation ergonomique / Repositionnement"], ["Manipulatzeko edo idazteko laguntza", "Aide humaine à la manipulation / secrétariat"], ["Jarduera motorra egokitzea", "Adaptation de l'activité motrice"], ["Atsedenaldi fisikoa", "Pause de récupération physique"]]}};
+const BASE_CATALOG = {"tsa": {"triggers": [["Ustekabeko aldaketa edo trantsizioa", "Changement imprévu ou transition"], ["Zarata, argia edo jendetza", "Bruit, lumière ou foule"], ["Ulertzen ez duen agindua", "Consigne non comprise ou implicite"], ["Denbora librea edo itxaronaldia", "Temps libre ou attente"]], "behaviors": [["Belarriak estali edo ihes egiten du", "Se bouche les oreilles ou s'enfuit"], ["Kulunkatu edo eskuak astintzen ditu", "Se balance ou agite les mains"], ["Oihu, negar edo lurrera botatzea", "Crie, pleure ou se jette au sol"], ["Bere burua edo besteak jotzen ditu", "Se tape ou tape les autres"]], "interventions": [["Aldaketa ikus-agendarekin iragartzea", "Annoncer le changement avec un visuel"], ["Gune lasaia edo zarataren aurkako kaskoa", "Coin calme ou casque antibruit"], ["Agindu labur bat, irudiarekin", "Une consigne courte avec image"], ["Laguntza eskatzeko modua eskaintzea (txartela)", "Proposer un moyen de demander (carte)"]]}, "tdah": {"triggers": [["Ataza luze edo errepikakorra", "Tâche longue ou répétitive"], ["Inguruko distrakzioak", "Distractions autour de l'élève"], ["Itxarotea edo txanda", "Attente ou tour de parole"], ["Antolatu gabeko tartea", "Moment peu structuré"]], "behaviors": [["Altxatu edo etengabe mugitzen da", "Se lève ou bouge sans arrêt"], ["Hitza mozten du", "Coupe la parole"], ["Ataza amaitu gabe uzten du", "Laisse la tâche inachevée"], ["Materiala galdu edo ahazten du", "Perd ou oublie son matériel"]], "interventions": [["Ataza zatitu eta urratsak markatzea", "Découper la tâche et cocher les étapes"], ["Mugimendu-etenaldia edo enkargu bat", "Pause mouvement ou petite mission"], ["Keinu diskretu adostua arreta berreskuratzeko", "Signal discret convenu pour recentrer"], ["Berehala goraipatzea", "Féliciter tout de suite"]]}, "comp": {"triggers": [["Ezetza edo muga bat", "Refus ou limite posée"], ["Bidegabekeria sentipena", "Sentiment d'injustice"], ["Ohartarazpena besteen aurrean", "Remarque devant les autres"], ["Jolas-ordua edo kideekiko gatazka", "Récréation ou conflit avec un pair"]], "behaviors": [["Urduritasuna handitzen zaio", "Agitation qui monte"], ["Aurka egin edo desafiatzen du", "S'oppose ou provoque"], ["Iraindu edo mehatxatu egiten du", "Insulte ou menace"], ["Jo, bota edo hausten du", "Frappe, jette ou casse"]], "interventions": [["Lasai eta ozen hitz egin gabe, distantzia utziz", "Parler calmement, garder ses distances"], ["Bi aukera eskaintzea", "Proposer deux choix"], ["Gune lasai bat edo etenaldia eskaintzea", "Offrir une pause ou un lieu calme"], ["Geroago, bakarka, berriz hitz egitea", "En reparler après, à part"]]}, "dys": {"triggers": [["Ozen irakurtzea", "Lecture à voix haute"], ["Kopiatu edo asko idatzi beharra", "Copie ou beaucoup d'écrit"], ["Orri kargatua", "Page trop chargée"], ["Denbora mugatua", "Temps limité"]], "behaviors": [["Poliki edo trakets irakurri eta idazten du", "Lit ou écrit lentement, avec peine"], ["Atazari ihes egiten dio", "Évite la tâche"], ["Azkar nekatzen da", "Se fatigue vite"], ["«Ez dut balio» esaten du", "Dit « je suis nul »"]], "interventions": [["Idatzia murriztea (hutsuneak bete, fotokopia)", "Réduire l'écrit (texte à trous, photocopie)"], ["Orri argia eta irakurtzeko erregela", "Page aérée et règle de lecture"], ["Ahoz erantzutea edo ordenagailua", "Réponse orale ou ordinateur"], ["Denbora gehiago edo ariketa gutxiago", "Plus de temps ou moins d'exercices"]]}, "lang": {"triggers": [["Ahozko agindu luze edo azkarra", "Consigne orale longue ou rapide"], ["Taldearen aurrean hitz egin beharra", "Parler devant le groupe"], ["Ulertua ez izatea", "Ne pas être compris"], ["Aldi berean entzun eta egin beharra", "Écouter et faire en même temps"]], "behaviors": [["Hitzak bilatzen ibiltzen da", "Cherche ses mots"], ["Isiltzen da", "Se tait"], ["Galderatik kanpo erantzuten du", "Répond à côté"], ["Haserretu egiten da", "S'énerve"]], "interventions": [["Esaldi laburrak, agindu bat aldiko", "Phrases courtes, une consigne à la fois"], ["Keinu eta irudien laguntza", "Appui par gestes et images"], ["Ulertu duena azaltzeko eskatzea", "Faire redire ce qu'il a compris"], ["Denbora uztea eta birformulatzea, errepikarazi gabe", "Laisser du temps, reformuler sans faire répéter"]]}, "intel": {"triggers": [["Zailegia edo abstraktua den ataza", "Tâche trop difficile ou abstraite"], ["Agindu bat baino gehiago batera", "Plusieurs consignes à la fois"], ["Egoera edo material berria", "Situation ou matériel nouveau"], ["Erritmo azkarregia", "Rythme trop rapide"]], "behaviors": [["Ez da hasten helduarik gabe", "Ne démarre pas sans l'adulte"], ["Agindua ahazten du", "Oublie la consigne"], ["Besteei kopiatzen die", "Copie sur les autres"], ["Etsi eta uzten du", "Se décourage et abandonne"]], "interventions": [["Adibide bat elkarrekin egitea", "Faire un exemple ensemble"], ["Urrats bat aldiko, irudiekin", "Une étape à la fois, avec images"], ["Material manipulagarria", "Matériel à manipuler"], ["Lana murriztea eta etenaldia iragartzea", "Réduire le travail et annoncer une pause"]]}, "visu": {"triggers": [["Testu txikia edo kontraste gutxikoa", "Texte trop petit ou peu contrasté"], ["Arbeletik kopiatu edo urrutira irakurri beharra", "Copie du tableau ou lecture de loin"], ["Distira, islak edo kontrargia", "Éblouissement, reflets ou contre-jour"], ["Argi gutxi edo argiaren bat-bateko aldaketa", "Manque de lumière ou changement brusque de luminosité"], ["Ikusmen-lan luzea (pilatutako nekea)", "Tâche visuelle prolongée (fatigue accumulée)"], ["Ikusmenez soilik emandako informazioa (bideoa, eskema, keinua, kolorea)", "Information uniquement visuelle (vidéo, schéma, geste, couleur)"], ["Orri kargatua (irudiak, zutabeak, taulak)", "Document chargé (images, colonnes, tableaux)"], ["Leku berria, oztopoak edo altzariak lekuz aldatuta", "Lieu nouveau, encombré ou meubles déplacés"], ["Gainerakoen denbora bera izatea", "Même temps imparti que les autres"], ["Jolastokia edo kirola (baloiak, korrikak, zarata)", "Récréation ou sport (ballons, courses, bruit)"], ["Material egokitua falta edo prestatu gabe", "Matériel adapté absent ou non préparé"]], "behaviors": [["Orrira edo pantailara asko hurbiltzen da", "Approche les yeux très près de la feuille ou de l'écran"], ["Begiak kizkurtu edo igurzten ditu, malkoak", "Plisse ou frotte les yeux, larmoie"], ["Buruko mina edo begietako mina adierazten du", "Se plaint de maux de tête ou aux yeux"], ["Burua okertzen du edo zeharka begiratzen du", "Penche la tête ou regarde de côté"], ["Lerroa galtzen du, hitzak saltatzen ditu", "Perd la ligne, saute des mots"], ["Poliki kopiatzen du, akatsekin edo lerrotik kanpo", "Copie lentement, avec erreurs ou hors des lignes"], ["Ondokoaren koadernora begiratzen du", "Regarde le cahier du voisin"], ["Talka egin, zalantzaz ibili edo hormari jarraitu", "Se cogne, hésite ou longe les murs"], ["Deskonektatu, urduritu edo hizketan hasten da", "Décroche, s'agite ou bavarde"], ["Ez du bere laguntza-tresna erabili nahi besteen aurrean", "Refuse d'utiliser son aide (loupe, tablette) devant les autres"], ["Jolastokian aparte geratzen da", "Reste à l'écart en récréation"]], "interventions": [["Arbelekoaren kopia bat eskura ematea", "Donner sur la table une copie de ce qui est au tableau"], ["Letraren tamaina ikaslearekin probatu eta egokitzea", "Tester avec l'élève la bonne taille de caractères"], ["Kontrastea indartzea (arkatz beltz lodia, lerro markatuak)", "Renforcer le contraste (feutre noir, lignes épaisses)"], ["Argia egokitzea: lanpara, pertsianak, leihoari bizkarra", "Régler la lumière : lampe, stores, dos à la fenêtre"], ["Idazten edo erakusten dena ozen esatea", "Dire à voix haute ce qui est écrit ou montré"], ["Pertsonak izendatzea eta lekua zehatz adieraztea (ez «hor»)", "Nommer les personnes et situer précisément (pas « là-bas »)"], ["Orria sinplifikatzea: ariketa bat aldiko, irakurtzeko estalkia", "Épurer la page : un exercice à la fois, cache de lecture"], ["Atril edo mahai inklinatua", "Pupitre ou plan incliné"], ["Begientzako atsedenaldi laburrak, nekatu aurretik", "Courtes pauses visuelles avant la fatigue"], ["Denbora gehiago eman edo kantitatea murriztea", "Accorder plus de temps ou réduire la quantité"], ["Ahoz edo audioz lan egitea", "Passer par l'oral ou l'audio"], ["Lupa, zooma edo tabletaren kamera arbelerako", "Loupe, zoom ou caméra de tablette pour le tableau"], ["Pasabideak libre utzi eta aldaketak aldez aurretik esan", "Dégager les passages et prévenir des changements"], ["Ukondoa eskaintzea gidatzeko, aurretik galdetuta", "Proposer son coude pour guider, après avoir demandé"], ["Zer laguntzen dion ikasleari diskretuki galdetzea", "Demander discrètement à l'élève ce qui l'aide"], ["Irakaslearekin eta zerbitzu espezializatuarekin koordinatzea (SAAAS)", "Faire le point avec l'enseignant et le service spécialisé (SAAAS)"]]}, "audi": {"triggers": [["Inguruko zarata", "Bruit ambiant"], ["Bizkarra emanda edo urrutitik hitz egitea", "Parole de dos ou de loin"], ["Taldeko elkarrizketa", "Discussion à plusieurs"], ["Aparatuaren edo mikrofonoaren matxura", "Panne de l'appareil ou du micro"]], "behaviors": [["Errepikatzeko eskatu edo ez du erantzuten", "Fait répéter ou ne répond pas"], ["Ulertu duela dio, baina ez", "Dit avoir compris alors que non"], ["Besteei begiratu eta imitatzen ditu", "Regarde et imite les autres"], ["Nekatu, deskonektatu edo isolatzen da", "Fatigue, décroche ou s'isole"]], "interventions": [["Arreta lortu eta aurrez aurre hitz egitea", "Capter son regard, parler de face"], ["Idatzia edo irudia erakustea", "Montrer par écrit ou en image"], ["Berarekin errepikatzeko edo adibidea emateko eskatzea", "Faire reformuler plutôt que « tu as compris ? »"], ["Zarata murriztu eta entzumen-etenaldiak", "Réduire le bruit, pauses d'écoute"]]}, "motor": {"triggers": [["Ataza fina (idatzi, moztu, marraztu)", "Geste fin (écrire, découper, tracer)"], ["Lekualdatzea edo oztopoak", "Déplacement ou obstacles"], ["Denbora mugatua", "Temps limité"], ["Kirola edo jarduera fisikoa", "Sport ou activité physique"]], "behaviors": [["Poliki egiten du edo uzkurtzen da", "Lenteur ou crispation"], ["Objektuak erortzen zaizkio", "Fait tomber les objets"], ["Nekea edo mina adierazten du", "Montre fatigue ou douleur"], ["Haserretu edo parte hartu nahi ez", "S'énerve ou refuse de participer"]], "interventions": [["Tresna egokituak (mahai inklinatua, heldulekua)", "Outils adaptés (plan incliné, guide-doigts)"], ["Idatzia murriztu edo ordenagailua", "Moins d'écrit ou ordinateur"], ["Denbora gehiago eta atsedena", "Plus de temps et de repos"], ["Behar den laguntza soilik, aurretik galdetuta", "Aider seulement au besoin, après avoir demandé"]]}};
+let catalog = JSON.parse(localStorage.getItem(KEY_CATALOG) || 'null') || { items: JSON.parse(JSON.stringify(BASE_CATALOG)), updatedAt: 0 };
+// Catálogo antiguo: se actualiza conservando lo que se hubiera añadido o modificado a mano
+function upgradeCatalog() {
+  if (catalog.v === CATALOG_VERSION) return;
+  if (catalog.updatedAt) {
+    Object.keys(BASE_CATALOG).filter(id => !(catalog.v === 2 && id === 'visu')).forEach(id => ['triggers','behaviors','interventions'].forEach(k => {
+      const own = (catalog.items[id][k] || []).filter(p => !OLD_CATALOG[id][k].some(o => o[0] === p[0] && o[1] === p[1]));
+      const base = JSON.parse(JSON.stringify(BASE_CATALOG[id][k]));
+      catalog.items[id][k] = [...base, ...own.filter(p => !base.some(b => b[0] === p[0] || b[1] === p[1]))];
+    }));
+    localStorage.setItem(KEY_CATALOG, JSON.stringify({ ...catalog, v: CATALOG_VERSION }));
+  } else {
+    catalog.items = JSON.parse(JSON.stringify(BASE_CATALOG));
+  }
+  catalog.v = CATALOG_VERSION;
+}
+upgradeCatalog();
+// Alumnos con perfil ya marcado: se cambian las casillas antiguas por las nuevas
+function upgradeProfiles() {
+  Object.keys(studentInfo).forEach(key => {
+    const ids = [...(studentInfo[key].profile || [])];
+    if (!ids.length || optionsOf(key).catalogVersion === CATALOG_VERSION) return;
+    const dates = [studentInfo[key].updatedAt, optionsOf(key).updatedAt];
+    const keepVisu = optionsOf(key).catalogVersion === 2;
+    const renew = ids.filter(id => !(keepVisu && id === 'visu'));
+    renew.forEach(id => applyProfile(key, id, false));
+    renew.forEach(id => applyProfile(key, id, true));
+    optionsOf(key).catalogVersion = CATALOG_VERSION;
+    // no cuenta como cambio del usuario (para fusionar copias de seguridad)
+    [studentInfo[key].updatedAt, optionsOf(key).updatedAt] = dates;
+    saveStudentInfo(); saveStudentOptions();
+  });
+}
+function saveCatalog() { catalog.updatedAt = Date.now(); localStorage.setItem(KEY_CATALOG, JSON.stringify(catalog)); }
+const phaseLabel = k => ({ triggers: ['Eragilea','Déclencheur'], behaviors: ['Ikusitako jokabidea','Comportement observé'], interventions: ['Ezarritako esku-hartzea','Intervention appliquée'] })[k][lang === 'eu' ? 0 : 1];
+
+// "Bestelakoa / Autre" siempre al final de cada bloque
+function moveOtherLast(o, k) {
+  const pairs = o.eu[k].map((e, i) => [e, o.fr[k][i]]);
+  pairs.sort((a, b) => isOther(a[0]) - isOther(b[0]));
+  o.eu[k] = pairs.map(p => p[0]); o.fr[k] = pairs.map(p => p[1]);
+}
+// Marca o desmarca un perfil: suma sus casillas (sin duplicados) o retira las que él añadió
+function applyProfile(key, id, on) {
+  const info = infoOf(key), o = optionsOf(key);
+  const set = new Set(info.profile || []);
+  on ? set.add(id) : set.delete(id);
+  info.profile = [...set];
+  o.catalogVersion = CATALOG_VERSION;
+  o.auto = o.auto || {};
+  const norm = v => v.trim().toLowerCase();
+  PHASES.forEach(k => {
+    const auto = o.auto[k] = o.auto[k] || {};
+    if (on) {
+      (catalog.items[id][k] || []).forEach(([eu, fr]) => {
+        const i = o.eu[k].findIndex((x, n) => norm(x) === norm(eu) || norm(o.fr[k][n]) === norm(fr));
+        if (i === -1) { o.eu[k].push(eu); o.fr[k].push(fr); auto[eu] = [id]; }
+        else if (auto[o.eu[k][i]] && !auto[o.eu[k][i]].includes(id)) auto[o.eu[k][i]].push(id);
+      });
+    } else {
+      Object.keys(auto).forEach(eu => {
+        if (!auto[eu].includes(id)) return;
+        auto[eu] = auto[eu].filter(x => x !== id);
+        if (auto[eu].length) return;
+        const i = o.eu[k].indexOf(eu);
+        if (i > -1) { o.eu[k].splice(i, 1); o.fr[k].splice(i, 1); }
+        delete auto[eu];
+      });
+    }
+    moveOtherLast(o, k);
+  });
+  info.updatedAt = o.updatedAt = Date.now();
+  saveStudentInfo(); saveStudentOptions();
+}
+function renderProfile() {
+  const box = document.getElementById('profileList');
+  if (!activeStudent) return;
+  const selected = infoOf(activeStudent).profile || [];
+  document.getElementById('profileCount').textContent = selected.length ? ` (${selected.length})` : '';
+  box.innerHTML = Object.keys(PROFILE_NAMES).map(id => `<label class="flex items-center gap-2 min-h-[44px] text-sm cursor-pointer">
+    <input type="checkbox" class="w-4 h-4 shrink-0" value="${id}" ${selected.includes(id) ? 'checked' : ''}><span>${escapeHtml(PROFILE_NAMES[id][lang])}</span></label>`).join('');
+}
+document.getElementById('profileList').addEventListener('change', e => {
+  applyProfile(activeStudent, e.target.value, e.target.checked);
+  renderProfile();
+});
+
+/* ---------- catálogo en la pestaña Ejemplos ---------- */
+let catalogEdit = null;   // { id, phase, index }
+let openProfiles = new Set();
+function renderCatalog() {
+  const root = document.getElementById('catalogList');
+  const li = lang === 'eu' ? 0 : 1;
+  root.innerHTML = Object.keys(PROFILE_NAMES).map(id => `<details class="border rounded" data-id="${id}" ${openProfiles.has(id) ? 'open' : ''}>
+    <summary class="p-3 font-semibold text-sm cursor-pointer">${escapeHtml(PROFILE_NAMES[id][lang])}</summary>
+    <div class="px-3 pb-3 space-y-3">${PHASES.map(k => `<div data-phase="${k}">
+      <div class="flex items-center justify-between gap-2"><span class="text-xs font-bold text-gray-600">${phaseLabel(k)}</span>
+        <button type="button" data-act="add" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded min-h-[36px]">+ ${t('addItem')}</button></div>
+      ${catalog.items[id][k].map((pair, i) => `<div class="flex items-center gap-1 text-sm" data-index="${i}"><span class="flex-1 min-w-0">${escapeHtml(pair[li])}</span>
+        <button type="button" data-act="edit" class="icon-btn" title="${t('editBtn')}">✏️</button>
+        <button type="button" data-act="del" class="icon-btn text-red-600 font-bold" title="${t('deleteBtn')}">✕</button></div>`).join('')}
+    </div>`).join('')}</div></details>`).join('');
+  root.querySelectorAll('details').forEach(d => d.ontoggle = () => { d.open ? openProfiles.add(d.dataset.id) : openProfiles.delete(d.dataset.id); });
+}
+document.getElementById('catalogList').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const id = b.closest('[data-id]').dataset.id, phase = b.closest('[data-phase]').dataset.phase;
+  const row = b.closest('[data-index]'), index = row ? +row.dataset.index : null;
+  if (b.dataset.act === 'del') {
+    if (!confirm(t('confirmDeleteTemplate') + '\n' + catalog.items[id][phase][index][lang === 'eu' ? 0 : 1])) return;
+    catalog.items[id][phase].splice(index, 1); saveCatalog(); renderCatalog();
+    return;
+  }
+  catalogEdit = { id, phase, index };
+  const pair = index === null ? ['', ''] : catalog.items[id][phase][index];
+  openOptionDialog(index === null ? 'modalTitle' : 'modalEditTitle', pair[lang === 'eu' ? 0 : 1], pair[lang === 'eu' ? 1 : 0]);
+});
+function saveCatalogItem(val, val2) {
+  const { id, phase, index } = catalogEdit;
+  const list = catalog.items[id][phase];
+  if (index !== null && val2 === list[index][0] && val2 === list[index][1]) val2 = '';
+  const pair = lang === 'eu' ? [val, val2 || val] : [val2 || val, val];
+  if (list.some((p, i) => i !== index && (p[0] === pair[0] || p[1] === pair[1]))) { alert(t('optionExists')); return; }
+  index === null ? list.push(pair) : (list[index] = pair);
+  saveCatalog(); renderCatalog();
+}
+document.getElementById('downloadExamplesBtn').onclick = () => {
+  const data = { type: 'nereapp-examples', version: APP_VERSION, exportedAt: new Date().toISOString(), profiles: PROFILE_NAMES, catalog };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = `nereapp_${lang === 'eu' ? 'adibideak' : 'exemples'}_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+function openOptionDialog(titleKey, value, other) {
+  const modal = document.getElementById('customOptionModal');
+  document.getElementById('modalTitle').textContent = t(titleKey);
+  const inp = document.getElementById('modalInput'), inp2 = document.getElementById('modalInputOther');
+  inp.placeholder = inp2.placeholder = t('modalPlaceholder');
+  inp.value = value; inp2.value = other;
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  setTimeout(() => inp.focus(), 100);
+}
+
 const OPTION_KEYS = { trigger: 'triggers', behavior: 'behaviors', intervention: 'interventions' };
 let editingOptionIndex = null;
 let formStudentShown = null;
@@ -1699,28 +1881,22 @@ function withOther(inc, key) {
 
 function openCustomModal(type, index) {
     if (!formStudent()) { alert(t('optionsNoStudent')); return; }
-    currentModalType = type;
+    currentModalType = type; catalogEdit = null;
     editingOptionIndex = (typeof index === 'number') ? index : null;
-    const modal = document.getElementById('customOptionModal');
-    document.getElementById('modalTitle').textContent = t(editingOptionIndex === null ? 'modalTitle' : 'modalEditTitle');
-    const inp = document.getElementById('modalInput');
-    inp.placeholder = t('modalPlaceholder');
-    inp.value = editingOptionIndex === null ? '' : optionsOf(formStudent())[lang][OPTION_KEYS[type]][editingOptionIndex];
-    const inp2 = document.getElementById('modalInputOther');
-    inp2.placeholder = t('modalPlaceholder');
-    inp2.value = editingOptionIndex === null ? '' : optionsOf(formStudent())[otherLang()][OPTION_KEYS[type]][editingOptionIndex];
-    modal.classList.remove('hidden'); modal.classList.add('flex');
-    setTimeout(() => inp.focus(), 100);
+    if (editingOptionIndex === null) { openOptionDialog('modalTitle', '', ''); return; }
+    const own = optionsOf(formStudent()), key = OPTION_KEYS[type];
+    openOptionDialog('modalEditTitle', own[lang][key][editingOptionIndex], own[otherLang()][key][editingOptionIndex]);
 }
 function closeModal() {
     const modal = document.getElementById('customOptionModal');
     modal.classList.add('hidden'); modal.classList.remove('flex');
-    currentModalType = null; editingOptionIndex = null;
+    currentModalType = null; editingOptionIndex = null; catalogEdit = null;
 }
 function saveModalOption() {
     const val = document.getElementById('modalInput').value.trim();
     const student = formStudent();
-    if (val && currentModalType && student) {
+    if (val && catalogEdit) saveCatalogItem(val, document.getElementById('modalInputOther').value.trim());
+    else if (val && currentModalType && student) {
         const own = optionsOf(student);
         const key = OPTION_KEYS[currentModalType];
         const list = own[lang][key], list2 = own[otherLang()][key];
@@ -1730,6 +1906,7 @@ function saveModalOption() {
         if (!val2) val2 = isOther(val) ? (otherLang() === 'fr' ? 'Autre' : 'Bestelakoa') : val;
         const clash = (l, v) => { const d = l.indexOf(v); return d > -1 && d !== editingOptionIndex; };
         if (clash(list, val) || clash(list2, val2)) { alert(t('optionExists')); return; }
+        if (editingOptionIndex !== null && own.auto && own.auto[key]) delete own.auto[key][own.eu[key][editingOptionIndex]];
         if (editingOptionIndex === null) { list.push(val); list2.push(val2); }
         else {
             // si estaba marcada, sigue marcada con el texto nuevo
@@ -1739,6 +1916,7 @@ function saveModalOption() {
             const cb = Array.from(document.querySelectorAll(`#incidentForm input[name="${currentModalType}"]`)).find(c => c.value === old);
             if (cb) cb.value = val;
         }
+        moveOtherLast(own, key);
         own.updatedAt = Date.now();
         saveStudentOptions();
         buildCheckboxes();
@@ -1752,6 +1930,18 @@ function saveModalOption() {
 /* =================================================================
    CHECKBOXES DINÁMICOS (propios de cada alumno)
    ================================================================= */
+// Cambia de idioma sin perder lo marcado
+function translateChecks(from, to) {
+  const student = formStudent();
+  if (!student) return;
+  const o = optionsOf(student);
+  Object.entries(OPTION_KEYS).forEach(([name, k]) => {
+    document.querySelectorAll(`#incidentForm input[name="${name}"]`).forEach(cb => {
+      const i = o[from][k].indexOf(cb.value);
+      if (i > -1) cb.value = o[to][k][i];
+    });
+  });
+}
 function buildCheckboxes() {
   const groups = [
     { idForm: 'triggersGroupForm',     name: 'trigger',      key: 'triggers' },
@@ -1812,6 +2002,7 @@ function buildCheckboxes() {
           e.preventDefault();
           if (confirm(t('confirmDeleteOption') + "\n" + label)) {
             const own = optionsOf(student);
+            if (own.auto && own.auto[g.key]) delete own.auto[g.key][own.eu[g.key][i]];
             own.eu[g.key].splice(i, 1);
             own.fr[g.key].splice(i, 1);
             own.updatedAt = Date.now();
@@ -2619,6 +2810,7 @@ function renderStudentDetail() {
   const metaEl = document.getElementById('studentDetailMeta');
   if (!activeStudent) return;
   nameEl.textContent = displayName(activeStudent);
+  renderProfile();
   const inc = incidents.filter(i => i.student === activeStudent);
   const files = getAttachmentsForStudent(activeStudent).length;
   const last = inc.length ? inc.sort((a,b)=> b.date.localeCompare(a.date))[0].date.slice(0,10) : '';
@@ -2653,7 +2845,7 @@ function switchConfigTab(name, force) {
   const tgt = document.getElementById('configtab-' + name);
   if (tgt) tgt.classList.remove('hidden');
   if (name === 'schedule') renderSlotList();
-  if (name === 'example') renderExamples();
+  if (name === 'example') { renderExamples(); renderCatalog(); }
 }
 
 /* =================================================================
@@ -4027,7 +4219,7 @@ document.getElementById('exportBackupBtn').addEventListener('click', async () =>
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     students, subjects, incidents, customOptions, slots,
-    studentInfo, studentOptions,
+    studentInfo, studentOptions, catalog,
     studentClasses, currentCourse, essData,
     attachments: attsCopy,
     title: document.getElementById('mainTitle').value,
@@ -4089,13 +4281,20 @@ async function mergeBackup(data) {
       }
     });
   };
-  const before = JSON.stringify([studentInfo, studentOptions]);
+  const before = JSON.stringify([studentInfo, studentOptions, catalog]);
+  const inCat = data.catalog;
+  if (inCat && inCat.items && (inCat.updatedAt || 0) > catalog.updatedAt
+      && Object.keys(PROFILE_NAMES).every(id => inCat.items[id] && PHASES.every(k => Array.isArray(inCat.items[id][k])))) {
+    catalog = clone(inCat);
+    localStorage.setItem(KEY_CATALOG, JSON.stringify(catalog));
+    upgradeCatalog();
+  }
   mergeByDate(studentInfo, data.studentInfo);
   mergeByDate(studentOptions, data.studentOptions);
   const used = new Set();
   Object.values(studentInfo).forEach(i => { if (!i.num || used.has(i.num)) i.num = nextStudentNum(); used.add(i.num); });
   saveStudentInfo(); saveStudentOptions();
-  const profilesChanged = before !== JSON.stringify([studentInfo, studentOptions]);
+  const profilesChanged = before !== JSON.stringify([studentInfo, studentOptions, catalog]);
 
   (data.students || []).forEach(s => {
     if (!students.includes(s)) { students.push(s); newStu++; }
@@ -4175,6 +4374,7 @@ async function mergeBackup(data) {
     saveOptions();
   }
   ensureStudentData();
+  upgradeProfiles();
 
   if (Array.isArray(data.slots) && data.slots.length > 0) {
     const existing = new Set((slots || []).map(s => slotsToValue(s)));
@@ -4248,6 +4448,7 @@ document.getElementById('clearAllConfirmBtn').addEventListener('click', () => {
   setActiveStudent(null);
   studentInfo = {}; studentOptions = {}; saveStudentInfo(); saveStudentOptions();
   localStorage.removeItem(KEY_NAME_MODE);
+  localStorage.removeItem(KEY_CATALOG);
   saveStudents(); saveSubjects(); saveIncidents(); saveAttachments(); saveOptions();
   localStorage.setItem(KEY_SLOTS, 'null');
   localStorage.removeItem(KEY_ACTIVE_STUDENT);
@@ -4547,6 +4748,12 @@ function essSummary(list, endMs) {
   };
   const untr = new Set();
   const tf = (kind, s) => {
+    const own = optionsOf(activeStudent);
+    const j = own.eu[kind].indexOf(s);
+    if (j > -1 && own.fr[kind][j] !== s) return own.fr[kind][j];
+    if (own.fr[kind].includes(s)) return s;
+    const c = Object.values(catalog.items).flatMap(x => x[kind]).find(p => p[0] === s);
+    if (c) return c[1];
     const i = defaultOptions.eu[kind].indexOf(s);
     if (i > -1) return defaultOptions.fr[kind][i];
     if (!defaultOptions.fr[kind].includes(s)) untr.add(s);
@@ -4565,7 +4772,7 @@ function essSummary(list, endMs) {
   const eff = {};
   list.forEach(i => {
     if (typeof i.worked !== 'boolean') return;
-    (i.interventions || []).forEach(x => {
+    (i.interventions || []).filter(x => !isOther(x)).forEach(x => {
       const n = tf('interventions', x);
       const r = eff[n] || (eff[n] = { n: 0, y: 0 });
       r.n++; if (i.worked) r.y++;
@@ -4575,8 +4782,8 @@ function essSummary(list, endMs) {
   return {
     n: list.length, first, weeks, perWeek, freqIdx,
     slots: cnt(list.map(i => i.slotRange)).slice(0, 3),
-    trig: cnt(list.flatMap(i => (i.triggers || []).filter(x => x !== 'Bestelakoa' && x !== 'Autre').map(x => tf('triggers', x)))).slice(0, 3),
-    beh: cnt(list.flatMap(i => (i.behaviors || []).map(x => tf('behaviors', x)))).slice(0, 3),
+    trig: cnt(list.flatMap(i => (i.triggers || []).filter(x => !isOther(x)).map(x => tf('triggers', x)))).slice(0, 3),
+    beh: cnt(list.flatMap(i => (i.behaviors || []).filter(x => !isOther(x)).map(x => tf('behaviors', x)))).slice(0, 3),
     subj: cnt(list.filter(i => i.subject).map(i => subjFr(i.subject))).slice(0, 3),
     good: effs.filter(x => x.r >= 0.7).sort((a, b) => b.r - a.r || b.n - a.n),
     poor: effs.filter(x => x.r < 0.4).sort((a, b) => a.r - b.r),
@@ -5059,6 +5266,7 @@ function wizardFinish() {
 (function init() {
   runMigrations(savedVersion, APP_VERSION);
   ensureStudentData();   // cada alumno existente recibe su propia copia de las opciones
+  upgradeProfiles();
   if (isExample(activeStudent)) setActiveStudent(null);
   sortStudents();
   applyLang();
@@ -5070,7 +5278,9 @@ function wizardFinish() {
   });
 
   document.getElementById('langBtn').onclick = () => {
+    const prevLang = lang;
     lang = lang === 'eu' ? 'fr' : 'eu';
+    translateChecks(prevLang, lang);
     localStorage.setItem('aesh_lang', lang);
     applyLang();
   };
